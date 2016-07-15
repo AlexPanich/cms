@@ -33,12 +33,15 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::directive('menu_tree', function ($expression) {
 
-            try {
-                list($tree, $pages) = explode(',', str_replace([' ', '(', ')'], '', $expression));
-                if ($pages == '$menu') $pages = 'old(\'pages\', $menu->pages->keyBy(\'id\')->keys()->all())';
-            } catch (Exception $e) {
+            $arr = explode(',', str_replace([' ', '(', ')'], '', $expression));
+            $tree = $arr[0];
+            if (isset($arr[1])) {
+                $pages = $arr[1];
+            } else {
                 $pages = 'old(\'pages\')';
             }
+            if ($pages == '$menu') $pages = 'old(\'pages\', $menu->pages->keyBy(\'id\')->keys()->all())';
+
             return "<?php
                         print_menu_tree($tree, $pages);
                    ?>";
