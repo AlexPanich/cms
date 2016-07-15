@@ -19,12 +19,13 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('tree', function ($expression) {
 
             try {
-                list($treee, $page_id) = explode(',', str_replace([' ', '(', ')'], '', $expression));
+                dd($expression);
+                list($tree, $page_id) = explode(',', str_replace([' ', '(', ')'], '', $expression));
             } catch (Exception $e) {
                 $page_id = 0;
             }
             return "<?php
-                         print_tree($treee, $page_id);
+                         print_tree($tree, $page_id);
                    ?>";
         });
 
