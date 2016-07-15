@@ -29,7 +29,7 @@
                     <select name="permissions[]" id="permissions" multiple>
                         @foreach($permission::all() as $permission)
                             <option value="{{ $permission->id }}"
-                                    @if(in_array($permission->id, old('permission', [])))
+                                    @if(in_array($permission->id, old('permission', $role->permissions->keyBy('id')->keys()->all())))
                                     selected
                                     @endif
                             >{{ $permission->label }}</option>
