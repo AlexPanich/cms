@@ -1,0 +1,1 @@
+{"version":3,"sources":["app.scss"],"names":[],"mappings":"AAAA;EACE,eAAe,EAChB","file":"app.css","sourcesContent":[".active a {\n  color: inherit;\n}"],"sourceRoot":"/source/"}
