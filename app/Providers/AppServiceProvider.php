@@ -18,12 +18,14 @@ class AppServiceProvider extends ServiceProvider
     {
         Blade::directive('tree', function ($expression) {
 
-            try {
-                dd($expression);
-                list($tree, $page_id) = explode(',', str_replace([' ', '(', ')'], '', $expression));
-            } catch (Exception $e) {
+            $arr = explode(',', str_replace([' ', '(', ')'], '', $expression));
+            $tree = $arr[0];
+            if (isset($arr[1])) {
+                $page_id = $arr[1];
+            } else {
                 $page_id = 0;
             }
+
             return "<?php
                          print_tree($tree, $page_id);
                    ?>";
@@ -33,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
 
             try {
                 list($tree, $pages) = explode(',', str_replace([' ', '(', ')'], '', $expression));
-                if($pages == '$menu') $pages = 'old(\'pages\', $menu->pages->keyBy(\'id\')->keys()->all())';
+                if ($pages == '$menu') $pages = 'old(\'pages\', $menu->pages->keyBy(\'id\')->keys()->all())';
             } catch (Exception $e) {
                 $pages = 'old(\'pages\')';
             }
@@ -42,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
                    ?>";
         });
 
-        Blade::directive('frontWidget', function($expression) {
+        Blade::directive('frontWidget', function ($expression) {
             list($type, $one) = explode(',', str_replace([' ', '(', ')'], '', $expression));
 
             return "<?php
@@ -52,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
                    ?>";
         });
 
-        Blade::directive('frontField', function($expression) {
+        Blade::directive('frontField', function ($expression) {
             list($key, $type) = explode(',', str_replace([' ', '(', ')'], '', $expression));
 
             return "<?php
@@ -62,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
                     ?>";
         });
 
-        Blade::directive('text', function($expression) {
+        Blade::directive('text', function ($expression) {
             return "<?php
 
                         \$text = \\App\\Text::getByAlias(str_replace(['(',')'], '', '$expression'));
@@ -85,7 +87,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->singleton(Search::class, function($app) {
+        $this->app->singleton(Search::class, function ($app) {
             return new Search($app->config['search_map']);
         });
     }
