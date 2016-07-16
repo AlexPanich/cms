@@ -5,16 +5,31 @@
 @endsection
 
 @section('content_title')
-    Список меню
+    Все меню
 @endsection
 
 @section('content')
-    <ul class="list-group">
-    @foreach($menu as $item)
-        <li class="list-group-item">
-            <a href="{{ route('edit_menu', $item->id) }}">{{ $item['title'] }}</a> |
-            <a href="{{ route('sort_menu', $item->id) }}">сортировать</a>
-        </li>
-    @endforeach
-    </ul>
+    <?php $i = ($menus->currentPage() - 1) * 10 + 1 ?>
+    <table class="table">
+        <thead>
+            <th>№</th>
+                <th>Название меню</th>
+                <th>Действия</th>
+        </thead>
+        <tbody>
+        @foreach($menus as $item)
+            <tr>
+                <td>{{ $i++ }}</td>
+                <td><a href="{{ route('edit_menu', $item->id) }}">{{ $item->title }}</a></td>
+                <td>
+                    <a class="btn btn-default btn-sm" href="{{ route('sort_menu', $item->id) }}">Сортировать</a>
+                    <a class="btn btn-danger btn-sm" href="{{ route('delete_menu', $item->id) }}">Удалить</a>
+                </td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+    {{ $menus->render() }}
+    <br>
+    <p><a class="btn btn-primary btn-square" href="{{ route('create_menu') }}">Создать меню</a></p>
 @endsection

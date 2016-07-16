@@ -9,7 +9,7 @@ class Image extends BaseImage
 
     protected static $thumbnailDir = 'images/gallery/thumbnail';
 
-    protected static $thumbnailSize = '200';
+    protected static $thumbnailSize = '400';
 
     public function gallery()
     {

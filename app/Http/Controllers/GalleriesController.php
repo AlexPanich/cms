@@ -19,7 +19,8 @@ class GalleriesController extends DashboardController
 
     public function index()
     {
-        $galleries = Gallery::all();
+        $galleries = Gallery::paginate();
+
         return view('dashboard.gallery.index', compact('galleries'));
     }
 
@@ -40,8 +41,17 @@ class GalleriesController extends DashboardController
         return view('dashboard.gallery.edit', compact('gallery'));
     }
 
-    public function update()
+    public function update(Gallery $gallery, GalleryRequest $request)
     {
+        $gallery->update($request->all());
+
+        return redirect()->route('gallery');
+    }
+
+    public function destroy(Gallery $gallery)
+    {
+        $gallery->delete();
+
         return redirect()->route('gallery');
     }
 
@@ -62,7 +72,12 @@ class GalleriesController extends DashboardController
         return view('dashboard.gallery.view', compact('gallery'));
     }
 
-    public function sorting(Gallery $gallery, Request $request)
+    public function sorting(Gallery $gallery)
+    {
+        return view('dashboard.gallery.sorting', compact('gallery'));
+    }
+
+    public function postSorting(Gallery $gallery, Request $request)
     {
         return (int)$gallery->sorting($request->input('images'));
     }

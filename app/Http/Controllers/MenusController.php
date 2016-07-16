@@ -12,8 +12,8 @@ class MenusController extends DashboardController
 {
     public function index()
     {
-        $menu = Menu::all();
-        return view('dashboard.menu.index', compact('menu'));
+        $menus = Menu::paginate();
+        return view('dashboard.menu.index', compact('menus'));
     }
 
     public function create()
@@ -41,6 +41,13 @@ class MenusController extends DashboardController
         $menu->update($request->all());
 
         $menu->pages()->sync($request->input('pages') ?: []);
+
+        return redirect()->route('all_menu');
+    }
+
+    public function destroy(Menu $menu)
+    {
+        $menu->delete();
 
         return redirect()->route('all_menu');
     }

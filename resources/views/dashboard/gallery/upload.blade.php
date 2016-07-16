@@ -1,8 +1,12 @@
 @extends('layouts.dashboard')
 
-@section('title')
-    Наполнение галлереи: {{ $gallery->title }}
+@section('page_title')
+    Галереи
 @endsection
+
+@section('content_title')
+    Загрузка изображений
+@endsection()
 
 @section('scripts.footer')
     <script src="{{ URL::to('js/dropzone.js') }}"></script>
@@ -47,8 +51,8 @@
 @endsection
 
 @section('content')
-    <h2>Загрузка изображения в галлерею: <a href="{{ route('edit_gallery', $gallery->id) }}">{{ $gallery->title }}</a></h2>
-
+    <div>Загрузка изображения в галлерею: <a href="{{ route('edit_gallery', $gallery->id) }}">{{ $gallery->title }}</a></div>
+    <br>
     <form action="{{ route('upload_image_gallery', $gallery->id) }}"
           method="post" class="dropzone" enctype="multipart/form-data" id="addImage">
         {{ csrf_field() }}
@@ -56,9 +60,14 @@
     <br>
     <div>
         <div id="upload-button">
-            <span>0 files</span>
             <button type="button" class="upload btn btn-success">Загрузить</button>
             <button type="button" class="delete btn btn-danger">Удалить все</button>
         </div>
     </div>
+    <br>
+    <p>
+        <a class="btn btn-primary btn-square" href="{{ route('create_gallery') }}">Создать галлерею</a>
+        <a class="btn btn-primary btn-square" href="{{ route('sort_image_gallery', $gallery->id) }}">Отсортировать изображения</a>
+        <a class="btn btn-default btn-square" href="{{ route('gallery') }}">Все галлереи (уйти не сохранив)</a>
+    </p>
 @endsection

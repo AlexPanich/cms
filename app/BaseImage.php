@@ -65,10 +65,15 @@ abstract class BaseImage extends Model
         ImageFacade::make($this->getPath())->fit(static::$thumbnailSize)->save($this->getThumbnailPath());
     }
 
-    public function delete()
+    public function removeFile()
     {
         File::delete($this->getPath());
         File::delete($this->getThumbnailPath());
+    }
+
+    public function delete()
+    {
+        $this->removeFile();
         parent::delete();
     }
 

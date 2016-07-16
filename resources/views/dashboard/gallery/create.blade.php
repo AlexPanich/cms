@@ -25,6 +25,9 @@
             </div>
         </div>
         <br>
-        <input type="submit" value="Создать галлерею" class="btn btn-danger">
+        <p>
+            <input type="submit" value="Создать галлерею" class="btn btn-primary btn-square">
+            <a class="btn btn-default btn-square" href="{{ route('gallery') }}">Все галлереи (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

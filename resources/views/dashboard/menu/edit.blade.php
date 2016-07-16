@@ -1,11 +1,14 @@
 @extends('layouts.dashboard')
 
-@section('title')
+@section('page_title')
+    Меню
+@endsection
+
+@section('content_title')
     Редактирование меню
 @endsection
 
 @section('content')
-    <h1>Редактирование меню</h1>
     @include('errors.list')
     <form class="" action="{{ route('update_menu', $menu->id) }}" method="post">
         {{ csrf_field() }}
@@ -27,6 +30,7 @@
                 </div>
             </div>
         </div>
+        <br>
         <input type="submit" value="Обновить меню меню" class="btn btn-danger">
     </form>
 @endsection

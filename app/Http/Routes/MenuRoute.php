@@ -25,6 +25,11 @@ Route::post('/menu/update/{menu}', [
     'as' => 'update_menu'
 ]);
 
+Route::get('/menu/destroy/{menu}', [
+    'uses' => 'MenusController@destroy',
+    'as' => 'delete_menu'
+]);
+
 Route::get('/menu/sort/{menu}', [
     'uses' => 'MenusController@sort',
     'as' => 'sort_menu'

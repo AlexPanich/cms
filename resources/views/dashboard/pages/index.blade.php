@@ -24,7 +24,7 @@
                 <tr>
                     <td>{{ $i++ }}</td>
                     <td>{{ $page->title }}</td>
-                    <td><a href="{{ route('url', $page->full_ulr) }}" target="_blank">Просмотреть</a></td>
+                    <td><a href="{{ route('url', $page->full_url) }}" target="_blank">Просмотреть</a></td>
                     <td><a href="{{ route('edit_page', $page->id) }}">Редактировать</a></td>
                     <td><a href="{{ route('delete_page', $page->id) }}">Удалить</a></td>
                     <td>{{ $page->is_show ? 'Опубликована' : 'Не опубликована' }}</td>

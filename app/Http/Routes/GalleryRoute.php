@@ -20,6 +20,16 @@ Route::get('/gallery/edit/{gallery}', [
     'as' => 'edit_gallery'
 ]);
 
+Route::post('/gallery/update', [
+    'uses' => 'GalleriesController@update',
+    'as' => 'update_gallery'
+]);
+
+Route::get('/gallery/destroy/{gallery}', [
+    'uses' => 'GalleriesController@destroy',
+    'as' => 'delete_gallery'
+]);
+
 Route::post('/gallery/update/{gallery}', [
     'uses' => 'GalleriesController@update',
     'as' => 'update_gallery'
@@ -35,8 +45,13 @@ Route::post('/gallery/upload_image/{gallery}', [
     'as' => 'upload_image_gallery',
 ]);
 
-Route::post('/gallery/edit/{gallery}/sorting', [
+Route::get('/gallery/edit/{gallery}/sorting', [
     'uses' => 'GalleriesController@sorting',
+    'as' => 'sort_image_gallery'
+]);
+
+Route::post('/gallery/edit/{gallery}/sorting', [
+    'uses' => 'GalleriesController@postSorting',
     'as' => 'sorting_image_gallery'
 ]);
 

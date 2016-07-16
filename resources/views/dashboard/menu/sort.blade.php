@@ -1,6 +1,10 @@
 @extends('layouts.dashboard');
 
-@section('title')
+@section('page_title')
+    Меню
+@endsection
+
+@section('content_title')
     Сортировка меню
 @endsection
 
@@ -34,11 +38,10 @@
 @endsection
 
 @section('content')
-    <h1>Сортировка меню</h1>
-    <h3>Название меню: {{ $menu->title }}</h3>
-    <ul class="sorting">
+    <div>{{ $menu->title }}</div>
+    <ul class="sorting list-group">
     @foreach($menu->withPages() as $item)
-        <li id_page="{{ $item->id }}">{{ $item->title }}</li>
+        <li class="list-group-item" id_page="{{ $item->id }}">{{ $item->title }}</li>
     @endforeach
     </ul>
     <form class="form-sorting" action="{{ route('sorting_menu', $menu->id) }}" method="post">

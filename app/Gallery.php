@@ -34,4 +34,12 @@ class Gallery extends Model
 
         return true;
     }
+
+    public function delete()
+    {
+        foreach($this->images as $image) {
+            $image->removeFile();
+        }
+        parent::delete();
+    }
 }

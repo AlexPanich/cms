@@ -38,4 +38,5 @@ class Menu extends Model implements SimpleEditInterface
 
         return true;
     }
+
 }
