@@ -5,7 +5,7 @@
 @endsection
 
 @section('content_title')
-    Дерево страниц
+    Все страницы - Дерево
 @endsection()
 
 @section('content')

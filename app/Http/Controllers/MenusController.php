@@ -12,7 +12,7 @@ class MenusController extends DashboardController
 {
     public function index()
     {
-        $menus = Menu::paginate();
+        $menus = Menu::paginate(10);
         return view('dashboard.menu.index', compact('menus'));
     }
 

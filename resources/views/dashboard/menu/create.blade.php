@@ -1,16 +1,19 @@
 @extends('layouts.dashboard')
 
-@section('title')
-    Добавление меню
+@section('page_title')
+    Меню
+@endsection
+
+@section('content_title')
+    Создание меню
 @endsection
 
 @section('content')
-    <h1>Создание нового меню</h1>
     @include('errors.list')
     <form class="" action="{{ route('add_menu') }}" method="post">
         {{ csrf_field() }}
         <div class="control-group">
-            <label class="control-label" for="title">Название меня</label>
+            <label class="control-label" for="title">Название меню</label>
             <div class="controls">
                 <div class="input-prepend">
                     <input class="form-control" type="text" name="title" id="title" value="{{ old('title') }}">
@@ -27,7 +30,10 @@
                 </div>
             </div>
         </div>
-
-        <input type="submit" value="Создать меню" class="btn btn-danger">
+        <br>
+        <p>
+            <input type="submit" value="Создать меню" class="btn btn-primary btn-square">
+            <a class="btn btn-default btn-square" href="{{ route('all_menu') }}">Все меню (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

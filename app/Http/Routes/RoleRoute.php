@@ -25,7 +25,7 @@ Route::post('/role/update/{role}', [
     'as' => 'update_role'
 ]);
 
-Route::post('/role/delete/{role}', [
+Route::get('/role/destroy/{role}', [
     'uses' => 'RolesController@destroy',
     'as' => 'delete_role'
 ]);

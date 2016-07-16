@@ -12,7 +12,7 @@ class RolesController extends DashboardController
 {
     public function index()
     {
-        $roles = Role::all();
+        $roles = Role::paginate(10);
 
         return view('dashboard.role.index', compact('roles'));
     }
@@ -40,7 +40,14 @@ class RolesController extends DashboardController
     {
         $role->update($request->all());
 
-        $role->permissions()->sync($request->input('permission') ?: []);
+        $role->permissions()->sync($request->input('permissions') ?: []);
+
+        return redirect()->route('all_roles');
+    }
+
+    public function destroy(Role $role)
+    {
+        $role->delete();
 
         return redirect()->route('all_roles');
     }

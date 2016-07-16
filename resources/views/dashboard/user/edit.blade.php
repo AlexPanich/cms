@@ -47,6 +47,9 @@
             </div>
         </div>
         <br>
-        <input type="submit" value="Отредактировать пользователя" class="btn btn-danger">
+        <p>
+            <input class="btn btn-primary btn-square" type="submit" value="Отредактировать пользователя">
+            <a class="btn btn-default btn-square" href="{{ route('all_users') }}">Все пользователи (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

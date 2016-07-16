@@ -19,7 +19,7 @@ class GalleriesController extends DashboardController
 
     public function index()
     {
-        $galleries = Gallery::paginate();
+        $galleries = Gallery::paginate(10);
 
         return view('dashboard.gallery.index', compact('galleries'));
     }

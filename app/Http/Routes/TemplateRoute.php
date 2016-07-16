@@ -20,12 +20,12 @@ Route::get('template/edit/{template}', [
     'as' => 'edit_template'
 ]);
 
-Route::post('template/upgrade/{template}', [
-    'uses' => 'TemplatesController@upgrade',
-    'as' => 'upgrade_template'
+Route::post('template/update/{template}', [
+    'uses' => 'TemplatesController@update',
+    'as' => 'update_template'
 ]);
 
-Route::post('template/delete/{template}', [
-    'uses' => 'TemplatesController@delete',
+Route::get('template/destroy/{template}', [
+    'uses' => 'TemplatesController@destroy',
     'as' => 'delete_template'
 ]);

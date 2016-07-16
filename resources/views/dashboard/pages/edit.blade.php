@@ -129,8 +129,9 @@
             </ul>
         </div>
         <input type="hidden" name="pages" value="">
-        <input type="submit" value="Отредактировать страницу" class="btn btn-success btn-square" name="sub">
-        <br><br>
-        <a class="btn btn-danger btn-square" href="{{ route('all_pages') }}">Перейти без сохранения к списку страниц</a>
+        <p>
+            <input type="submit" value="Отредактировать страницу" class="btn btn-primary btn-square" name="sub">
+            <a class="btn btn-default btn-square" href="{{ route('all_pages') }}">Все страницы (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

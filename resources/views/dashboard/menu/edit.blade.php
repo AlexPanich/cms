@@ -31,6 +31,9 @@
             </div>
         </div>
         <br>
-        <input type="submit" value="Обновить меню меню" class="btn btn-danger">
+         <p>
+            <input type="submit" value="Сохранить меню" class="btn btn-primary btn-square">
+            <a class="btn btn-default btn-square" href="{{ route('all_menu') }}">Все меню (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

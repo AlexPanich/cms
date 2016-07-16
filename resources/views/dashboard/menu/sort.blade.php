@@ -39,6 +39,7 @@
 
 @section('content')
     <div>{{ $menu->title }}</div>
+    <br>
     <ul class="sorting list-group">
     @foreach($menu->withPages() as $item)
         <li class="list-group-item" id_page="{{ $item->id }}">{{ $item->title }}</li>
@@ -47,6 +48,9 @@
     <form class="form-sorting" action="{{ route('sorting_menu', $menu->id) }}" method="post">
         {{ csrf_field() }}
         <input type="hidden" name="pages" value="">
-        <input class="btn btn-primary" type="button" name="sub" value="Сортировать">
+        <p>
+            <input class="btn btn-primary btn-square" type="button" name="sub" value="Сортировать меню">
+            <a class="btn btn-default btn-square" href="{{ route('all_menu') }}">Все меню (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

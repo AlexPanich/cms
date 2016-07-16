@@ -60,13 +60,12 @@
     <br>
     <div>
         <div id="upload-button">
-            <button type="button" class="upload btn btn-success">Загрузить</button>
-            <button type="button" class="delete btn btn-danger">Удалить все</button>
+            <button type="button" class="upload btn btn-success btn-square">Загрузить</button>
+            <button type="button" class="delete btn btn-danger btn-square">Удалить все</button>
         </div>
     </div>
     <br>
     <p>
-        <a class="btn btn-primary btn-square" href="{{ route('create_gallery') }}">Создать галлерею</a>
         <a class="btn btn-primary btn-square" href="{{ route('sort_image_gallery', $gallery->id) }}">Отсортировать изображения</a>
         <a class="btn btn-default btn-square" href="{{ route('gallery') }}">Все галлереи (уйти не сохранив)</a>
     </p>

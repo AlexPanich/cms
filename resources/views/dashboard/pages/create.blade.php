@@ -106,7 +106,9 @@
             Отображать на сайте
         </label>
         </p>
-        <input type="submit" value="Создать страницу" class="btn btn-success btn-square">
-        <a class="btn btn-danger btn-square" href="{{ route('all_pages') }}">Закрыть без сохранения</a>
+        <p>
+            <input type="submit" value="Создать страницу" class="btn btn-primary btn-square">
+            <a class="btn btn-default btn-square" href="{{ route('all_pages') }}">Все страницы (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

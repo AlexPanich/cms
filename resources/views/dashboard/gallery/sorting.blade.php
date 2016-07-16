@@ -64,9 +64,10 @@
 
 @section('content')
     <div>Галлерея: {{ $gallery->title }}</div>
+    <br>
     <div>
-        <button class="btn btn-danger" id="btn_save">Сохранить</button>
-        <span class="btn btn-success" id="msg_save">Saved!</span>
+        <button class="btn btn-danger btn-square" id="btn_save">Сохранить порядок</button>
+        <span class="btn btn-success btn-square" style="cursor: default" id="msg_save">Сохранено</span>
     </div>
     <br>
     <!-- Gallery (.js-gallery class is initialized in App() -> uiHelperMagnific()) -->

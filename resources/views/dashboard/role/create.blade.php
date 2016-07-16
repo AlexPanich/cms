@@ -2,6 +2,14 @@
 
 @inject('permission', 'App\Permission')
 
+@section('page_title')
+    Роли
+@endsection
+
+@section('content_title')
+    Создание роли
+@endsection()
+
 @section('content')
     @include('errors.list')
     <form class="" action="{{ route('add_role') }}" method="post">
@@ -39,6 +47,9 @@
             </div>
         </div>
         <br>
-        <input type="submit" value="Создать роль" class="btn btn-danger">
+        <p>
+            <input type="submit" value="Создать роль" class="btn btn-primary btn-square">
+            <a class="btn btn-default btn-square" href="{{ route('all_roles') }}">Все роли (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

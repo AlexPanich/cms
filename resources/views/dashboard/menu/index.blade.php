@@ -20,8 +20,9 @@
         @foreach($menus as $item)
             <tr>
                 <td>{{ $i++ }}</td>
-                <td><a href="{{ route('edit_menu', $item->id) }}">{{ $item->title }}</a></td>
+                <td>{{ $item->title }}</td>
                 <td>
+                    <a class="btn btn-default btn-sm" href="{{ route('edit_menu', $item->id) }}">Редактировать</a>
                     <a class="btn btn-default btn-sm" href="{{ route('sort_menu', $item->id) }}">Сортировать</a>
                     <a class="btn btn-danger btn-sm" href="{{ route('delete_menu', $item->id) }}">Удалить</a>
                 </td>

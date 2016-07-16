@@ -12,7 +12,7 @@ class UsersController extends DashboardController
 {
     public function index()
     {
-        $users = User::all();
+        $users = User::paginate(10);
 
         return view('dashboard.user.index', compact('users'));
     }
@@ -41,6 +41,13 @@ class UsersController extends DashboardController
         $user->updateFromDashboard($request->all());
 
         $user->roles()->sync($request->input('roles') ?: []);
+
+        return redirect()->route('all_users');
+    }
+
+    public function destroy(User $user)
+    {
+        $user->delete();
 
         return redirect()->route('all_users');
     }

@@ -2,6 +2,14 @@
 
 @inject('role', 'App\Role')
 
+@section('page_title')
+    Пользователи
+@endsection
+
+@section('content_title')
+    Создание пользователя
+@endsection()
+
 @section('content')
     @include('errors.list')
     <form class="" action="{{ route('add_user') }}" method="post">
@@ -47,6 +55,9 @@
             </div>
         </div>
         <br>
-        <input type="submit" value="Создать пользователя" class="btn btn-danger">
+        <p>
+            <input type="submit" value="Создать пользователя" class="btn btn-primary btn-square">
+            <a class="btn btn-default btn-square" href="{{ route('all_users') }}">Все пользователи (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

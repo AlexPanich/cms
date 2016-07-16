@@ -5,7 +5,7 @@
 @endsection
 
 @section('content_title')
-    Список страниц
+    Все страницы - Список
 @endsection()
 
 @section('content')

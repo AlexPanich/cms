@@ -24,3 +24,8 @@ Route::post('/user/update/{user}', [
     'uses' => 'UsersController@update',
     'as' => 'update_user'
 ]);
+
+Route::get('/user/destroy/{user}', [
+    'uses' => 'UsersController@destroy',
+    'as' => 'delete_user'
+]);

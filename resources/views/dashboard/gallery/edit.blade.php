@@ -34,8 +34,7 @@
         </div>
         <br>
         <p>
-            <input class="btn btn-danger btn-square" type="submit" value="Отредактировать галлерею">
-            <a class="btn btn-primary btn-square" href="{{ route('create_gallery') }}">Создать галлерею</a>
+            <input class="btn btn-primary btn-square" type="submit" value="Отредактировать галлерею">
             <a class="btn btn-default btn-square" href="{{ route('gallery') }}">Все галлереи (уйти не сохранив)</a>
         </p>
     </form>
