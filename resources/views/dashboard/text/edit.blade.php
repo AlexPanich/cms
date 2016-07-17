@@ -1,8 +1,12 @@
 @extends('layouts.dashboard')
 
-@section('title')
-    Редактирование текста
+@section('page_title')
+    Тексты
 @endsection
+
+@section('content_title')
+    Создание нового текста
+@endsection()
 
 @section('content')
     @include('errors.list')
@@ -25,12 +29,22 @@
             </div>
         </div>
         <div class="control-group">
-            <label class="control-label" for="content">Текст</label>
+            <label class="control-label" for="body">Текст</label>
             <div class="controls">
-                <textarea class="form-control" name="content" id="content"  rows="10">{{ old('content', $text->content) }}</textarea>
+                <textarea class="form-control" name="body" id="content"  rows="10">{{ old('body', $text->body) }}</textarea>
             </div>
         </div>
+        <div class="control-group">
+            <label class="css-input switch switch-sm switch-primary">
+                <input type="checkbox" name="is_show" {{ (count($errors) == 0) ? $text->is_show ? 'checked' : '' : old('is_show') ? 'checked' : '' }}>
+                <span></span>
+                Отображать на сайте
+            </label>
+        </div>
         <br>
-        <input type="submit" value="Создать текст" class="btn btn-danger">
+        <p>
+            <input type="submit" value="Сохранить текст" class="btn btn-primary btn-square">
+            <a class="btn btn-default btn-square" href="{{ route('all_texts') }}">Все тексты (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

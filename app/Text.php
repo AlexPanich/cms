@@ -19,7 +19,7 @@ class Text extends Model implements SimpleEditInterface
         if(static::$cache == null)
             static::load_texts();
 
-        if (is_null(static::$cache)) {
+        if (is_null(static::$cache) || !isset(static::$cache[$alias]) || !static::$cache[$alias]->is_show) {
             return (new static);
         }
 
@@ -32,5 +32,19 @@ class Text extends Model implements SimpleEditInterface
 
         foreach($texts as $text)
             static::$cache[$text['alias']] = $text;
+    }
+
+    public static function create(array $attributes = [])
+    {
+        $attributes['is_show'] = isset($attributes['is_show']) ? 1 : 0;
+
+        return parent::create($attributes);
+    }
+
+    public function update(array $attributes = [], array $options = [])
+    {
+        $attributes['is_show'] = isset($attributes['is_show']) ? 1 : 0;
+
+        return parent::update($attributes, $options);
     }
 }

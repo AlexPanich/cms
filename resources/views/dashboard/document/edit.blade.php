@@ -6,7 +6,7 @@
 
 @section('content_title')
     Редактирование документа
-@endsection()
+@endsection
 
 @section('content')
     @include('errors.list')

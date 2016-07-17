@@ -6,7 +6,7 @@
 
 @section('content_title')
     Все документы
-@endsection()
+@endsection
 
 @section('content')
     <?php $i = ($documents->currentPage() - 1) * 10 + 1?>

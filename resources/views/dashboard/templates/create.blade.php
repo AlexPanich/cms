@@ -6,7 +6,7 @@
 
 @section('content_title')
     Создание нового шаблона
-@endsection()
+@endsection
 
 @section('content')
     @include('errors.list')

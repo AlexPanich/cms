@@ -6,7 +6,7 @@
 
 @section('content_title')
     Все страницы - Дерево
-@endsection()
+@endsection
 
 @section('content')
     @include('dashboard.partitions.tree.page', ['tree' => $tree])

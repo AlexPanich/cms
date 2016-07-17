@@ -6,7 +6,7 @@
 
 @section('content_title')
     Создание новой страницы
-@endsection()
+@endsection
 
 @include('dashboard.editor')
 
@@ -99,16 +99,17 @@
         <br>
         <textarea class="form-control" name="content" id="replace" rows="10">{!! old('content') !!}</textarea>
         <br>
-        <p>
+        <div class="control-group">
         <label class="css-input switch switch-sm switch-primary">
             <input type="checkbox" name="is_show" {{ count($errors) == 0 || old('is_show') ? 'checked' : '' }}>
             <span></span>
             Отображать на сайте
         </label>
-        </p>
+        </div>
+        <br>
         <p>
             <input type="submit" value="Создать страницу" class="btn btn-primary btn-square">
-            <a class="btn btn-default btn-square" href="{{ route('all_pages') }}">Все страницы (уйти не сохранив)</a>
+            <a class="btn btn-default btn-square" href="{{ route('all_articles') }}">Все статьи (уйти не сохранив)</a>
         </p>
     </form>
 @endsection

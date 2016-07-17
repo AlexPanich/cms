@@ -6,7 +6,7 @@
 
 @section('content_title')
     Все шаблоны
-@endsection()
+@endsection
 
 @section('content')
     <?php $i = ($templates->currentPage() - 1) * 10 + 1?>

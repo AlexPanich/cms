@@ -6,7 +6,7 @@
 
 @section('content_title')
     Загрузка изображений
-@endsection()
+@endsection
 
 @section('scripts.footer')
     <script src="{{ URL::to('js/dropzone.js') }}"></script>

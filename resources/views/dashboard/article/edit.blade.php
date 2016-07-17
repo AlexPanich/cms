@@ -1,12 +1,17 @@
 @extends('layouts.dashboard')
 
+@section('page_title')
+    Статьи
+@endsection
+
+@section('content_title')
+    Редактирование статьи
+@endsection
+
 @include('dashboard.editor')
 
 @section('content')
-    <h3>Создать статью</h3>
-    <hr>
     @include('errors.list')
-
     <form action="{{ route('update_article', $article->id) }}" method="post" enctype="multipart/form-data">
         {{ csrf_field() }}
         <div class="form-group">
@@ -22,6 +27,9 @@
             <label class="from-label" for="text">Текст</label>
             <textarea class="form-control" name="text" id="text" rows="10">{{ old('text', $article->text) }}</textarea>
         </div>
-        <button class="btn btn-primary" type="submit">Отредактировать статью</button>
+        <p>
+            <input type="submit" value="Отредактировать статью" class="btn btn-primary btn-square">
+            <a class="btn btn-default btn-square" href="{{ route('all_articles') }}">Все статьи (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection

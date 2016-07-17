@@ -1,7 +1,11 @@
 @extends('layouts.dashboard')
 
-@section('title')
-    Добавление галлереи
+@section('page_title')
+    Галереи
+@endsection
+
+@section('content_title')
+    Список галерей
 @endsection
 
 @section('content')

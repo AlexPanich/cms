@@ -8,7 +8,7 @@
 
 @section('content_title')
     Создание роли
-@endsection()
+@endsection
 
 @section('content')
     @include('errors.list')

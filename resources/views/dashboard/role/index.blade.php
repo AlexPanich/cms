@@ -6,7 +6,7 @@
 
 @section('content_title')
     Все роли
-@endsection()
+@endsection
 
 @section('content')
     <?php $i = ($roles->currentPage() - 1) * 10 + 1?>

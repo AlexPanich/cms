@@ -1,9 +1,14 @@
 @extends('layouts.dashboard')
 
-@section('content')
-    <h1>Articles</h1>
-    <hr>
+@section('page_title')
+    Статьи
+@endsection
 
+@section('content_title')
+    Все статьи
+@endsection
+
+@section('content')
     @foreach ($articles as $article)
         <div class="media">
             <div class="media-left">
@@ -27,4 +32,6 @@
         <hr>
     @endforeach
     @include('pagination.dashboard_article',['paginator' => $articles])
+    <br>
+    <p><a class="btn btn-primary btn-square" href="{{ route('create_article') }}">Создать страницу</a></p>
 @endsection

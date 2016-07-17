@@ -6,7 +6,7 @@
 
 @section('content_title')
     Список галерей
-@endsection()
+@endsection
 
 @section('content')
     <div>Галлерея: {{ $gallery->title }}</div>

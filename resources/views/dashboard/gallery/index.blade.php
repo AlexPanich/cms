@@ -6,7 +6,7 @@
 
 @section('content_title')
     Список галерей
-@endsection()
+@endsection
 
 @section('content')
     <?php $i = ($galleries->currentPage() - 1) * 10 + 1?>

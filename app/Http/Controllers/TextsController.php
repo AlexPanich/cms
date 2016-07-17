@@ -40,4 +40,11 @@ class TextsController extends DashboardController
 
         return redirect()->route('all_texts');
     }
+
+    public function destroy(Text $text)
+    {
+        $text->delete();
+
+        return redirect()->route('all_texts');
+    }
 }

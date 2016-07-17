@@ -6,7 +6,7 @@
 
 @section('content_title')
     Сортировка галлереи
-@endsection()
+@endsection
 
 @section('scripts.footer')
     <!-- Page JS Plugins -->

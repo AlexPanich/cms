@@ -115,7 +115,7 @@
         <br>
         <p>
             <label class="css-input switch switch-sm switch-primary">
-                <input type="checkbox" name="is_show" {{ count($errors) == 0 || old('is_show') ? 'checked' : '' }}>
+                <input type="checkbox" name="is_show" {{ count($errors) == 0 ? $page->is_show ? 'checked' : '' : old('is_show') ? 'checked' : '' }}>
                 <span></span>
                 Отображать на сайте
             </label>

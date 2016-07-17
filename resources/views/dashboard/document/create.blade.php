@@ -6,7 +6,7 @@
 
 @section('content_title')
     Добавление документа
-@endsection()
+@endsection
 
 @section('scripts.footer')
     <script>

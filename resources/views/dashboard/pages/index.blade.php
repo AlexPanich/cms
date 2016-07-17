@@ -6,7 +6,7 @@
 
 @section('content_title')
     Все страницы - Список
-@endsection()
+@endsection
 
 @section('content')
     <?php $i = ($pages->currentPage() - 1) * 10 + 1?>
