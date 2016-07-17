@@ -27,6 +27,7 @@ Route::any('/tynimce/gallery', [
     'uses' => 'TinyMCEController@gallery'
 ]);
 
+Route::any('document/uploadDoc/{answer?}', 'UploadFileController@uploadDoc');
 
 
 Route::get('/{url}', [

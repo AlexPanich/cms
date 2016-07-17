@@ -1,8 +1,12 @@
 @extends('layouts.dashboard')
 
-@section('title')
-    Добавление нового документа
+@section('page_title')
+    Документы
 @endsection
+
+@section('content_title')
+    Добавление документа
+@endsection()
 
 @section('scripts.footer')
     <script>
@@ -26,22 +30,37 @@
             </div>
         </div>
         <br/>
-        <div id="message">Select the file:</div>
+        <div id="message">Выберите файл:</div>
         <table>
             <td><input type="file" id="files" name="files[]"></td>
-            <td>(allowed formats: 'pdf')</td>
+            <td>(Поддерживаемые форматы: 'pdf')</td>
         </table>
-            <br/>
-            <input type="submit"  id="btnSubmit" class="btn btn-success" value="Add"/>
-            <br/>
+        <br>
+        <p>
+            <input type="submit" value="Добавить документ" class="btn btn-primary btn-square" id="btnSubmit" value="Add">
+            <a class="btn btn-default btn-square" href="{{ route('all_documents') }}">Все документы (уйти не сохранив)</a>
+        </p>
     </form>
-    <div class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-header">
-            <h3 id="myModalLabel">Wait for the upload file</h3>
-            <p id="cnuploader_progressbar">0</p>
-            <p id="cnuploader_progresscomplete"></p>
 
-        </div><div class="modal-footer">
+    <div class="modal fade" id="modal-popin" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-popin">
+            <div class="modal-content">
+                <div class="block block-themed block-transparent remove-margin-b">
+                    <div class="block-header bg-primary-dark">
+                        <ul class="block-options">
+                            <li>
+                                <button data-dismiss="modal" type="button"><i class="si si-close"></i></button>
+                            </li>
+                        </ul>
+                        <h3 class="block-title">Файл загружается</h3>
+                    </div>
+                    <div class="block-content">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-info" id="cnuploader_progressbar" style="width: 0%; transition: none">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 @endsection

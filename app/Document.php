@@ -25,9 +25,7 @@ class Document extends Model
 
     public static function create(array $attributes = [])
     {
-        $path = $attributes['path'] = Session::slice('done');
-
-        $array = explode('.', $path);
+        $array = explode('.', $attributes['path']);
 
         $attributes['type'] = end($array);
 

@@ -100,28 +100,15 @@ function FileUploader(ioptions) {
                     if (evt.lengthComputable) {
 
 						// Посчитаем количество закаченного в процентах (с точность до 0.1)
-                        var percentComplete = Math.round((loadfrom+evt.loaded) * 1000 / that.filesize);percentComplete/=10;
-			
-						// Посчитаем ширину синей полоски ProgressBar
-                        var width=Math.round((loadfrom+evt.loaded) * 300 / that.filesize);
+                        var percentComplete = Math.round((loadfrom+evt.loaded) * 1000 / that.filesize) / 10;
 
 						// Изменим свойства элементом ProgressBar'а, добавим к нему текст
                         var div1=document.getElementById('cnuploader_progressbar');
-                        var div2=document.getElementById('cnuploader_progresscomplete');
 
-                        div1.style.display='block';
-                        div2.style.display='block';
-                        div2.style.width=width+'px';
-                        if (percentComplete<30) {
-                            div2.textContent='';
-                            div1.textContent=percentComplete+'%';
-                            }
-                        else {
-                            div2.textContent=percentComplete+'%';
-                            div1.textContent='';
-                            }
+                        div1.style.width=percentComplete + '%';
+                        div1.textContent=percentComplete + '%';
+                        div1.setAttribute('aria-valuenow', percentComplete.toString(10));
                         }
-                    
                     }, false);
 
 

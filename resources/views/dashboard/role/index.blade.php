@@ -27,7 +27,7 @@
                     <td>{{ $role->getPermissionsAsString() }}</td>
                     <td>
                         <a class="btn btn-default btn-sm" href="{{ route('edit_role', $role->id) }}">Редактировать</a>
-                        @unless($role->name =='admin')
+                        @unless(in_array($role->name, ['admin', 'user']))
                             <a class="btn btn-danger btn-sm" href="{{ route('delete_role', $role->id) }}">Удалить</a>
                         @endunless
                     </td>

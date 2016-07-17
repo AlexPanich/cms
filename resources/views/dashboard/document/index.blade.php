@@ -1,31 +1,37 @@
 @extends('layouts.dashboard')
 
-@section('title')
-    Все документы
+@section('page_title')
+    Документы
 @endsection
 
+@section('content_title')
+    Все документы
+@endsection()
+
 @section('content')
-    <h3><a href="{{ route('create_document') }}">Добавить новый документ</a></h3>
-    <h1>Список документов</h1>
+    <?php $i = ($documents->currentPage() - 1) * 10 + 1?>
     <table class="table">
         <thead>
             <th>№</th>
             <th>Заголовок</th>
             <th>Посмотреть</th>
-            <th>Редактировать</th>
-            <th>Удалить</th>
+            <th>Действия</th>
         </thead>
         <tbody>
-        <?php $i = 1 ?>
             @foreach($documents as $document)
                 <tr>
                     <td>{{ $i++ }}</td>
                     <td>{{ $document->title }}</td>
-                    <td><a href="{{ asset('documents/' . $document->path) }}">Просмотр</a></td>
-                    <td><a href="{{ route('edit_document', $document->id) }}">Редактировать</a></td>
-                    <td><a href="{{ route('delete_document', $document->id) }}">Удалить</a></td>
+                    <td><a href="{{ asset('documents/' . $document->path) }}" target="_blank">Просмотр (в новой вкладке)</a></td>
+                    <td>
+                        <a class="btn btn-default btn-sm" href="{{ route('edit_document', $document->id) }}">Редактировать</a>
+                        <a class="btn btn-danger btn-sm" href="{{ route('delete_document', $document->id) }}">Удалить</a>
+                    </td>
                 </tr>
             @endforeach
         </tbody>
     </table>
+    {{ $documents->render() }}
+    <br>
+    <p><a class="btn btn-primary btn-square" href="{{ route('create_document') }}">Создать новый</a></p>
 @endsection

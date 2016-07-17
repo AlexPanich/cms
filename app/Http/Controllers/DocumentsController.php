@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Document;
-use App\Helpers\Session;
 use App\Http\Requests\DocumentRequest;
 use Illuminate\Http\Request;
 
@@ -25,9 +24,9 @@ class DocumentsController extends DashboardController
 
     public function store(DocumentRequest $request)
     {
-        session_start();
+        $attributes = array_merge($request->all(), ['path' => $request->session()->get('done')]);
 
-        Document::create($request->all());
+        Document::create($attributes);
 
         return redirect()->route('all_documents');
     }
@@ -46,11 +45,14 @@ class DocumentsController extends DashboardController
 
     public function upload(Request $request)
     {
-        session_start();
-        $_SESSION['hash'] = get_hash($request->input('name') . time());
-        $_SESSION['name'] = unique_name(public_path('documents'), $request->input('name'), true);
-        $_SESSION['uploaddir'] = public_path('documents');
-        die('1');
+        //session_start();
+        //$_SESSION['hash'] = get_hash($request->input('name') . time());
+        $request->session()->put('hash', get_hash($request->input('name') . time()));
+        //$_SESSION['name'] = unique_name(public_path('documents'), $request->input('name'), true);
+        $request->session()->put('name', unique_name(public_path('documents'), $request->input('name'), true));
+        //$_SESSION['uploaddir'] = public_path('documents');
+        $request->session()->put('uploaddir', public_path('documents'));
+        return response('1', 200);
     }
 
     public function destroy(Document $document)

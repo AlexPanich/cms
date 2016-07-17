@@ -70,13 +70,10 @@ function unique_name($dir, $name, $translit = false)
     return $name;
 }
 
-define('HASH_KEY', 'JLkjOlkielOIn342JM(j90');
 
 function get_hash($str)
 {
-    $i = 0;
-    while ($i++ < 4)
-        $str = md5(md5($str . HASH_KEY) . $str);
+    $str = md5(sha1($str . env('APP_KEY')) . $str);
 
     return $str;
 }

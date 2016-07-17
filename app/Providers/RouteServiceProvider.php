@@ -40,9 +40,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function map(Router $router)
     {
-        $router->any('document/uploadDoc/{answer?}', '\App\Http\Controllers\UploadFileController@uploadDoc');
         $this->mapWebRoutes($router);
-
     }
 
     /**

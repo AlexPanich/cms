@@ -2,31 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\Session;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
 
+
 class UploadFileController extends Controller
 {
-    public function uploadDoc($answer = null)
+    public function uploadDoc(Request $request, $answer = null)
     {
-        session_start();
-        if(!Session::has('hash') || !Session::has('name') || !Session::has('uploaddir')){
-            header("HTTP/1.0 500 Internal Server Error");
-            print "Wrong session hash.";
-            die();
+        //session_start();
+        if(    !$request->session()->has('hash')
+            || !$request->session()->has('name')
+            || !$request->session()->has('uploaddir')) {
+                return response('Wrong session.', 500);
         }
 
-        $uploaddir = Session::read('uploaddir');
-        $name = Session::read('name');
+        $uploaddir = $request->session()->get('uploaddir');
+        $name = $request->session()->get('name');
 
-        if (preg_match("/^[0123456789abcdef]{32}$/i", Session::read('hash'))) {
-            if ($_SERVER["REQUEST_METHOD"] == "GET") {
+        if (preg_match("/^[0123456789abcdef]{32}$/i", $request->session()->get('hash'))) {
+            if ($request->method() == 'GET') {
                 if ($answer == "abort") {
                     if (is_file($uploaddir."/".$name.".html5upload")) unlink($uploaddir."/".$name.".html5upload");
                     print "ok abort";
-                    Session::kick(array('name', 'hash', 'uploaddir'));
+                    $request->session()->forget(['name', 'hash', 'uploaddir']);
                     return;
                 }
 
@@ -35,11 +35,11 @@ class UploadFileController extends Controller
                         unlink($uploaddir."/".$name.".original");
 
                     rename($uploaddir."/".$name.".html5upload", $uploaddir."/".$name);
-                    Session::push('done', $name);
-                    Session::kick(array('name', 'hash', 'uploaddir'));
+                    $request->session()->put('done', $name);
+                    $request->session()->forget(['name', 'hash', 'uploaddir']);
                 }
             }
-            elseif ($_SERVER["REQUEST_METHOD"]=="POST"){
+            elseif ($request->method() == "POST"){
 
                 $filename = $uploaddir . "/" . $name .  ".html5upload";
 
@@ -49,9 +49,7 @@ class UploadFileController extends Controller
                     $fout = fopen($filename,"ab");
 
                 if (!$fout) {
-                    header("HTTP/1.0 500 Internal Server Error");
-                    print "Can't open file for writing.";
-                    return;
+                    return response("Can't open file for writing.", 500);
                 }
 
                 $fin = fopen("php://input", "rb");
@@ -66,12 +64,11 @@ class UploadFileController extends Controller
                 fclose($fout);
             }
 
-            header("HTTP/1.0 200 OK");
-            print "ok\n";
+            return response("ok\n", 200);
         }
         else {
-            header("HTTP/1.0 500 Internal Server Error");
-            print "Wrong session hash.";
+
+            return response('Wrong session hash.', 500);
         }
     }
 }

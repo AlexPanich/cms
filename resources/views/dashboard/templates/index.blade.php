@@ -24,8 +24,8 @@
                 <td>{{ $template->name }}</td>
                 <td>{{ $template->path }}</td>
                 <td>
-                    <a class="btn btn-default btn-sm" href="{{ route('edit_template', $template->id) }}">Редактировать</a>
                     @unless($template->name == 'main')
+                        <a class="btn btn-default btn-sm" href="{{ route('edit_template', $template->id) }}">Редактировать</a>
                         <a class="btn btn-danger btn-sm" href="{{ route('delete_template', $template->id) }}">Удалить</a>
                     @endunless
                 </td>

@@ -1,8 +1,12 @@
 @extends('layouts.dashboard')
 
-@section('title')
-    Редактирование документа
+@section('page_title')
+    Документы
 @endsection
+
+@section('content_title')
+    Редактирование документа
+@endsection()
 
 @section('content')
     @include('errors.list')
@@ -16,7 +20,9 @@
                 </div>
             </div>
         </div>
-        <br>
-        <input type="submit" value="Сохранить изменения" class="btn btn-danger">
+        <p>
+            <input type="submit" value="Сохранить изменения" class="btn btn-primary btn-square" id="btnSubmit" value="Add">
+            <a class="btn btn-default btn-square" href="{{ route('all_documents') }}">Все документы (уйти не сохранив)</a>
+        </p>
     </form>
 @endsection
