@@ -8,4 +8,5 @@ Homestead.json
 /public/documents
 /public/files
 /public/images
+!/public/images/icons/gallery.png
 
