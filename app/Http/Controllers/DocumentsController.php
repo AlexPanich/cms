@@ -45,12 +45,8 @@ class DocumentsController extends DashboardController
 
     public function upload(Request $request)
     {
-        //session_start();
-        //$_SESSION['hash'] = get_hash($request->input('name') . time());
         $request->session()->put('hash', get_hash($request->input('name') . time()));
-        //$_SESSION['name'] = unique_name(public_path('documents'), $request->input('name'), true);
         $request->session()->put('name', unique_name(public_path('documents'), $request->input('name'), true));
-        //$_SESSION['uploaddir'] = public_path('documents');
         $request->session()->put('uploaddir', public_path('documents'));
         return response('1', 200);
     }
