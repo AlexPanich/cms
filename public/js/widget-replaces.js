@@ -29,7 +29,7 @@ function replaceInput(elem, act){
 	}
 	
 	this.object = function(){
-		this.replace = $('<input type="text" >');
+		this.replace = $('<input type="text" style="color: #333">');
 		this.setVal();
 		return this.replace;
 	}
@@ -79,7 +79,7 @@ function replaceTinyMCE(elem, act){
 		var tM = this;
 
 		$.ajax({
-			url: 'frontedit/get' + this.act,
+			url: '/frontedit/get' + this.act,
 			type: 'POST',
 			data: {id: elem.record_id, _token: token},
 			dataType: 'json',

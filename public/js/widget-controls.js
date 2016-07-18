@@ -68,7 +68,7 @@ function widget_edit(widget)
 		obj[name] = replace.getVal();
 		obj['_token'] = token;
 
-		$.post('frontedit/save' + that.act, obj, {}, 'json')
+		$.post('/frontedit/save' + that.act, obj, {}, 'json')
 			.done(function(data){
 				var text = data[name]
 				elem.html(text).show();

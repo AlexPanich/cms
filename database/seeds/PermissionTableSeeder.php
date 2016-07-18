@@ -23,6 +23,7 @@ class PermissionTableSeeder extends Seeder
             ['name' => 'edit_documents',        'label' => 'Edit Documents'],
             ['name' => 'edit_texts',            'label' => 'Edit Texts'],
             ['name' => 'edit_articles',         'label' => 'Edit Articles'],
+            ['name' => 'edit_from_front',       'label' => 'Edit From Front'],
         ];
 
         foreach ($permissions as $permission) {

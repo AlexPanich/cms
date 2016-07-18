@@ -22,6 +22,7 @@ class PermissionRoleTable extends Seeder
             ['permission_id' => '8',   'role_id' => '1'],
             ['permission_id' => '9',   'role_id' => '1'],
             ['permission_id' => '10',   'role_id' => '1'],
+            ['permission_id' => '11',   'role_id' => '1'],
         ];
 
         foreach ($relations as$relation) {

@@ -13,6 +13,7 @@ $(document).ready(function() {
 
 		var styles = {
 			background: '#ff0',
+			color: '#333',
 			position: 'absolute',
 			top: '-16px',
 			left: '0px',
