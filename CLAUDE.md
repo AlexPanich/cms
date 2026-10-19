@@ -11,7 +11,7 @@ pnpm dev                  # dev-сервер
 pnpm db:generate          # SQL-миграция из изменений src/db/schema/
 pnpm db:migrate           # применить миграции
 pnpm db:seed              # системные роли и меню (идемпотентно)
-pnpm user:create-admin --email admin@example.com   # первый администратор (пароль спросит)
+pnpm user:create-admin --email admin@example.com   # первый администратор из консоли (или /setup в браузере)
 pnpm lint && pnpm typecheck && pnpm test && pnpm format:check   # быстрые проверки CI
 pnpm build && pnpm test:e2e   # E2E на Playwright (поднимает pnpm start сам)
 pnpm build
@@ -84,6 +84,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 - Каждое действие в админке проверяет конкретное право (`edit_pages` и т. п.), а не только факт входа:
   страница — `await requirePagePermission("edit_pages", "/admin/pages")`, server action и route handler — `await requirePermission(...)` первой строкой.
   Проверка в `admin/layout.tsx` и `proxy.ts` не защищает: layout не перерисовывается при переходах, а proxy смотрит только на наличие cookie.
+- Первый запуск: пока в `users` нет ни одной строки, `/login` ведёт на `/setup`, где создаётся администратор (`createFirstAdmin`, `src/server/setup/`: advisory lock и проверка в транзакции). Это единственное действие без права, его ошибки в `ActionResult` превращает `actionFailure` из `src/server/action.ts`.
 - Текущий пользователь — `getCurrentUser()` из `src/server/auth/session.ts` (кешируется на запрос). Проверка права в UI — `can(user, permission)`.
 - Страницы, читающие сессию, `headers()` или `searchParams`, оборачивают динамическую часть в `<Suspense>` — этого требует `cacheComponents`.
 - Никаких динамических импортов и создания классов по имени из пользовательских данных. Виджеты в контенте берутся только из явного реестра.

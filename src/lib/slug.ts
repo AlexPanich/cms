@@ -11,6 +11,7 @@ export const RESERVED_ROOT_SLUGS: readonly string[] = [
   "login",
   "media",
   "search",
+  "setup",
 ];
 
 const CYRILLIC: Record<string, string> = {

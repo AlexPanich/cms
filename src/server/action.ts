@@ -22,23 +22,29 @@ export async function runAction<T>(
     for (const tag of SITE_CACHE_TAGS_BY_PERMISSION[permission] ?? []) updateTag(tag);
     return { ok: true, data };
   } catch (error) {
-    if (error instanceof AuthError) {
-      return { ok: false, error: error.message };
-    }
-    if (error instanceof DomainError) {
-      return {
-        ok: false,
-        error: error.message,
-        fieldErrors: error.field ? { [error.field]: [error.message] } : undefined,
-      };
-    }
-    if (error instanceof z.ZodError) {
-      return {
-        ok: false,
-        error: "Проверьте правильность заполнения формы",
-        fieldErrors: z.flattenError(error).fieldErrors as Record<string, string[]>,
-      };
-    }
-    throw error;
+    return actionFailure(error);
   }
+}
+
+// Ожидаемые ошибки — в ActionResult, остальные (включая redirect() и notFound()) — дальше.
+// Отдельно от runAction — для действий без права, как создание первого администратора.
+export function actionFailure(error: unknown): ActionResult<never> {
+  if (error instanceof AuthError) {
+    return { ok: false, error: error.message };
+  }
+  if (error instanceof DomainError) {
+    return {
+      ok: false,
+      error: error.message,
+      fieldErrors: error.field ? { [error.field]: [error.message] } : undefined,
+    };
+  }
+  if (error instanceof z.ZodError) {
+    return {
+      ok: false,
+      error: "Проверьте правильность заполнения формы",
+      fieldErrors: z.flattenError(error).fieldErrors as Record<string, string[]>,
+    };
+  }
+  throw error;
 }

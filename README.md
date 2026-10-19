@@ -31,7 +31,9 @@ pnpm dev                  # http://localhost:3000, админка — /admin
 docker compose up --build
 ```
 
-Нужен `.env` с `BETTER_AUTH_SECRET` (и `BETTER_AUTH_URL`, если сайт открывается не с `http://localhost:3000`). Первый администратор: `docker compose run --rm migrate pnpm user:create-admin --email admin@example.com`.
+Нужен `.env` с `BETTER_AUTH_SECRET` (и `BETTER_AUTH_URL`, если сайт открывается не с `http://localhost:3000`).
+
+Первый администратор: пока в базе нет ни одного пользователя, `/login` и `/admin` ведут на `/setup` — там администратор создаётся в браузере, после этого страница закрывается. Его же можно создать из консоли: `docker compose run --rm migrate pnpm user:create-admin --email admin@example.com`.
 
 Поднимаются три сервиса: `db`, `migrate` (применяет миграции и сид, затем завершается) и `app` на порту `APP_PORT` (по умолчанию 3000). Загруженные файлы хранятся в томе `storage`. Состояние сервиса отдаёт `GET /api/health`.
 
@@ -42,8 +44,9 @@ docker compose up --build
 ```bash
 cp .env.production.example .env   # заполнить SITE_DOMAIN, POSTGRES_PASSWORD, BETTER_AUTH_SECRET
 docker compose -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.prod.yml run --rm migrate pnpm user:create-admin --email admin@example.com
 ```
+
+Затем сразу откройте `https://<домен>/setup` и создайте администратора: пока его нет, это может сделать любой, кто первым откроет сайт. Либо из консоли сервера до открытия DNS: `docker compose -f docker-compose.prod.yml run --rm migrate pnpm user:create-admin --email admin@example.com`.
 
 DNS-запись домена должна указывать на сервер до первого запуска, иначе Caddy не получит сертификат. Обновление — `git pull` и та же команда `up -d --build`: миграции применятся до старта приложения.
 
@@ -84,7 +87,7 @@ docker compose -f docker-compose.prod.yml start app
 - Бесплатная база удаляется через 30 дней после создания (плюс 14 дней, чтобы перейти на платный план).
 - Прокси Render присылает `X-Forwarded-For` списком адресов, а Better Auth доверяет только заголовку с одним адресом. Поэтому лимит попыток входа общий для всех посетителей (3 за 10 секунд), в логах — предупреждение Better Auth об этом.
 
-Первый администратор — с локальной машины, через внешний адрес базы (Render → база → Connections → External Database URL):
+Первый администратор — на `/setup` (на него ведёт `/login`, пока пользователей нет). Shell на бесплатном плане нет; из консоли — с локальной машины через внешний адрес базы (Render → база → Connections → External Database URL):
 
 ```bash
 DATABASE_URL='<External Database URL>?sslmode=require' pnpm user:create-admin --email admin@example.com

@@ -82,9 +82,9 @@ async function notFoundResponse(request: NextRequest) {
 }
 
 export const config = {
-  // Админка и публичный сайт: всё, кроме API, файлов Next, загруженных файлов, входа
+  // Админка и публичный сайт: всё, кроме API, файлов Next, загруженных файлов, входа, первого запуска
   // и служебных файлов сайта.
   matcher: [
-    "/((?!(?:api|_next|media|login)(?:/|$)|favicon\\.ico$|sitemap\\.xml$|robots\\.txt$).*)",
+    "/((?!(?:api|_next|media|login|setup)(?:/|$)|favicon\\.ico$|sitemap\\.xml$|robots\\.txt$).*)",
   ],
 };
