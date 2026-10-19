@@ -36,12 +36,15 @@ export async function insertPublishedPage({
   paragraphs = [],
   blocks: ownBlocks,
   parentPath,
+  template = "default",
 }: {
   slug: string;
   title: string;
   paragraphs?: string[];
   blocks?: { type: string; variant?: string; data: unknown }[];
   parentPath?: string;
+  // Ключ шаблона как есть: его может не быть в теме.
+  template?: string;
 }) {
   // Текст — один блок «Текст», как у страницы, созданной в админке. Поисковый текст
   // пишет сервис страниц, поэтому здесь его тоже нужно задать.
@@ -72,9 +75,9 @@ export async function insertPublishedPage({
       : [{ id: null }];
     const path = parentPath ? `${parentPath}/${slug}` : slug;
     await sql`
-      insert into pages (parent_id, slug, path, title, blocks, search_text, published)
+      insert into pages (parent_id, slug, path, title, blocks, search_text, template, published)
       values (${parent.id}, ${slug}, ${path}, ${title}, ${sql.json(blocks as postgres.JSONValue)},
-        ${paragraphs.join("\n")}, true)`;
+        ${paragraphs.join("\n")}, ${template}, true)`;
   } finally {
     await sql.end();
   }

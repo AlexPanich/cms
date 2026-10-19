@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 /* Тема сайта: токены внутри [data-site], при необходимости — свои утилиты (@theme). */
 @import "../theme/theme.css";
+/* Вторая тема для проверки контракта подставляется на место src/theme только в CI. */
+@source not "../../e2e/theme";
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));

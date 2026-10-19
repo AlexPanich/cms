@@ -1,0 +1,23 @@
+/* Тема для проверки контракта: тёмная, с тёплым акцентом. Токены только под [data-site]. */
+
+[data-site] {
+  --background: oklch(0.18 0.01 260);
+  --foreground: oklch(0.95 0.01 80);
+  --card: oklch(0.23 0.01 260);
+  --card-foreground: oklch(0.95 0.01 80);
+  --popover: oklch(0.23 0.01 260);
+  --popover-foreground: oklch(0.95 0.01 80);
+  --primary: oklch(0.78 0.15 70);
+  --primary-foreground: oklch(0.2 0.02 70);
+  --secondary: oklch(0.28 0.01 260);
+  --secondary-foreground: oklch(0.95 0.01 80);
+  --muted: oklch(0.26 0.01 260);
+  --muted-foreground: oklch(0.72 0.01 260);
+  --accent: oklch(0.3 0.03 70);
+  --accent-foreground: oklch(0.95 0.01 80);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.34 0.01 260);
+  --input: oklch(0.34 0.01 260);
+  --ring: oklch(0.78 0.15 70);
+  --radius: 0;
+}
