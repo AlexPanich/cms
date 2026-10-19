@@ -39,7 +39,8 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 - Route handlers и страницы, которые ходят в БД, должны вызывать `await connection()` из `next/server`. Иначе при `cacheComponents` Next попытается пререндерить их на сборке.
 - В запросе к одной таблице Drizzle пишет колонки без имени таблицы, поэтому в коррелированном подзапросе через `sql\`\`` внешнюю колонку нужно писать явно (`media.id`), иначе она свяжется с таблицей подзапроса.
 - Тесты лежат рядом с кодом: `src/**/*.test.ts` (Vitest). Алиас `@/*` указывает на `src/*`.
-- Интеграционные тесты ходят в настоящий Postgres из `.env`, поэтому перед `pnpm test` база должна быть поднята и смигрирована. Каждый тест оборачивается в `withRollback` из `src/test/db.ts` и ничего не оставляет в БД.
+- Интеграционные тесты ходят в отдельную базу на том же Postgres: `TEST_DATABASE_URL` или база из `DATABASE_URL` с суффиксом `_test` (`src/test/database-url.ts`, имя без `_test` отклоняется). Перед прогоном `src/test/global-setup.ts` создаёт её, если нет, и применяет миграции и сид — нужен только запущенный Postgres. Базу разработки тесты не трогают. Каждый тест оборачивается в `withRollback` из `src/test/db.ts` и ничего не оставляет в БД.
+- Миграции и сид — функции `migrateDatabase` и `seedDatabase` (`src/db/migrator.ts`, `src/db/seeder.ts`); `src/db/migrate.ts` и `src/db/seed.ts` — их CLI, на эти пути завязаны Dockerfile и Render.
 
 ## Админка
 

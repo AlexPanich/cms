@@ -21,7 +21,7 @@ pnpm user:create-admin --email admin@example.com
 pnpm dev                  # http://localhost:3000, админка — /admin
 ```
 
-Проверки: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm format:check`.
+Проверки: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm format:check`. Тесты работают с отдельной базой `<имя базы>_test` на том же сервере (или `TEST_DATABASE_URL`): она создаётся, мигрируется и засевается сама, база разработки не меняется.
 
 Изменили схему в `src/db/schema/`, значит нужно выполнить `pnpm db:generate`, затем `pnpm db:migrate`.
 
