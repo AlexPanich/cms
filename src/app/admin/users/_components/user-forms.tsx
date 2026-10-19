@@ -24,7 +24,12 @@ export function CreateUserForm({ roles }: { roles: RoleOption[] }) {
   });
   const { onSubmit, pending } = useActionSubmit(form, createUser, {
     successMessage: "Пользователь создан",
-    onSuccess: () => router.push("/admin/users"),
+    // Next 16 сохраняет состояние посещённых страниц (React Activity) — без reset при
+    // следующем открытии «Нового пользователя» в форме остались бы прежние значения.
+    onSuccess: () => {
+      form.reset();
+      router.push("/admin/users");
+    },
   });
 
   return (

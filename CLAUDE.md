@@ -46,7 +46,11 @@ docker compose up --build # полный стек: db → migrate → app
 - Удаление и другие необратимые действия — через `ConfirmAction` с `action.bind(null, id)`.
 - Списки — серверные таблицы с `?q=&page=` (`parsePage`, `parseSearch`, `likePattern` из `src/lib/pagination.ts`).
 - Компоненты shadcn — на Base UI: вместо `asChild` проп `render`, ссылка-кнопка — `ButtonLink`. Добавлять компоненты через `pnpm dlx shadcn@latest add <name>`.
+- Next 16 с `cacheComponents` не размонтирует посещённые страницы, а прячет их в React `<Activity>`: состояние форм сохраняется между визитами, и скрытая копия остаётся в DOM. Формы создания после успеха делают `form.reset()`; форма, зависящая от `searchParams`, получает `key` по этому параметру.
+- Rich text — `FormRichText` (TipTap, `src/components/admin/rich-text-editor.tsx`). Документ хранится как JSON и проверяется `richTextDocSchema` (`src/lib/rich-text.ts`).
+- Шаблоны страниц — реестр `PAGE_TEMPLATES` в `src/lib/templates.ts`.
 - Новый раздел добавляется в `ADMIN_NAV` (`src/app/admin/_components/nav.ts`) с его правом.
+- В E2E искать элементы через `getByRole` (скрытые копии из `<Activity>` он пропускает, `getByLabel` — нет), а после `goto`/`reload` дожидаться содержимого: админка сначала отдаёт «Загрузка…» из `<Suspense>`.
 - E2E лежат в `e2e/`: всё, что создают тесты, помечается префиксом `e2e-` и удаляется в teardown. Сессия администратора общая (`e2e/.auth/admin.json`), потому что вход ограничен 3 попытками за 10 секунд.
 
 ## Правила

@@ -171,6 +171,11 @@ export async function reorderPages(
   });
 }
 
+export async function getPage(executor: Executor, id: number): Promise<Page | null> {
+  const [page] = await executor.select().from(pages).where(eq(pages.id, id));
+  return page ?? null;
+}
+
 export async function getPageTree(executor: Executor, { publishedOnly = false } = {}) {
   const rows = await executor
     .select({
@@ -190,3 +195,5 @@ export async function getPageTree(executor: Executor, { publishedOnly = false } 
     .orderBy(asc(pages.sort), asc(pages.id));
   return buildTree(rows);
 }
+
+export type PageTreeNode = Awaited<ReturnType<typeof getPageTree>>[number];

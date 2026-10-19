@@ -38,7 +38,7 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="flex-1 p-4 md:p-6">{children}</div>
         </SidebarInset>
       </SidebarProvider>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" containerAriaLabel="Уведомления" />
     </TooltipProvider>
   );
 }

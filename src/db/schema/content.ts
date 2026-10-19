@@ -9,7 +9,8 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { id, type RichTextDoc, timestamps } from "./columns";
+import type { RichTextDoc } from "../../lib/rich-text";
+import { id, timestamps } from "./columns";
 import { media } from "./media";
 
 // Именованные текстовые блоки, которые шаблоны вставляют по ключу.

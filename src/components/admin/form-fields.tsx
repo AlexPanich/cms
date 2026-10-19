@@ -12,7 +12,15 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "./rich-text-editor";
 
 type BaseProps<T extends FieldValues> = {
   control: Control<T>;
@@ -178,6 +186,74 @@ export function FormCheckboxGroup<T extends FieldValues, V extends string | numb
           </FieldSet>
         );
       }}
+    />
+  );
+}
+
+export function FormSelect<T extends FieldValues>({
+  control,
+  name,
+  label,
+  description,
+  options,
+}: BaseProps<T> & { options: readonly { value: string; label: string }[] }) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={name}>{label}</FieldLabel>
+          <Select
+            items={options}
+            value={field.value}
+            onValueChange={(value) => field.onChange(value)}
+          >
+            <SelectTrigger id={name} className="w-full" aria-invalid={fieldState.invalid}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {description && <FieldDescription>{description}</FieldDescription>}
+          <FieldError errors={[fieldState.error]} />
+        </Field>
+      )}
+    />
+  );
+}
+
+export function FormRichText<T extends FieldValues>({
+  control,
+  name,
+  label,
+  description,
+}: BaseProps<T>) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          {/* contenteditable нельзя связать с label через htmlFor — используем aria-labelledby. */}
+          <FieldLabel id={`${name}-label`}>{label}</FieldLabel>
+          <RichTextEditor
+            id={name}
+            labelledBy={`${name}-label`}
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            invalid={fieldState.invalid}
+          />
+          {description && <FieldDescription>{description}</FieldDescription>}
+          <FieldError errors={[fieldState.error]} />
+        </Field>
+      )}
     />
   );
 }

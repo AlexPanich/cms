@@ -1,4 +1,10 @@
-import { LayoutDashboardIcon, type LucideIcon, ShieldCheckIcon, UsersIcon } from "lucide-react";
+import {
+  FileTextIcon,
+  LayoutDashboardIcon,
+  type LucideIcon,
+  ShieldCheckIcon,
+  UsersIcon,
+} from "lucide-react";
 import type { Permission } from "@/lib/permissions";
 
 export type AdminNavItem = {
@@ -18,6 +24,13 @@ export const ADMIN_NAV: AdminNavItem[] = [
     description: "Разделы админки",
     icon: LayoutDashboardIcon,
     permission: "view_admin",
+  },
+  {
+    href: "/admin/pages",
+    label: "Страницы",
+    description: "Дерево страниц сайта и их содержимое",
+    icon: FileTextIcon,
+    permission: "edit_pages",
   },
   {
     href: "/admin/users",

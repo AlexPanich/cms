@@ -10,7 +10,8 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { id, type RichTextDoc, timestamps } from "./columns";
+import type { RichTextDoc } from "../../lib/rich-text";
+import { id, timestamps } from "./columns";
 
 export const pages = pgTable(
   "pages",

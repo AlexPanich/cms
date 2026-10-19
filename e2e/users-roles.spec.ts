@@ -28,6 +28,10 @@ test("роль и пользователь: создание, вход под н
   await page.getByRole("button", { name: "Создать пользователя" }).click();
 
   await expectToast(page, "Пользователь создан");
+  // Регрессия: повторное открытие формы создания не должно показывать прошлые значения.
+  await page.getByRole("link", { name: "Добавить" }).click();
+  await expect(page.getByRole("textbox", { name: "Email" })).toHaveValue("");
+  await page.goBack();
   await page.getByRole("searchbox").fill(email);
   await page.getByRole("searchbox").press("Enter");
   await expect(page.getByRole("row", { name: new RegExp(email) })).toContainText(roleName);

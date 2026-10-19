@@ -47,7 +47,11 @@ export function RoleForm({ role }: RoleFormProps) {
       role ? updateRole(role.id, values) : createRole(values),
     {
       successMessage: role ? "Роль сохранена" : "Роль создана",
-      onSuccess: () => (role ? router.refresh() : router.push("/admin/roles")),
+      onSuccess: () => {
+        if (role) return router.refresh();
+        form.reset(); // см. CreateUserForm: состояние страницы создания сохраняется между визитами
+        router.push("/admin/roles");
+      },
     },
   );
 

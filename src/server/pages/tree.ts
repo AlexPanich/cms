@@ -34,3 +34,15 @@ export function buildTree<T extends TreeRow>(rows: readonly T[]): TreeNode<T>[] 
   sortLevel(roots);
   return roots;
 }
+
+export type FlatNode<T extends TreeRow> = TreeNode<T> & { depth: number };
+
+// Дерево в плоский список в порядке обхода (для выпадающих списков с отступами).
+export function flattenTree<T extends TreeRow>(tree: TreeNode<T>[], depth = 0): FlatNode<T>[] {
+  return tree.flatMap((node) => [{ ...node, depth }, ...flattenTree(node.children, depth + 1)]);
+}
+
+// id узла и всех его потомков.
+export function subtreeIds<T extends TreeRow>(node: TreeNode<T>): number[] {
+  return [node.id, ...node.children.flatMap(subtreeIds)];
+}

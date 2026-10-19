@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { richTextDocSchema } from "@/lib/rich-text";
 import { SLUG_PATTERN } from "@/lib/slug";
+import { PAGE_TEMPLATE_KEYS } from "@/lib/templates";
 
 const optionalText = (max: number) =>
   z
@@ -16,11 +18,8 @@ export const pageInputSchema = z.object({
   title: z.string().trim().min(1, "Укажите заголовок").max(200),
   menuTitle: optionalText(100),
   metaDescription: optionalText(300),
-  content: z
-    .object({ type: z.literal("doc"), content: z.array(z.unknown()).optional() })
-    .nullable()
-    .default(null),
-  template: z.string().min(1).default("default"),
+  content: richTextDocSchema.nullable().default(null),
+  template: z.enum(PAGE_TEMPLATE_KEYS).default("default"),
   published: z.boolean().default(false),
   isHome: z.boolean().default(false),
 });

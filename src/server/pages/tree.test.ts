@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTree, isSameOrDescendantPath, joinPath } from "./tree";
+import { buildTree, flattenTree, isSameOrDescendantPath, joinPath, subtreeIds } from "./tree";
 
 describe("joinPath", () => {
   it("корневая страница — путь равен slug", () => {
@@ -50,5 +50,24 @@ describe("buildTree", () => {
     const rows = [row(1, null, 0)];
     buildTree(rows);
     expect(rows[0]).not.toHaveProperty("children");
+  });
+});
+
+describe("flattenTree и subtreeIds", () => {
+  const row = (id: number, parentId: number | null, sort: number) => ({ id, parentId, sort });
+  const tree = buildTree([row(1, null, 0), row(2, 1, 0), row(3, 2, 0), row(4, null, 1)]);
+
+  it("разворачивает дерево в порядке обхода с глубиной", () => {
+    expect(flattenTree(tree).map((n) => [n.id, n.depth])).toEqual([
+      [1, 0],
+      [2, 1],
+      [3, 2],
+      [4, 0],
+    ]);
+  });
+
+  it("собирает id поддерева", () => {
+    expect(subtreeIds(tree[0])).toEqual([1, 2, 3]);
+    expect(subtreeIds(tree[1])).toEqual([4]);
   });
 });
