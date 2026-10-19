@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatAspect, renderBlocksDoc } from "./catalog-doc";
-import { BLOCKS } from "./registry";
+import { BLOCKS, blockVariants } from "./registry";
 
 describe("docs/BLOCKS.md", () => {
   it("пропорции дробью", () => {
@@ -16,7 +16,12 @@ describe("docs/BLOCKS.md", () => {
     expect(doc).toContain(
       "| ↳ Заголовок (`items[].title`) | строка | да | до 80 символов; одной строкой |",
     );
-    expect(doc).toContain("«Картинка справа» (`image-right`)");
+    // Варианты — какие объявила тема.
+    for (const block of BLOCKS) {
+      for (const variant of blockVariants(block.type)) {
+        expect(doc).toContain(`«${variant.label}» (\`${variant.key}\`)`);
+      }
+    }
     expect(doc).toContain(
       "| Телефон (`phone`) | строка | нет | до 30 символов; одной строкой; телефон |",
     );

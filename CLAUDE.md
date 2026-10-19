@@ -76,6 +76,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 - Статус 404/308 рендер с Cache Components поставить не может (всегда 200) — его ставит `src/proxy.ts` через `resolveSiteRoute` до рендера. Новый тип публичного адреса добавляй в `classifySitePath` (`src/lib/site-routes.ts`) и `resolveSiteRoute`. «Не найдена» страница рисует сама (`theme.NotFound`), а не через `notFound()` — так сохраняются её метаданные.
 - Метаданные публичных страниц — только через `siteMetadata` (`(site)/_lib/metadata.ts`): canonical, Open Graph, noindex. Структурированные данные — `JsonLd` (`src/components/site/json-ld.tsx`). Обёртки с `cache` из React для повторных запросов в одном рендере — `(site)/_lib/data.ts`.
 - Новый раздел первого уровня (как `/articles`) добавляй и в `RESERVED_ROOT_SLUGS` (`src/lib/slug.ts`), иначе страница с таким slug станет недоступной.
+- Вторая тема `e2e/theme/` проверяет, что ядро не зависит от темы по умолчанию: `pnpm theme:contract` (в CI — задача `theme-contract`) подставляет её на место `src/theme/`. Новое требование к теме (поле `ThemeModule`, блок ядра, вид поля) поддержи и в ней. Тесты ядра не завязывай на тему по умолчанию: варианты, шаблоны и настройки бери из реестра.
 - Новый шаблон: ключ в `PAGE_TEMPLATES` темы (`src/theme/page-templates.ts`) и лейаут в `src/theme/templates.tsx`. Ключ `default` обязателен, без него не соберётся.
 - Каталог для дизайнера: у `defineBlock` обязательный `example` (картинки и прочие ссылки — из `src/lib/blocks/examples.ts`), по нему рисуется `/_blocks` (`src/app/(catalog)/%5Fblocks`, данные-заглушки — `src/server/site/catalog.ts`). После изменения блоков, полей или вариантов — `pnpm blocks:catalog` и коммит `docs/BLOCKS.md`. Правила для макета — `docs/DESIGN-GUIDE.md`.
 - Блоки: поля и тип блока — `field.*` и `defineBlock` (`src/lib/blocks/define.ts`), каталог ядра — `catalog.ts`, свои блоки и варианты темы — `src/theme/blocks/index.ts`. Схему блока меняй только совместимо: новое поле необязательное или со значением по умолчанию, поля не переименовываются. Новый тип блока требует вид в `src/theme/blocks/views.tsx` (`BlockViews`). Данные полей блока на сайте (картинки, документы, галереи, ссылки, последние статьи) приходят в `context`, тема выводит их через `resolveImage`/`resolveDocument`/`resolveLink` из `src/components/site/blocks.tsx`. Блоки страницы пишет только сервис страниц: вместе с ними он обновляет `search_text` и `page_media`. Чтение из БД — через `parseStoredBlocks`/`validStoredBlocks`, данные для ссылок и виджетов — `loadBlocksContext`.
@@ -136,7 +137,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 5. ✅ Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
 6. ✅ Редактирование на сайте: клиентский компонент для пользователей с правом `edit_from_front`, поля только из белого списка.
 7. ✅ E2E-тесты (Playwright) и деплой в Docker.
-8. Темы и блоки: дизайн клиента в `src/theme/`, страница из блоков каталога, каталог для дизайнера, отдельный репозиторий на клиента (`docs/CLIENT.md`, skill `apply-design`).
+8. ✅ Темы и блоки: дизайн клиента в `src/theme/`, страница из блоков каталога, каталог для дизайнера, отдельный репозиторий на клиента (`docs/CLIENT.md`, skill `apply-design`).
 
 ## Особенности окружения
 

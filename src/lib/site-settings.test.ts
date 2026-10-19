@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { normalizePhone, phoneHref, readSiteSettings, siteSettingsSchema } from "./site-settings";
+import {
+  CORE_SETTINGS,
+  normalizePhone,
+  phoneHref,
+  readSiteSettings,
+  siteSettingsSchema,
+} from "./site-settings";
+
+// Только настройки ядра: тема может добавить свои (src/theme/settings.ts).
+const core = (settings: Record<string, unknown>) =>
+  Object.fromEntries(Object.keys(CORE_SETTINGS).map((name) => [name, settings[name]]));
 
 describe("настройки сайта", () => {
   it("без записи все настройки пустые", () => {
-    expect(readSiteSettings(undefined)).toEqual({
+    expect(core(readSiteSettings(undefined))).toEqual({
       logo: null,
       phone: "",
       email: "",
@@ -15,12 +25,14 @@ describe("настройки сайта", () => {
 
   it("негодное значение из БД заменяется пустым, остальные остаются", () => {
     expect(
-      readSiteSettings({
-        phone: "+7 999 123-45-67",
-        email: "не почта",
-        socials: [{ network: "vk", url: "javascript:alert(1)" }],
-        removed: "поле убрали из темы",
-      }),
+      core(
+        readSiteSettings({
+          phone: "+7 999 123-45-67",
+          email: "не почта",
+          socials: [{ network: "vk", url: "javascript:alert(1)" }],
+          removed: "поле убрали из темы",
+        }),
+      ),
     ).toEqual({
       logo: null,
       phone: "+7 999 123-45-67",
@@ -29,6 +41,10 @@ describe("настройки сайта", () => {
       hours: "",
       socials: [],
     });
+  });
+
+  it("лишние поля отбрасываются", () => {
+    expect(readSiteSettings({ removed: "поле убрали из темы" })).not.toHaveProperty("removed");
   });
 
   it("неизвестная соцсеть — «Другое», адрес обязателен", () => {
