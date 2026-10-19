@@ -8,6 +8,7 @@ import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/db";
+import { formatFileSize } from "@/lib/format";
 import { pageCount, parsePage, parseSearch } from "@/lib/pagination";
 import { requirePagePermission } from "@/server/auth/session";
 import { type ImageListItem, listImages } from "@/server/media/service";
@@ -16,14 +17,6 @@ import { deleteImage } from "./actions";
 export const metadata: Metadata = { title: "Изображения" };
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium" });
-const sizeFormat = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 });
-
-function formatSize(bytes: number): string {
-  return bytes < 1024 * 1024
-    ? `${sizeFormat.format(bytes / 1024)} КБ`
-    : `${sizeFormat.format(bytes / 1024 / 1024)} МБ`;
-}
-
 function usage({ galleryUses, articleUses }: ImageListItem): string | null {
   const parts = [
     galleryUses > 0 && `галерей: ${galleryUses}`,
@@ -109,7 +102,7 @@ export default async function MediaPage({ searchParams }: PageProps<"/admin/medi
                         {image.originalName}
                       </span>
                       <span className="text-muted-foreground">
-                        {image.width}×{image.height}, {formatSize(image.size)},{" "}
+                        {image.width}×{image.height}, {formatFileSize(image.size)},{" "}
                         {dateFormat.format(image.createdAt)}
                       </span>
                       {usedIn ? (

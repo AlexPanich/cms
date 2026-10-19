@@ -7,10 +7,10 @@ const nextConfig: NextConfig = {
   experimental: {
     // forbidden() и forbidden.tsx для ответа 403.
     authInterrupts: true,
-    // Загрузка картинок идёт через server actions: файл до 10 МБ (MAX_IMAGE_BYTES)
+    // Загрузка файлов идёт через server actions: документ до 20 МБ (MAX_DOCUMENT_BYTES)
     // плюс заголовки multipart. Запросы к /admin проходят через proxy, у него свой лимит.
-    serverActions: { bodySizeLimit: "11mb" },
-    proxyClientMaxBodySize: "11mb",
+    serverActions: { bodySizeLimit: "21mb" },
+    proxyClientMaxBodySize: "21mb",
   },
   // next/image оптимизирует только загруженные картинки.
   images: { localPatterns: [{ pathname: "/media/**" }] },

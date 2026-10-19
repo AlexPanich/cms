@@ -52,6 +52,7 @@ docker compose up --build # полный стек: db → migrate → app
 - Rich text — `FormRichText` (TipTap, `src/components/admin/rich-text-editor.tsx`). Документ хранится как JSON и проверяется `richTextDocSchema` (`src/lib/rich-text.ts`).
 - Загрузка картинки — поле `FormImageUpload` (`src/components/admin/image-upload.tsx`) и server action, который вызывает `saveUploadedImage` (`src/server/media/service.ts`). Файл не доверяем ни по имени, ни по MIME: формат определяет sharp, сохраняется перекодированный WebP. Адрес файла — `mediaUrl(storageKey)`, в разметке — `next/image`.
 - Картинка используется, если на неё ссылается галерея или превью статьи — подсчёт `galleryUses`/`articleUses` в `src/server/media/service.ts`. Новую ссылку на `media` добавляй туда же, иначе картинку сочтут неиспользуемой и удалят вместе с галереей. Записи `media` удаляются в транзакции, а файлы — после неё (`deleteStoredFiles`).
+- Документ — запись `media` с `kind = document` (`src/server/documents/`): расширение из белого списка `DOCUMENT_EXTENSIONS`, содержимое сверяется с сигнатурой (`detect.ts`), отдаётся только как вложение. Новый формат добавляется и в список, и в `DOCUMENT_TYPES`.
 - Шаблоны страниц — реестр `PAGE_TEMPLATES` в `src/lib/templates.ts`.
 - Новый раздел добавляется в `ADMIN_NAV` (`src/app/admin/_components/nav.ts`) с его правом.
 - В E2E искать элементы через `getByRole` (скрытые копии из `<Activity>` он пропускает, `getByLabel` — нет), а после `goto`/`reload` дожидаться содержимого: админка сначала отдаёт «Загрузка…» из `<Suspense>`.
@@ -100,7 +101,7 @@ docker compose up --build # полный стек: db → migrate → app
 1. ✅ Каркас: Next.js, Drizzle, Docker, CI.
 2. ✅ Схема БД: страницы-дерево (пересчёт путей в транзакции), меню, `media`, тексты, статьи, пользователи, роли, права.
 3. ✅ Вход (Better Auth, регистрация закрыта) и проверка прав `can(user, permission)`.
-4. Админка (shadcn/ui, TanStack Table, dnd-kit, TipTap). Порядок: пользователи и роли → страницы → меню → тексты → статьи → галереи → документы.
+4. ✅ Админка (shadcn/ui, TanStack Table, dnd-kit, TipTap). Порядок: пользователи и роли → страницы → меню → тексты → статьи → галереи → документы.
 5. Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
 6. Редактирование на сайте: клиентский компонент для пользователей с правом `edit_from_front`, поля только из белого списка.
 7. E2E-тесты (Playwright) и деплой в Docker.

@@ -12,19 +12,19 @@ import { deleteStoredFile, newStorageKey, writeStoredFile } from "./storage";
 export type Media = typeof media.$inferSelect;
 
 // Файл из FormData: проверяем тип и размер до чтения содержимого.
-function assertUpload(value: unknown): asserts value is File {
+export function assertUpload(value: unknown, maxBytes: number): asserts value is File {
   if (!(value instanceof File) || value.size === 0) {
     throw new MediaError("invalid_file", "Выберите файл", "file");
   }
-  if (value.size > MAX_IMAGE_BYTES) {
-    throw new MediaError("invalid_file", "Файл больше 10 МБ", "file");
+  if (value.size > maxBytes) {
+    throw new MediaError("invalid_file", `Файл больше ${maxBytes / 1024 / 1024} МБ`, "file");
   }
 }
 
-// Имя файла от пользователя только показываем в админке — на диске оно не используется.
-function cleanName(name: string): string {
+// Имя файла от пользователя только показываем — на диске оно не используется.
+export function cleanName(name: string, fallback: string): string {
   const base = name.split(/[\\/]/).pop() ?? "";
-  return base.replace(/\p{Cc}/gu, "").slice(0, 255) || "image";
+  return base.replace(/\p{Cc}/gu, "").slice(0, 255) || fallback;
 }
 
 export async function saveUploadedImage(
@@ -32,7 +32,7 @@ export async function saveUploadedImage(
   upload: unknown,
   uploadedBy: string | null,
 ): Promise<Media> {
-  assertUpload(upload);
+  assertUpload(upload, MAX_IMAGE_BYTES);
   const image = await processImage(new Uint8Array(await upload.arrayBuffer()));
   const storageKey = newStorageKey("images", "webp");
   await writeStoredFile(storageKey, image.data);
@@ -43,7 +43,7 @@ export async function saveUploadedImage(
       .values({
         kind: "image",
         storageKey,
-        originalName: cleanName(upload.name),
+        originalName: cleanName(upload.name, "image"),
         mimeType: "image/webp",
         size: image.data.length,
         width: image.width,

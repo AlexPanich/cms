@@ -1,4 +1,5 @@
 import {
+  FileDownIcon,
   FileTextIcon,
   ImageIcon,
   ImagesIcon,
@@ -70,6 +71,13 @@ export const ADMIN_NAV: AdminNavItem[] = [
     label: "Изображения",
     description: "Все загруженные картинки, удаление неиспользуемых",
     icon: ImageIcon,
+    permission: "edit_media",
+  },
+  {
+    href: "/admin/documents",
+    label: "Документы",
+    description: "Файлы для скачивания с сайта",
+    icon: FileDownIcon,
     permission: "edit_media",
   },
   {
