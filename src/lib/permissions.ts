@@ -30,3 +30,7 @@ export function can(
 ): boolean {
   return user?.permissions.has(permission) ?? false;
 }
+
+// Системная роль со всеми правами. Её права нельзя изменить, а последнего
+// пользователя с этой ролью нельзя удалить или лишить роли.
+export const ADMIN_ROLE = "admin";

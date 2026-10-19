@@ -3,13 +3,13 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { parseEnv } from "../env";
-import { type Permission, PERMISSIONS } from "../lib/permissions";
+import { ADMIN_ROLE, type Permission, PERMISSIONS } from "../lib/permissions";
 import * as schema from "./schema";
 
 const { menus, rolePermissions, roles } = schema;
 
 const SYSTEM_ROLES: { key: string; name: string; permissions: readonly Permission[] }[] = [
-  { key: "admin", name: "Администратор", permissions: PERMISSIONS },
+  { key: ADMIN_ROLE, name: "Администратор", permissions: PERMISSIONS },
   {
     key: "editor",
     name: "Редактор",
@@ -51,7 +51,7 @@ async function main() {
           created?.id ??
           (await tx.select({ id: roles.id }).from(roles).where(eq(roles.key, role.key)))[0].id;
 
-        if (created || role.key === "admin") {
+        if (created || role.key === ADMIN_ROLE) {
           await tx
             .insert(rolePermissions)
             .values(role.permissions.map((permission) => ({ roleId, permission })))

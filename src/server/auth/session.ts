@@ -9,6 +9,7 @@ import { getUserPermissions } from "./permissions";
 
 export type CurrentUser = {
   id: string;
+  sessionId: string;
   name: string;
   email: string;
   permissions: ReadonlySet<Permission>;
@@ -20,7 +21,13 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!session) return null;
 
   const { id, name, email } = session.user;
-  return { id, name, email, permissions: await getUserPermissions(db(), id) };
+  return {
+    id,
+    sessionId: session.session.id,
+    name,
+    email,
+    permissions: await getUserPermissions(db(), id),
+  };
 });
 
 export class AuthError extends Error {

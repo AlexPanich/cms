@@ -12,7 +12,8 @@ pnpm db:generate          # SQL-миграция из изменений src/db/
 pnpm db:migrate           # применить миграции
 pnpm db:seed              # системные роли и меню (идемпотентно)
 pnpm user:create-admin --email admin@example.com   # первый администратор (пароль спросит)
-pnpm lint && pnpm typecheck && pnpm test && pnpm format:check   # всё, что гоняет CI
+pnpm lint && pnpm typecheck && pnpm test && pnpm format:check   # быстрые проверки CI
+pnpm build && pnpm test:e2e   # E2E на Playwright (поднимает pnpm start сам)
 pnpm build
 docker compose up --build # полный стек: db → migrate → app
 ```
@@ -35,6 +36,18 @@ docker compose up --build # полный стек: db → migrate → app
 - Route handlers и страницы, которые ходят в БД, должны вызывать `await connection()` из `next/server`. Иначе при `cacheComponents` Next попытается пререндерить их на сборке.
 - Тесты лежат рядом с кодом: `src/**/*.test.ts` (Vitest). Алиас `@/*` указывает на `src/*`.
 - Интеграционные тесты ходят в настоящий Postgres из `.env`, поэтому перед `pnpm test` база должна быть поднята и смигрирована. Каждый тест оборачивается в `withRollback` из `src/test/db.ts` и ничего не оставляет в БД.
+
+## Админка
+
+- Server action — тонкая обёртка в `src/app/admin/<раздел>/actions.ts`: `return runAction("edit_x", (actor) => service(db(), ...))`. `runAction` (`src/server/action.ts`) проверяет право и превращает `AuthError`, `ZodError` и `DomainError` в `ActionResult`; ошибки возвращаются значением, а не исключением.
+- id из аргументов action проверяется zod-схемой в самом action, остальной ввод — схемой сервиса.
+- Ошибки предметной области наследуют `DomainError` (`src/server/errors.ts`): `message` показывается пользователю, `field` привязывает ошибку к полю формы.
+- Формы: react-hook-form + `zodResolver` с той же схемой, что у сервиса (`src/server/<модуль>/schema.ts` — без серверных зависимостей), поля из `src/components/admin/form-fields.tsx`, отправка через `useActionSubmit`.
+- Удаление и другие необратимые действия — через `ConfirmAction` с `action.bind(null, id)`.
+- Списки — серверные таблицы с `?q=&page=` (`parsePage`, `parseSearch`, `likePattern` из `src/lib/pagination.ts`).
+- Компоненты shadcn — на Base UI: вместо `asChild` проп `render`, ссылка-кнопка — `ButtonLink`. Добавлять компоненты через `pnpm dlx shadcn@latest add <name>`.
+- Новый раздел добавляется в `ADMIN_NAV` (`src/app/admin/_components/nav.ts`) с его правом.
+- E2E лежат в `e2e/`: всё, что создают тесты, помечается префиксом `e2e-` и удаляется в teardown. Сессия администратора общая (`e2e/.auth/admin.json`), потому что вход ограничен 3 попытками за 10 секунд.
 
 ## Правила
 

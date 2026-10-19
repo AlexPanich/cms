@@ -37,3 +37,10 @@ jobs:
       - run: pnpm db:seed
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
