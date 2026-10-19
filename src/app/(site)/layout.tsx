@@ -2,6 +2,7 @@ import type { Viewport } from "next";
 import { connection } from "next/server";
 import { FrontEditProvider } from "@/components/site/front-edit-lazy";
 import { cachedSiteMenu } from "@/server/site/cached";
+import { loadSiteContext } from "@/server/site/content";
 import { getFrontEditor } from "@/server/site/front-editor";
 import { theme } from "@/theme";
 import { getSiteInfo } from "./_lib/data";
@@ -20,18 +21,19 @@ export async function generateViewport(): Promise<Viewport> {
 
 export default async function SiteLayout({ children }: LayoutProps<"/">) {
   await connection();
-  const [editor, info, mainMenu, footerMenu] = await Promise.all([
+  const [editor, info, mainMenu, footerMenu, context] = await Promise.all([
     getFrontEditor(),
     getSiteInfo(),
     cachedSiteMenu("main"),
     cachedSiteMenu("footer"),
+    loadSiteContext(),
   ]);
   // data-site — граница стилей темы (src/theme/theme.css). Обёртка не создаёт блока
   // (display: contents), поэтому вёрстку оболочки целиком задаёт тема. Окна и уведомления
   // правки на сайте выводятся в портал вне неё и выглядят как админка.
   const site = (
     <div data-site className="contents">
-      <theme.SiteLayout site={info} mainMenu={mainMenu} footerMenu={footerMenu}>
+      <theme.SiteLayout site={info} mainMenu={mainMenu} footerMenu={footerMenu} context={context}>
         {children}
       </theme.SiteLayout>
     </div>

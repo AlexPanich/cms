@@ -1,15 +1,38 @@
 import { SearchIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { resolveImage } from "@/components/site/blocks";
 import { EditableText } from "@/components/site/editable";
+import type { ContentContext } from "@/components/site/rich-text";
 import type { SiteInfo } from "@/components/site/theme";
 import type { SiteMenuItem } from "@/server/site/service";
 import { SiteNav } from "./site-nav";
 
-export function SiteHeader({ site, menu }: { site: SiteInfo; menu: SiteMenuItem[] }) {
+export function SiteHeader({
+  site,
+  menu,
+  context,
+}: {
+  site: SiteInfo;
+  menu: SiteMenuItem[];
+  context: ContentContext;
+}) {
+  const logo = resolveImage(context.settings.logo, context);
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-8 gap-y-3 px-4 py-4">
       <EditableText textKey="site-name" value={site.name}>
-        <Link href="/" className="text-lg font-semibold tracking-tight">
+        <Link href="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight">
+          {/* Ссылку называет название сайта рядом, поэтому у логотипа пустой alt. */}
+          {logo && (
+            <Image
+              src={logo.url}
+              alt=""
+              width={logo.width}
+              height={logo.height}
+              priority
+              className="h-8 w-auto"
+            />
+          )}
           {site.name}
         </Link>
       </EditableText>

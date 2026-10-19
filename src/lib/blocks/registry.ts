@@ -1,8 +1,15 @@
-import { collectGalleryKeys, richTextPlainText, textExcerpt } from "@/lib/rich-text";
+import { richTextPlainText, textExcerpt } from "@/lib/rich-text";
 import { z } from "@/lib/zod";
 import { BLOCK_VARIANTS, THEME_BLOCKS } from "@/theme/blocks";
 import { CORE_BLOCKS } from "./catalog";
-import { type BlockDefinition, type BlockVariant, type FieldsData, walkFields } from "./define";
+import {
+  type BlockDefinition,
+  type BlockVariant,
+  type FieldReferences,
+  type FieldsData,
+  fieldReferences,
+  walkFields,
+} from "./define";
 
 // Реестр блоков: базовый каталог ядра и блоки темы. Блок страницы хранится как
 // { id, type, variant, data }, data проверяется схемой своего типа.
@@ -137,40 +144,13 @@ export function blocksExcerpt(blocks: readonly Block[], maxLength = 160): string
   return null;
 }
 
-// Ключи галерей из полей-галерей и rich text всех блоков — чтобы загрузить их одним
-// запросом до вывода.
-export function collectBlockGalleryKeys(blocks: readonly Block[]): string[] {
-  const keys = new Set<string>();
-  for (const entry of blockValues(blocks)) {
-    if (entry.kind === "gallery" && entry.value) keys.add(entry.value);
-    if (entry.kind === "richText") for (const key of collectGalleryKeys(entry.value)) keys.add(key);
-  }
-  return [...keys];
-}
-
-// id документов из блоков — чтобы загрузить их одним запросом до вывода.
-export function collectBlockDocumentIds(blocks: readonly Block[]): number[] {
-  const ids = new Set<number>();
-  for (const entry of blockValues(blocks)) {
-    if (entry.kind === "document" && entry.value) ids.add(entry.value);
-  }
-  return [...ids];
+// Ссылки блоков на картинки, документы, галереи и страницы — чтобы загрузить их одним
+// запросом до вывода и посчитать использование картинок.
+export function blockReferences(blocks: readonly Block[]): FieldReferences {
+  return fieldReferences(blockValues(blocks));
 }
 
 // id картинок из блоков — для подсчёта использования media.
 export function collectBlockMediaIds(blocks: readonly Block[]): number[] {
-  const ids = new Set<number>();
-  for (const entry of blockValues(blocks)) {
-    if (entry.kind === "image" && entry.value) ids.add(entry.value.mediaId);
-  }
-  return [...ids];
-}
-
-// id страниц из ссылок блоков — чтобы загрузить их адреса одним запросом до вывода.
-export function collectBlockPageIds(blocks: readonly Block[]): number[] {
-  const ids = new Set<number>();
-  for (const entry of blockValues(blocks)) {
-    if (entry.kind === "link" && entry.value?.kind === "page") ids.add(entry.value.pageId);
-  }
-  return [...ids];
+  return blockReferences(blocks).imageIds;
 }

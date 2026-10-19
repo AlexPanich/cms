@@ -1,6 +1,7 @@
 import { SLUG_PATTERN } from "@/lib/slug";
 import { z } from "@/lib/zod";
 import { pageInputSchema } from "@/server/pages/schema";
+import { siteSettingsInputSchema } from "@/server/settings/schema";
 import { textInputSchema } from "@/server/texts/schema";
 
 // Значения полей — по тем же правилам, что в формах админки.
@@ -21,6 +22,8 @@ export const frontEditInputSchema = z.discriminatedUnion("field", [
     blockId: z.string().min(1).max(64),
     data: z.unknown(),
   }),
+  // Часть настроек сайта: значения проверяются схемой настроек в сервисе.
+  z.object({ field: z.literal("settings"), data: siteSettingsInputSchema }),
   z.object({
     field: z.literal("text.body"),
     key: z.string().regex(SLUG_PATTERN),

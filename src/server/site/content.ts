@@ -1,38 +1,36 @@
 import "server-only";
 import type { ContentContext } from "@/components/site/rich-text";
-import {
-  type Block,
-  collectBlockDocumentIds,
-  collectBlockGalleryKeys,
-  collectBlockMediaIds,
-  collectBlockPageIds,
-} from "@/lib/blocks/registry";
+import type { FieldReferences } from "@/lib/blocks/define";
+import { type Block, blockReferences } from "@/lib/blocks/registry";
 import { collectGalleryKeys, type RichTextDoc } from "@/lib/rich-text";
+import { settingsReferences } from "@/server/settings/service";
 import {
   cachedDocuments,
   cachedGalleries,
   cachedImages,
   cachedLatestArticles,
   cachedPageLinks,
+  cachedSiteSettings,
 } from "./cached";
 
-type Needs = {
-  galleryKeys: string[];
-  pageIds?: number[];
-  imageIds?: number[];
-  documentIds?: number[];
-  articleCount?: number;
-};
+type Needs = Partial<FieldReferences> & { articleCount?: number };
 
-const sortIds = (ids: number[] = []) => ids.sort((a, b) => a - b);
+// Ключи и id без повторов и по порядку — чтобы один и тот же набор был одной записью в кеше.
+const sortIds = (...lists: (number[] | undefined)[]) =>
+  [...new Set(lists.flatMap((ids) => ids ?? []))].sort((a, b) => a - b);
+const sortKeys = (...lists: (string[] | undefined)[]) =>
+  [...new Set(lists.flatMap((keys) => keys ?? []))].sort();
 
 // Загружает данные виджетов, ссылок и полей блоков заранее — одним (кешированным) запросом
-// на тип данных. Ключи и id по порядку — чтобы один и тот же набор был одной записью в кеше.
+// на тип данных. Настройки сайта есть в каждом контексте, вместе с данными их полей
+// (логотип): их выводят шапка, подвал и блок «Контакты».
 async function loadContext(needs: Needs): Promise<ContentContext> {
-  const galleryKeys = needs.galleryKeys.sort();
-  const pageIds = sortIds(needs.pageIds);
-  const imageIds = sortIds(needs.imageIds);
-  const documentIds = sortIds(needs.documentIds);
+  const settings = await cachedSiteSettings();
+  const own = settingsReferences(settings);
+  const galleryKeys = sortKeys(needs.galleryKeys, own.galleryKeys);
+  const pageIds = sortIds(needs.pageIds, own.pageIds);
+  const imageIds = sortIds(needs.imageIds, own.imageIds);
+  const documentIds = sortIds(needs.documentIds, own.documentIds);
   const [galleries, links, images, documents, articles] = await Promise.all([
     galleryKeys.length > 0 ? cachedGalleries(galleryKeys) : [],
     pageIds.length > 0 ? cachedPageLinks(pageIds) : [],
@@ -46,7 +44,13 @@ async function loadContext(needs: Needs): Promise<ContentContext> {
     images: new Map(images),
     documents: new Map(documents),
     articles,
+    settings,
   };
+}
+
+// Контекст лейаута сайта: только настройки и данные их полей.
+export function loadSiteContext(): Promise<ContentContext> {
+  return loadContext({});
 }
 
 export function loadContentContext(doc: RichTextDoc | null): Promise<ContentContext> {
@@ -59,11 +63,5 @@ export function loadBlocksContext(blocks: readonly Block[]): Promise<ContentCont
     0,
     ...blocks.flatMap((block) => (block.type === "articles" ? [Number(block.data.count)] : [])),
   );
-  return loadContext({
-    galleryKeys: collectBlockGalleryKeys(blocks),
-    pageIds: collectBlockPageIds(blocks),
-    imageIds: collectBlockMediaIds(blocks),
-    documentIds: collectBlockDocumentIds(blocks),
-    articleCount,
-  });
+  return loadContext({ ...blockReferences(blocks), articleCount });
 }

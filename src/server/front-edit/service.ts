@@ -4,6 +4,7 @@ import type { Executor } from "@/db";
 import { pages, texts } from "@/db/schema";
 import { DomainError } from "@/server/errors";
 import { PageError, updatePageBlock } from "@/server/pages/service";
+import { updateSiteSettings } from "@/server/settings/service";
 import { type FrontEditInput, frontEditInputSchema } from "./schema";
 
 export type FrontEditErrorCode = "page_not_found" | "text_not_found";
@@ -14,7 +15,7 @@ const pageNotFound = () =>
   new FrontEditError("page_not_found", "Страница не найдена или снята с публикации");
 
 // Правка поля из белого списка (schema.ts). Править можно только то, что видно на сайте:
-// опубликованную страницу и показываемый текст. Черновики — только из админки.
+// опубликованную страницу, показываемый текст и настройки сайта. Черновики — только из админки.
 export async function saveFrontEdit(executor: Executor, input: FrontEditInput): Promise<void> {
   const data = frontEditInputSchema.parse(input);
 
@@ -27,6 +28,11 @@ export async function saveFrontEdit(executor: Executor, input: FrontEditInput): 
     if (updated.length === 0) {
       throw new FrontEditError("text_not_found", "Текст не найден или скрыт на сайте");
     }
+    return;
+  }
+
+  if (data.field === "settings") {
+    await updateSiteSettings(executor, data.data);
     return;
   }
 

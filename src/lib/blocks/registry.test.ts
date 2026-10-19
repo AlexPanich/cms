@@ -3,11 +3,9 @@ import {
   type Block,
   blocksExcerpt,
   blocksSchema,
+  blockReferences,
   blocksSearchText,
-  collectBlockDocumentIds,
-  collectBlockGalleryKeys,
   collectBlockMediaIds,
-  collectBlockPageIds,
   parseStoredBlocks,
   resolveBlockVariant,
   validStoredBlocks,
@@ -152,7 +150,7 @@ describe("данные из полей блоков", () => {
 
   it("id картинок и страниц без повторов", () => {
     expect(collectBlockMediaIds(blocks)).toEqual([3, 4]);
-    expect(collectBlockPageIds(blocks)).toEqual([7, 8]);
+    expect(blockReferences(blocks).pageIds).toEqual([7, 8]);
   });
 
   it("описание по умолчанию — из первого непустого текста", () => {
@@ -181,14 +179,14 @@ describe("данные из полей блоков", () => {
       },
       { ...team, id: "b3", data: { ...team.data, photos: "party" } },
     ]);
-    expect(collectBlockGalleryKeys(withGalleries)).toEqual(["office", "team", "party"]);
+    expect(blockReferences(withGalleries).galleryKeys).toEqual(["office", "team", "party"]);
   });
 
   it("id документов из списков без повторов", () => {
     const withFiles = blocksSchema.parse([
       { ...team, data: { ...team.data, files: [{ file: 5 }, { file: 6 }, { file: 5 }] } },
     ]);
-    expect(collectBlockDocumentIds(withFiles)).toEqual([5, 6]);
-    expect(collectBlockDocumentIds(blocks)).toEqual([]);
+    expect(blockReferences(withFiles).documentIds).toEqual([5, 6]);
+    expect(blockReferences(blocks).documentIds).toEqual([]);
   });
 });

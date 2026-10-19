@@ -1,5 +1,6 @@
 import { type ComponentType, Fragment, type ReactNode } from "react";
 import { galleryKeyOf, type RichTextDoc, type RichTextNode } from "@/lib/rich-text";
+import type { SiteSettings } from "@/lib/site-settings";
 import { isSafeLinkUrl } from "@/lib/url";
 import type {
   PageLink,
@@ -18,6 +19,8 @@ export type ContentContext = {
   documents: ReadonlyMap<number, PublicDocument>;
   // Свежие статьи для блока «Последние статьи», сколько попросил самый длинный такой блок.
   articles: readonly PublishedArticleCard[];
+  // Настройки сайта (src/lib/site-settings.ts); картинки и ссылки из них — в images и links.
+  settings: SiteSettings;
 };
 
 // Как выглядят виджеты, решает тема.

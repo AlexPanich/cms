@@ -1,6 +1,7 @@
 import type { StaticImageData } from "next/image";
 import type { BlockType } from "@/lib/blocks/registry";
 import articles from "./previews/articles.svg";
+import contacts from "./previews/contacts.svg";
 import cta from "./previews/cta.svg";
 import documents from "./previews/documents.svg";
 import faq from "./previews/faq.svg";
@@ -22,4 +23,5 @@ export const BLOCK_PREVIEWS: Partial<Record<BlockType, StaticImageData>> = {
   faq,
   articles,
   documents,
+  contacts,
 };

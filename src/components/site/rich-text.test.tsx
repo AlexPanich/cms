@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { collectGalleryKeys, type RichTextDoc, type RichTextNode } from "@/lib/rich-text";
 import { type ContentContext, RichText, type RichTextWidgets } from "./rich-text";
+import { readSiteSettings } from "@/lib/site-settings";
 
 const empty: ContentContext = {
   galleries: new Map(),
@@ -9,6 +10,7 @@ const empty: ContentContext = {
   images: new Map(),
   documents: new Map(),
   articles: [],
+  settings: readSiteSettings({}),
 };
 
 const widgets: RichTextWidgets = {

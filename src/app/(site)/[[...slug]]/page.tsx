@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 import { connection } from "next/server";
+import { resolveImage } from "@/components/site/blocks";
 import { BreadcrumbsJsonLd } from "@/components/site/breadcrumbs-json-ld";
 import { JsonLd } from "@/components/site/json-ld";
 import { resolvePageTemplate } from "@/lib/templates";
 import { blocksExcerpt } from "@/lib/blocks/registry";
+import { normalizePhone } from "@/lib/site-settings";
 import { cachedAncestors, cachedSectionMenu } from "@/server/site/cached";
 import { loadBlocksContext } from "@/server/site/content";
 import { pageHref, type PublishedPage } from "@/server/site/service";
@@ -54,23 +56,42 @@ async function PageView({ page }: { page: PublishedPage }) {
     getSiteInfo(),
   ]);
   const Template = theme.templates[resolvePageTemplate(page.template)];
+  const { settings } = context;
+  const logo = resolveImage(settings.logo, context);
 
   return (
     <>
       {page.isHome ? (
-        // Сайт целиком: название и поиск по сайту прямо из выдачи.
-        <JsonLd
-          data={{
-            "@type": "WebSite",
-            name: site.name,
-            url: absoluteUrl("/"),
-            potentialAction: {
-              "@type": "SearchAction",
-              target: `${absoluteUrl("/search")}?q={search_term_string}`,
-              "query-input": "required name=search_term_string",
-            },
-          }}
-        />
+        <>
+          {/* Сайт целиком: название и поиск по сайту прямо из выдачи. */}
+          <JsonLd
+            data={{
+              "@type": "WebSite",
+              name: site.name,
+              url: absoluteUrl("/"),
+              potentialAction: {
+                "@type": "SearchAction",
+                target: `${absoluteUrl("/search")}?q={search_term_string}`,
+                "query-input": "required name=search_term_string",
+              },
+            }}
+          />
+          {/* Владелец сайта и его контакты из настроек; пустые поля не попадают в разметку. */}
+          <JsonLd
+            data={{
+              "@type": "Organization",
+              name: site.name,
+              url: absoluteUrl("/"),
+              logo: logo ? absoluteUrl(logo.url) : undefined,
+              telephone: settings.phone ? normalizePhone(settings.phone) : undefined,
+              email: settings.email || undefined,
+              address: settings.address || undefined,
+              sameAs: settings.socials.length
+                ? settings.socials.map((item) => item.url)
+                : undefined,
+            }}
+          />
+        </>
       ) : (
         <BreadcrumbsJsonLd items={crumbs} current={{ href, title: page.title }} />
       )}

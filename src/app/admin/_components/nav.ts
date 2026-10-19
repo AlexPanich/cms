@@ -7,6 +7,7 @@ import {
   type LucideIcon,
   MenuIcon,
   NewspaperIcon,
+  SettingsIcon,
   ShieldCheckIcon,
   TextQuoteIcon,
   UsersIcon,
@@ -79,6 +80,13 @@ export const ADMIN_NAV: AdminNavItem[] = [
     description: "Файлы для скачивания с сайта",
     icon: FileDownIcon,
     permission: "edit_media",
+  },
+  {
+    href: "/admin/settings",
+    label: "Настройки сайта",
+    description: "Логотип, контакты и соцсети",
+    icon: SettingsIcon,
+    permission: "edit_settings",
   },
   {
     href: "/admin/users",
