@@ -2,6 +2,7 @@ import {
   FileTextIcon,
   LayoutDashboardIcon,
   type LucideIcon,
+  MenuIcon,
   ShieldCheckIcon,
   UsersIcon,
 } from "lucide-react";
@@ -31,6 +32,13 @@ export const ADMIN_NAV: AdminNavItem[] = [
     description: "Дерево страниц сайта и их содержимое",
     icon: FileTextIcon,
     permission: "edit_pages",
+  },
+  {
+    href: "/admin/menus",
+    label: "Меню",
+    description: "Пункты меню сайта и их порядок",
+    icon: MenuIcon,
+    permission: "edit_menus",
   },
   {
     href: "/admin/users",

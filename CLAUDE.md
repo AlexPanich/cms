@@ -29,7 +29,7 @@ docker compose up --build # полный стек: db → migrate → app
 - `src/db/seed.ts`: идемпотентный сид. `src/db/errors.ts`: распознавание ошибок Postgres (Drizzle кладёт исходную ошибку в `cause`).
 - `src/server/<модуль>/`: серверная логика модуля. `schema.ts` — zod-схема ввода, `service.ts` — операции с БД (`server-only`), чистые функции отдельно, чтобы тестировать без БД.
 - Сервисы принимают первым аргументом `Executor` (`db()` или транзакцию), сами валидируют ввод через zod и бросают типизированную ошибку модуля (например, `PageError` с `code`).
-- `src/lib/`: общий код без зависимостей от сервера: права и `can()` (`permissions.ts`), `slugify`, длина пароля, `safeRedirectPath`, клиент Better Auth (`auth-client.ts`).
+- `src/lib/`: общий код без зависимостей от сервера: права и `can()` (`permissions.ts`), `slugify`, длина пароля, `safeRedirectPath`, `isSafeLinkUrl` (проверка href по белому списку протоколов), клиент Better Auth (`auth-client.ts`).
 - `src/server/auth/`: Better Auth (`auth.ts`, `getAuth()`), права пользователя из БД, `getCurrentUser`/`requirePermission`/`requirePagePermission`. Обработчик — `src/app/api/auth/[...all]/route.ts`.
 - `src/scripts/`: CLI-скрипты, запускаются через `tsx --conditions=react-server` (иначе падает импорт `server-only`).
 - `src/db/migrate.ts`: программный мигратор. В Docker его запускает отдельный сервис `migrate` (стадия `migrator` в Dockerfile).
@@ -47,6 +47,7 @@ docker compose up --build # полный стек: db → migrate → app
 - Списки — серверные таблицы с `?q=&page=` (`parsePage`, `parseSearch`, `likePattern` из `src/lib/pagination.ts`).
 - Компоненты shadcn — на Base UI: вместо `asChild` проп `render`, ссылка-кнопка — `ButtonLink`. Добавлять компоненты через `pnpm dlx shadcn@latest add <name>`.
 - Next 16 с `cacheComponents` не размонтирует посещённые страницы, а прячет их в React `<Activity>`: состояние форм сохраняется между визитами, и скрытая копия остаётся в DOM. Формы создания после успеха делают `form.reset()`; форма, зависящая от `searchParams`, получает `key` по этому параметру.
+- Порядок перетаскиванием — dnd-kit по образцу `pages/_components/page-tree.tsx` (оптимистичное обновление, откат при ошибке, объявления на русском); сервис принимает полный список id в новом порядке и проверяет, что это перестановка.
 - Rich text — `FormRichText` (TipTap, `src/components/admin/rich-text-editor.tsx`). Документ хранится как JSON и проверяется `richTextDocSchema` (`src/lib/rich-text.ts`).
 - Шаблоны страниц — реестр `PAGE_TEMPLATES` в `src/lib/templates.ts`.
 - Новый раздел добавляется в `ADMIN_NAV` (`src/app/admin/_components/nav.ts`) с его правом.

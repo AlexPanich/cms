@@ -26,9 +26,24 @@ export async function insertRootPages(slugs: string[]) {
   }
 }
 
+// Отдельное меню для теста, чтобы не трогать «main» и «footer». Пункты — ссылки с названиями labels.
+export async function insertMenu(key: string, labels: string[] = []): Promise<number> {
+  const sql = connect();
+  try {
+    const [{ id }] = await sql`insert into menus (key, title) values (${key}, ${key}) returning id`;
+    for (const [index, label] of labels.entries()) {
+      await sql`insert into menu_items (menu_id, url, label, sort) values (${id}, ${"/"}, ${label}, ${index})`;
+    }
+    return id;
+  } finally {
+    await sql.end();
+  }
+}
+
 export async function cleanupE2EData() {
   const sql = connect();
   try {
+    await sql`delete from menus where key like ${`${E2E_PREFIX}%`}`;
     // Один DELETE удаляет ветку целиком: внешний ключ parent_id проверяется в конце запроса.
     await sql`delete from pages where path like ${`${E2E_PREFIX}%`}`;
     await sql`delete from users where email like ${`${E2E_PREFIX}%`}`;
