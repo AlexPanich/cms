@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { expectToast, insertPublishedPage, resetSiteCache, setTextBody } from "./fixtures";
 
-test("правка на сайте: заголовок, текст страницы и текст в подвале", async ({ page }) => {
+test("правка на сайте: заголовок, блок страницы и текст в подвале", async ({ page }) => {
   const stamp = Date.now();
   const slug = `e2e-front-${stamp}`;
   await insertPublishedPage({ slug, title: `E2E Правка ${stamp}`, paragraphs: ["Старый абзац"] });
@@ -28,13 +28,19 @@ test("правка на сайте: заголовок, текст страни�
     await expectToast(page, "Заголовок сохранён");
     await expect(heading).toHaveText(`E2E Новый ${stamp}`);
 
-    await page.getByRole("button", { name: "Изменить текст страницы" }).click();
-    const editor = page.getByRole("textbox", { name: "Текст страницы" });
+    // Блок правится в диалоге с той же формой, что в админке.
+    await page.getByRole("button", { name: "Изменить блок «Текст»" }).click();
+    const dialog = page.getByRole("dialog", { name: "Блок «Текст»" });
+    const editor = dialog.getByRole("textbox", { name: "Текст" });
     await editor.click();
     await editor.press("ControlOrMeta+a");
+    await editor.press("Delete");
+    await dialog.getByRole("button", { name: "Сохранить" }).click();
+    await expect(dialog.getByText("Обязательное поле")).toBeVisible();
     await editor.pressSequentially("Новый абзац");
-    await page.getByRole("button", { name: "Сохранить" }).click();
-    await expectToast(page, "Текст страницы сохранён");
+    await dialog.getByRole("button", { name: "Сохранить" }).click();
+    await expectToast(page, "Блок сохранён");
+    await expect(dialog).toBeHidden();
     await expect(page.getByText("Новый абзац", { exact: true })).toBeVisible();
     await expect(page.getByText("Старый абзац")).toHaveCount(0);
 

@@ -1,5 +1,5 @@
 import type { BlockProps, BlockViews } from "@/components/site/blocks";
-import { EditableTextBlock } from "@/components/site/editable";
+import { EditableBlock } from "@/components/site/editable";
 import { RichText } from "@/components/site/rich-text";
 import { PROSE, WIDGETS } from "../rich-text";
 
@@ -8,9 +8,9 @@ import { PROSE, WIDGETS } from "../rich-text";
 
 function TextBlock({ block, pageId, context }: BlockProps<"text">) {
   return (
-    <EditableTextBlock pageId={pageId} block={block}>
+    <EditableBlock pageId={pageId} block={block}>
       <RichText doc={block.data.content} context={context} widgets={WIDGETS} className={PROSE} />
-    </EditableTextBlock>
+    </EditableBlock>
   );
 }
 

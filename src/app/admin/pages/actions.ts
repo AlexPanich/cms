@@ -2,6 +2,7 @@
 
 import { z } from "@/lib/zod";
 import { db } from "@/db";
+import { mediaUrl } from "@/lib/media";
 import { runAction } from "@/server/action";
 import type { PageInput } from "@/server/pages/schema";
 import {
@@ -10,6 +11,7 @@ import {
   reorderPages as reorderPageRecords,
   updatePage as updatePageRecord,
 } from "@/server/pages/service";
+import { saveUploadedImage } from "@/server/media/service";
 
 const pageId = z.number().int().positive();
 
@@ -34,4 +36,12 @@ export async function reorderPages(parentId: number | null, orderedIds: number[]
   return runAction("edit_pages", () =>
     reorderPageRecords(db(), pageId.nullable().parse(parentId), z.array(pageId).parse(orderedIds)),
   );
+}
+
+// Картинку для блока загружает редактор страниц, поэтому нужно право на страницы.
+export async function uploadPageImage(formData: FormData) {
+  return runAction("edit_pages", async (user) => {
+    const image = await saveUploadedImage(db(), formData.get("file"), user.id);
+    return { id: image.id, url: mediaUrl(image.storageKey) };
+  });
 }

@@ -63,6 +63,19 @@ export async function getMedia(executor: Executor, id: number): Promise<Media | 
   return row ?? null;
 }
 
+// Адреса картинок по id — для превью в формах. Удалённых и документов в ответе нет.
+export async function listImageUrls(
+  executor: Executor,
+  ids: readonly number[],
+): Promise<Record<number, string>> {
+  if (ids.length === 0) return {};
+  const rows = await executor
+    .select({ id: media.id, storageKey: media.storageKey })
+    .from(media)
+    .where(and(inArray(media.id, [...ids]), eq(media.kind, "image")));
+  return Object.fromEntries(rows.map((row) => [row.id, mediaUrl(row.storageKey)]));
+}
+
 // Для ссылок на картинку из других модулей: блокирует строку на чтение, чтобы её
 // не удалили до конца транзакции. field — поле формы для сообщения об ошибке.
 export async function assertImageExists(tx: Tx, id: number, field: string): Promise<void> {

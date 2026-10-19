@@ -13,7 +13,7 @@ export default async function NewPagePage({ searchParams }: PageProps<"/admin/pa
   await requirePagePermission("edit_pages", "/admin/pages/new");
   const { parent } = await searchParams;
   const [tree, galleries] = await Promise.all([getPageTree(db()), listGalleryOptions(db())]);
-  const parents = flattenTree(tree);
+  const parents = flattenTree(tree).map(({ id, title, depth }) => ({ id, title, depth }));
 
   // ?parent=<id> из кнопки «Добавить подстраницу»; неизвестный id игнорируем.
   const requested = typeof parent === "string" ? Number(parent) : NaN;
@@ -25,7 +25,8 @@ export default async function NewPagePage({ searchParams }: PageProps<"/admin/pa
       {/* key: при переходе на другой ?parent= форма монтируется заново с новым родителем. */}
       <PageForm
         key={defaultParentId ?? "root"}
-        parents={parents.map(({ id, title, depth }) => ({ id, title, depth }))}
+        parents={parents}
+        linkPages={parents}
         defaultParentId={defaultParentId}
         galleries={galleries}
       />

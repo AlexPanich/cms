@@ -42,7 +42,7 @@ export function resolveBlockVariant(type: string, variant: string | null | undef
 export const MAX_BLOCKS = 100;
 
 // id блока создаёт редактор; по нему правка на сайте находит блок на странице.
-const BLOCK_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
+export const BLOCK_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 
 export const blockSchema = z
   .object({
