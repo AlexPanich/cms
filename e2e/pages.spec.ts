@@ -5,6 +5,9 @@ test("страница с текстом, подстраница и пересч
   const stamp = Date.now();
   const title = `E2E Раздел ${stamp}`;
   const slug = `e2e-razdel-${stamp}`;
+  // Уникальное имя: при повторе теста подстраница от прошлой попытки ещё в базе.
+  const child = `Дочерняя ${stamp}`;
+  const childSlug = `dochernyaya-${stamp}`;
 
   await page.goto("/admin/pages/new");
   await page.getByLabel("Заголовок", { exact: true }).fill(title);
@@ -23,11 +26,11 @@ test("страница с текстом, подстраница и пересч
 
   await page.getByRole("link", { name: `Добавить подстраницу в «${title}»` }).click();
   await expect(page.getByRole("combobox", { name: "Родительская страница" })).toContainText(title);
-  await page.getByLabel("Заголовок", { exact: true }).fill("Дочерняя");
+  await page.getByLabel("Заголовок", { exact: true }).fill(child);
   await page.getByLabel("Заголовок", { exact: true }).blur();
   await page.getByRole("button", { name: "Создать страницу" }).click();
   await expectToast(page, "Страница создана");
-  await expect(page.getByText(`/${slug}/dochernyaya`)).toBeVisible();
+  await expect(page.getByText(`/${slug}/${childSlug}`)).toBeVisible();
 
   await page.getByRole("link", { name: title, exact: true }).click();
   await expect(page.getByRole("textbox", { name: "Содержимое" })).toContainText("Первый абзац");
@@ -49,7 +52,7 @@ test("страница с текстом, подстраница и пересч
   await page.keyboard.press("Escape");
 
   await page.goto("/admin/pages");
-  await expect(page.getByText(`/${slug}-new/dochernyaya`)).toBeVisible();
+  await expect(page.getByText(`/${slug}-new/${childSlug}`)).toBeVisible();
 
   // Опубликованная страница видна на сайте по новому адресу, старый адрес — 404.
   await page.goto(`/${slug}-new`);
@@ -58,14 +61,14 @@ test("страница с текстом, подстраница и пересч
   expect((await page.request.get(`/${slug}`)).status()).toBe(404);
 
   // Подстраница создана черновиком: на сайте её нет, пока не опубликуют.
-  expect((await page.request.get(`/${slug}-new/dochernyaya`)).status()).toBe(404);
+  expect((await page.request.get(`/${slug}-new/${childSlug}`)).status()).toBe(404);
   await page.goto("/admin/pages");
-  await page.getByRole("link", { name: "Дочерняя", exact: true }).click();
+  await page.getByRole("link", { name: child, exact: true }).click();
   await page.getByRole("checkbox", { name: "Опубликована" }).click();
   await page.getByRole("button", { name: "Сохранить" }).click();
   await expectToast(page, "Страница сохранена");
-  await page.goto(`/${slug}-new/dochernyaya`);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Дочерняя");
+  await page.goto(`/${slug}-new/${childSlug}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(child);
 });
 
 test("порядок страниц меняется перетаскиванием с клавиатуры", async ({ page }) => {

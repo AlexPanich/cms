@@ -140,6 +140,7 @@ export function uniqueEmail(label: string) {
   return `${E2E_PREFIX}${label}-${Date.now()}@example.test`;
 }
 
+// first(): предыдущий тост с тем же текстом может ещё не исчезнуть, и их на экране два.
 export async function expectToast(page: Page, text: string) {
-  await expect(page.getByText(text, { exact: true })).toBeVisible();
+  await expect(page.getByText(text, { exact: true }).first()).toBeVisible();
 }
