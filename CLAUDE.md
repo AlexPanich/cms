@@ -69,6 +69,8 @@ docker compose up --build # полный стек: db → migrate → app
 - Новый виджет в контенте: узел TipTap в редакторе (по образцу `src/components/admin/gallery-node.tsx`), вывод в реестре `NODES` (`src/components/site/rich-text.tsx`), загрузка данных в `loadContentContext` (`src/server/site/content.ts`). Документ — это данные: узлы не из реестра не выводятся.
 - Тексты лейаута — `SITE_TEXTS` (`src/lib/site.ts`), их создаёт сид.
 - Данные для публичных страниц читаются только через `src/server/site/cached.ts` (`"use cache"` + `cacheTag` по типу данных). Кеш сбрасывает `runAction` по `SITE_CACHE_TAGS_BY_PERMISSION` (`src/lib/site-cache.ts`): новый тип данных — новый тег и строка в этой карте. Чтение по пути или slug — только для адресов из `cachedRouteIndex`, иначе любой запрос на несуществующий адрес станет записью в кеше.
+- Правка на сайте: белый список полей — `frontEditInputSchema` (`src/server/front-edit/schema.ts`), новое поле добавляется туда и в сервис. На странице — серверные обёртки из `(site)/_components/editable.tsx`: редактор выводится только пользователю с `edit_from_front`.
+- Тяжёлый клиентский код, нужный не всем посетителям, подключай через `next/dynamic` (как `front-edit-lazy.tsx`): Next грузит на каждую страницу все клиентские модули, импортированные в сегменте, даже если они не отрендерены.
 - Правки в БД в обход админки (SQL, E2E-фикстуры) сайт не увидит до сброса кеша: `POST /api/site-cache`, в E2E — `resetSiteCache(page)`.
 
 ## Правила
@@ -116,7 +118,7 @@ docker compose up --build # полный стек: db → migrate → app
 3. ✅ Вход (Better Auth, регистрация закрыта) и проверка прав `can(user, permission)`.
 4. ✅ Админка (shadcn/ui, TanStack Table, dnd-kit, TipTap). Порядок: пользователи и роли → страницы → меню → тексты → статьи → галереи → документы.
 5. ✅ Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
-6. Редактирование на сайте: клиентский компонент для пользователей с правом `edit_from_front`, поля только из белого списка.
+6. ✅ Редактирование на сайте: клиентский компонент для пользователей с правом `edit_from_front`, поля только из белого списка.
 7. E2E-тесты (Playwright) и деплой в Docker.
 
 ## Особенности окружения

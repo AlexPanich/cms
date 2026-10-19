@@ -8,6 +8,7 @@ import { pageHref, type PublishedPage } from "@/server/site/service";
 import { JsonLd } from "@/components/site/json-ld";
 import { absoluteUrl } from "@/server/site/url";
 import { Breadcrumbs, BreadcrumbsJsonLd } from "../_components/breadcrumbs";
+import { EditablePageContent, EditablePageTitle } from "../_components/editable";
 import { getSiteInfo } from "../_lib/data";
 import { SectionMenu } from "../_components/section-menu";
 
@@ -44,10 +45,14 @@ async function PageBody({ page }: TemplateProps) {
           <Breadcrumbs items={ancestors} current={page.title} />
         </>
       )}
-      <h1 className="mb-6 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-        {page.title}
-      </h1>
-      <RichText doc={page.content} context={context} />
+      <EditablePageTitle pageId={page.id} value={page.title}>
+        <h1 className="mb-6 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+          {page.title}
+        </h1>
+      </EditablePageTitle>
+      <EditablePageContent pageId={page.id} value={page.content}>
+        <RichText doc={page.content} context={context} />
+      </EditablePageContent>
     </article>
   );
 }

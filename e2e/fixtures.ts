@@ -92,6 +92,18 @@ export async function insertMenu(key: string, labels: string[] = []): Promise<nu
   }
 }
 
+// Меняет текст по ключу и возвращает прежний — чтобы тест мог вернуть общий текст сайта.
+export async function setTextBody(key: string, body: string): Promise<string> {
+  const sql = connect();
+  try {
+    const [previous] = await sql`select body from texts where key = ${key}`;
+    await sql`update texts set body = ${body}, published = true where key = ${key}`;
+    return previous.body;
+  } finally {
+    await sql.end();
+  }
+}
+
 export async function cleanupE2EData() {
   const sql = connect();
   try {

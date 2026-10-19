@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { cachedSiteMenu } from "@/server/site/cached";
 import { getSiteInfo } from "../_lib/data";
+import { EditableText } from "./editable";
 import { SiteNav } from "./site-nav";
 
 export async function SiteFooter() {
@@ -10,7 +11,9 @@ export async function SiteFooter() {
   return (
     <div className="text-muted-foreground mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-8 text-sm sm:flex-row sm:justify-between">
       {/* Текст простой: переводы строк сохраняются, HTML экранируется. */}
-      <p className="whitespace-pre-line">{site.footer || site.name}</p>
+      <EditableText textKey="footer" value={site.footer} multiline>
+        <p className="whitespace-pre-line">{site.footer || site.name}</p>
+      </EditableText>
       <SiteNav
         items={menu}
         label="Меню в подвале"

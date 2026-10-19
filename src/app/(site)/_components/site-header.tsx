@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { cachedSiteMenu } from "@/server/site/cached";
 import { getSiteInfo } from "../_lib/data";
+import { EditableText } from "./editable";
 import { SiteNav } from "./site-nav";
 
 export async function SiteHeader() {
@@ -11,9 +12,11 @@ export async function SiteHeader() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-8 gap-y-3 px-4 py-4">
-      <Link href="/" className="text-lg font-semibold tracking-tight">
-        {site.name}
-      </Link>
+      <EditableText textKey="site-name" value={site.name}>
+        <Link href="/" className="text-lg font-semibold tracking-tight">
+          {site.name}
+        </Link>
+      </EditableText>
       <div className="order-last w-full sm:order-none sm:w-auto sm:flex-1">
         <SiteNav
           items={menu}

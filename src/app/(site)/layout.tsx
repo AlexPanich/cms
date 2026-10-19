@@ -1,7 +1,9 @@
 import type { Viewport } from "next";
 import { connection } from "next/server";
+import { FrontEditProvider } from "./_components/front-edit-lazy";
 import { SiteFooter } from "./_components/site-footer";
 import { SiteHeader } from "./_components/site-header";
+import { getFrontEditor } from "./_lib/data";
 
 // Публичный сайт рендерится целиком до отправки ответа, без стриминга и без <Suspense>
 // (подробно — в CLAUDE.md): метаданные попадают в <head>, а текст — сразу в HTML, а не
@@ -15,8 +17,9 @@ export async function generateViewport(): Promise<Viewport> {
   return {};
 }
 
-export default function SiteLayout({ children }: LayoutProps<"/">) {
-  return (
+export default async function SiteLayout({ children }: LayoutProps<"/">) {
+  const editor = await getFrontEditor();
+  const site = (
     <div className="flex min-h-full flex-1 flex-col">
       <a
         href="#content"
@@ -34,5 +37,10 @@ export default function SiteLayout({ children }: LayoutProps<"/">) {
         <SiteFooter />
       </footer>
     </div>
+  );
+  return editor ? (
+    <FrontEditProvider canOpenAdmin={editor.canOpenAdmin}>{site}</FrontEditProvider>
+  ) : (
+    site
   );
 }
