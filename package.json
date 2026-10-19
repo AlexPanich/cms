@@ -18,7 +18,8 @@
     "db:seed": "tsx src/db/seed.ts",
     "blocks:catalog": "tsx src/scripts/blocks-catalog.ts",
     "user:create-admin": "tsx --conditions=react-server src/scripts/create-admin.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "theme:screenshots": "SCREENSHOTS_DIR=test-results/screenshots playwright test e2e/screenshots.spec.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
