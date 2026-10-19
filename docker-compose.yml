@@ -1,5 +1,10 @@
 # Локальная разработка: `docker compose up -d db` и `pnpm dev`.
 # Полный стек как в продакшене: `docker compose up --build`.
+x-app-env: &app-env
+  DATABASE_URL: postgres://${POSTGRES_USER:-cms}:${POSTGRES_PASSWORD:-cms}@db:5432/${POSTGRES_DB:-cms}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Задайте BETTER_AUTH_SECRET в .env (openssl rand -base64 32)}
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+
 services:
   db:
     image: postgres:17-alpine
@@ -21,8 +26,7 @@ services:
     build:
       context: .
       target: migrator
-    environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-cms}:${POSTGRES_PASSWORD:-cms}@db:5432/${POSTGRES_DB:-cms}
+    environment: *app-env
     depends_on:
       db:
         condition: service_healthy
@@ -31,8 +35,7 @@ services:
     build:
       context: .
       target: runner
-    environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-cms}:${POSTGRES_PASSWORD:-cms}@db:5432/${POSTGRES_DB:-cms}
+    environment: *app-env
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:

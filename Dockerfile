@@ -10,7 +10,9 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
 # Образ для одноразового запуска миграций и сида (нужны tsx и drizzle-orm из devDependencies).
+# Здесь же запускается создание администратора: docker compose run --rm migrate pnpm user:create-admin
 FROM deps AS migrator
+COPY tsconfig.json ./
 COPY src ./src
 COPY drizzle ./drizzle
 CMD ["sh", "-c", "pnpm exec tsx src/db/migrate.ts && pnpm exec tsx src/db/seed.ts"]

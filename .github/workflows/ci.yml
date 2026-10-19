@@ -20,6 +20,8 @@ jobs:
           --health-cmd "pg_isready -U cms" --health-interval 5s --health-timeout 3s --health-retries 10
     env:
       DATABASE_URL: postgres://cms:cms@localhost:5432/cms
+      BETTER_AUTH_SECRET: ci-secret-not-used-in-production-0123456789
+      BETTER_AUTH_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

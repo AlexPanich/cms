@@ -23,3 +23,10 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   edit_media: "Медиа: изображения, галереи, документы",
   edit_from_front: "Редактирование на сайте",
 };
+
+export function can(
+  user: { permissions: ReadonlySet<Permission> } | null | undefined,
+  permission: Permission,
+): boolean {
+  return user?.permissions.has(permission) ?? false;
+}

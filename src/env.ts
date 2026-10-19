@@ -4,6 +4,10 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   STORAGE_DIR: z.string().min(1).default("./storage"),
+  // Подписывает cookie сессий. Сгенерировать: openssl rand -base64 32
+  BETTER_AUTH_SECRET: z.string().min(32, "Минимум 32 символа"),
+  // Публичный адрес приложения, с которого браузер ходит в /api/auth.
+  BETTER_AUTH_URL: z.url({ protocol: /^https?$/ }),
 });
 
 export type Env = z.infer<typeof envSchema>;

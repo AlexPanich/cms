@@ -13,15 +13,17 @@
 
 ```bash
 cp .env.example .env      # если порт 5432 занят, поменяйте POSTGRES_PORT и DATABASE_URL
+# в .env впишите BETTER_AUTH_SECRET: openssl rand -base64 32
 pnpm install
 docker compose up -d db   # только PostgreSQL
-pnpm db:migrate
-pnpm dev                  # http://localhost:3000
+pnpm db:migrate && pnpm db:seed
+pnpm user:create-admin --email admin@example.com
+pnpm dev                  # http://localhost:3000, админка — /admin
 ```
 
 Проверки: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm format:check`.
 
-Изменили схему в `src/db/schema.ts`, значит нужно выполнить `pnpm db:generate`, затем `pnpm db:migrate`.
+Изменили схему в `src/db/schema/`, значит нужно выполнить `pnpm db:generate`, затем `pnpm db:migrate`.
 
 ## Полный стек в Docker
 
@@ -29,4 +31,6 @@ pnpm dev                  # http://localhost:3000
 docker compose up --build
 ```
 
-Поднимаются три сервиса: `db`, `migrate` (применяет миграции и завершается) и `app` на порту `APP_PORT` (по умолчанию 3000). Загруженные файлы хранятся в томе `storage`. Состояние сервиса отдаёт `GET /api/health`.
+Нужен `.env` с `BETTER_AUTH_SECRET` (и `BETTER_AUTH_URL`, если сайт открывается не с `http://localhost:3000`). Первый администратор: `docker compose run --rm migrate pnpm user:create-admin --email admin@example.com`.
+
+Поднимаются три сервиса: `db`, `migrate` (применяет миграции и сид, затем завершается) и `app` на порту `APP_PORT` (по умолчанию 3000). Загруженные файлы хранятся в томе `storage`. Состояние сервиса отдаёт `GET /api/health`.

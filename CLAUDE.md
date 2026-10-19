@@ -11,6 +11,7 @@ pnpm dev                  # dev-сервер
 pnpm db:generate          # SQL-миграция из изменений src/db/schema/
 pnpm db:migrate           # применить миграции
 pnpm db:seed              # системные роли и меню (идемпотентно)
+pnpm user:create-admin --email admin@example.com   # первый администратор (пароль спросит)
 pnpm lint && pnpm typecheck && pnpm test && pnpm format:check   # всё, что гоняет CI
 pnpm build
 docker compose up --build # полный стек: db → migrate → app
@@ -27,7 +28,9 @@ docker compose up --build # полный стек: db → migrate → app
 - `src/db/seed.ts`: идемпотентный сид. `src/db/errors.ts`: распознавание ошибок Postgres (Drizzle кладёт исходную ошибку в `cause`).
 - `src/server/<модуль>/`: серверная логика модуля. `schema.ts` — zod-схема ввода, `service.ts` — операции с БД (`server-only`), чистые функции отдельно, чтобы тестировать без БД.
 - Сервисы принимают первым аргументом `Executor` (`db()` или транзакцию), сами валидируют ввод через zod и бросают типизированную ошибку модуля (например, `PageError` с `code`).
-- `src/lib/`: общий код без зависимостей от сервера: права (`permissions.ts`), `slugify`.
+- `src/lib/`: общий код без зависимостей от сервера: права и `can()` (`permissions.ts`), `slugify`, длина пароля, `safeRedirectPath`, клиент Better Auth (`auth-client.ts`).
+- `src/server/auth/`: Better Auth (`auth.ts`, `getAuth()`), права пользователя из БД, `getCurrentUser`/`requirePermission`/`requirePagePermission`. Обработчик — `src/app/api/auth/[...all]/route.ts`.
+- `src/scripts/`: CLI-скрипты, запускаются через `tsx --conditions=react-server` (иначе падает импорт `server-only`).
 - `src/db/migrate.ts`: программный мигратор. В Docker его запускает отдельный сервис `migrate` (стадия `migrator` в Dockerfile).
 - Route handlers и страницы, которые ходят в БД, должны вызывать `await connection()` из `next/server`. Иначе при `cacheComponents` Next попытается пререндерить их на сборке.
 - Тесты лежат рядом с кодом: `src/**/*.test.ts` (Vitest). Алиас `@/*` указывает на `src/*`.
@@ -37,7 +40,11 @@ docker compose up --build # полный стек: db → migrate → app
 
 - Любой ввод (формы, server actions, query-параметры) валидируется zod-схемой.
 - Изменение данных только через server actions или POST. GET-запросы ничего не меняют.
-- Каждое действие в админке проверяет конкретное право (`edit_pages` и т. п.), а не только факт входа.
+- Каждое действие в админке проверяет конкретное право (`edit_pages` и т. п.), а не только факт входа:
+  страница — `await requirePagePermission("edit_pages", "/admin/pages")`, server action и route handler — `await requirePermission(...)` первой строкой.
+  Проверка в `admin/layout.tsx` и `proxy.ts` не защищает: layout не перерисовывается при переходах, а proxy смотрит только на наличие cookie.
+- Текущий пользователь — `getCurrentUser()` из `src/server/auth/session.ts` (кешируется на запрос). Проверка права в UI — `can(user, permission)`.
+- Страницы, читающие сессию, `headers()` или `searchParams`, оборачивают динамическую часть в `<Suspense>` — этого требует `cacheComponents`.
 - Никаких динамических импортов и создания классов по имени из пользовательских данных. Виджеты в контенте берутся только из явного реестра.
 - Загруженные файлы хранятся в `STORAGE_DIR` вне `public/`, расширения проверяются по белому списку, отдаются через обработчик.
 - SQL пишется только через Drizzle или шаблон `sql\`\`` с параметрами, никакой конкатенации строк.
@@ -71,7 +78,7 @@ docker compose up --build # полный стек: db → migrate → app
 
 1. ✅ Каркас: Next.js, Drizzle, Docker, CI.
 2. ✅ Схема БД: страницы-дерево (пересчёт путей в транзакции), меню, `media`, тексты, статьи, пользователи, роли, права.
-3. Вход (Better Auth, регистрация закрыта) и проверка прав `can(user, permission)`.
+3. ✅ Вход (Better Auth, регистрация закрыта) и проверка прав `can(user, permission)`.
 4. Админка (shadcn/ui, TanStack Table, dnd-kit, TipTap). Порядок: пользователи и роли → страницы → меню → тексты → статьи → галереи → документы.
 5. Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
 6. Редактирование на сайте: клиентский компонент для пользователей с правом `edit_from_front`, поля только из белого списка.
