@@ -1,6 +1,6 @@
 import { richTextDocSchema } from "@/lib/rich-text";
 import { RESERVED_ROOT_SLUGS, SLUG_PATTERN } from "@/lib/slug";
-import { PAGE_TEMPLATE_KEYS } from "@/lib/templates";
+import { DEFAULT_PAGE_TEMPLATE, PAGE_TEMPLATE_KEYS } from "@/lib/templates";
 import { optionalText, z } from "@/lib/zod";
 
 export const pageInputSchema = z
@@ -11,7 +11,7 @@ export const pageInputSchema = z
     menuTitle: optionalText(100),
     metaDescription: optionalText(300),
     content: richTextDocSchema.nullable().default(null),
-    template: z.enum(PAGE_TEMPLATE_KEYS).default("default"),
+    template: z.enum(PAGE_TEMPLATE_KEYS).default(DEFAULT_PAGE_TEMPLATE),
     published: z.boolean().default(false),
     isHome: z.boolean().default(false),
   })

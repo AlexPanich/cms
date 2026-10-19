@@ -66,7 +66,7 @@ export type SearchProps = {
 export type ThemeModule = {
   // Оболочка всех публичных страниц: шапка, main, подвал.
   SiteLayout: ComponentType<SiteLayoutProps>;
-  // Лейаут для каждого шаблона страницы из src/lib/templates.ts.
+  // Лейаут для каждого шаблона из src/theme/page-templates.ts.
   templates: Record<PageTemplate, ComponentType<PageTemplateProps>>;
   ArticleList: ComponentType<ArticleListProps>;
   Article: ComponentType<ArticleProps>;

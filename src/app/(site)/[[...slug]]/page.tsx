@@ -3,7 +3,7 @@ import { permanentRedirect } from "next/navigation";
 import { connection } from "next/server";
 import { BreadcrumbsJsonLd } from "@/components/site/breadcrumbs-json-ld";
 import { JsonLd } from "@/components/site/json-ld";
-import { isPageTemplate } from "@/lib/templates";
+import { resolvePageTemplate } from "@/lib/templates";
 import { richTextExcerpt } from "@/lib/rich-text";
 import { cachedAncestors, cachedSectionMenu } from "@/server/site/cached";
 import { loadContentContext } from "@/server/site/content";
@@ -53,8 +53,7 @@ async function PageView({ page }: { page: PublishedPage }) {
     loadContentContext(page.content),
     getSiteInfo(),
   ]);
-  // Шаблон из БД мог пропасть из реестра — тогда стандартный.
-  const Template = theme.templates[isPageTemplate(page.template) ? page.template : "default"];
+  const Template = theme.templates[resolvePageTemplate(page.template)];
 
   return (
     <>
