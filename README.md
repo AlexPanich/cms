@@ -94,3 +94,11 @@ DATABASE_URL='<External Database URL>?sslmode=require' pnpm user:create-admin --
 
 `.mcp.json` подключает к Claude Code MCP-сервер Render (деплои, логи, метрики, сервисы). Ключ — в переменной окружения `RENDER_API_KEY` (Render → Account Settings → API Keys), в репозиторий он не попадает. Без переменной Claude Code покажет ошибку подключения этого сервера.
 
+## Релизы
+
+Версии ведёт [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release-please.yml`) по коммитам в формате Conventional Commits:
+
+1. После пуша в `master` с коммитами `feat:`, `fix:` или несовместимыми изменениями release-please открывает или обновляет release-PR: версия в `package.json` и `.release-please-manifest.json`, записи в `CHANGELOG.md`.
+2. Слияние release-PR создаёт тег `vX.Y.Z` и GitHub Release.
+
+В настройках репозитория должно быть включено Settings → Actions → General → «Allow GitHub Actions to create and approve pull requests». PR, созданный токеном Actions, не запускает CI — перед слиянием release-PR проверки можно запустить, закрыв и снова открыв его.

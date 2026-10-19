@@ -102,6 +102,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 - Область необязательна. Это модуль, который затронут коммитом: `pages`, `menus`, `media`, `auth`, `admin`, `db`, `docker` и т. п.
 - Описание на русском, в повелительном наклонении, со строчной буквы, без точки в конце: `feat(pages): добавить дерево страниц`.
 - Несовместимые изменения помечаются `!` после типа или области и строкой `BREAKING CHANGE:` в теле коммита.
+- От типа коммита зависит версия: release-please (`.github/workflows/release-please.yml`) по `feat:`, `fix:` и `!` в `master` ведёт release-PR, `CHANGELOG.md` и теги `vX.Y.Z`. `CHANGELOG.md` и версию в `package.json` руками не правь.
 - Один коммит — одно логическое изменение. Миграция в `drizzle/` коммитится вместе с изменением схемы.
 
 ## Legacy
