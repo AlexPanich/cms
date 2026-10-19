@@ -89,6 +89,9 @@ test("блоки каталога: картинка, ссылки, список 
   await page.goto(`/${slug}`);
   const main = page.getByRole("main");
   await expect(main.getByRole("heading", { name: `Добро пожаловать ${stamp}` })).toBeVisible();
+  // Страница начинается с «Первого экрана»: h1 есть, но не виден.
+  await expect(main.getByRole("heading", { level: 1 })).toHaveText(title);
+  await expect(main.getByRole("heading", { level: 1 })).toHaveClass(/sr-only/);
   await expect(main.getByRole("link", { name: "К статьям" })).toHaveAttribute("href", "/articles");
   await expect(main.getByRole("img", { name: "Синий фон" })).toBeVisible();
   await expect(main.getByRole("heading", { name: "Быстро", level: 3 })).toBeVisible();

@@ -6,14 +6,21 @@ import { Breadcrumbs } from "./breadcrumbs";
 import { SectionMenu } from "./section-menu";
 
 function PageBody({ page, crumbs, context }: PageTemplateProps) {
+  // Страница, которая начинается с «Первого экрана», открывается его заголовком. h1 остаётся
+  // для скринридеров и поисковиков, но не виден — иначе два крупных заголовка подряд.
+  const heroFirst = page.blocks[0]?.type === "hero";
   return (
     <article className="min-w-0">
       {!page.isHome && <Breadcrumbs items={crumbs} current={page.title} />}
-      <EditablePageTitle pageId={page.id} value={page.title}>
-        <h1 className="mb-6 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {page.title}
-        </h1>
-      </EditablePageTitle>
+      {heroFirst ? (
+        <h1 className="sr-only">{page.title}</h1>
+      ) : (
+        <EditablePageTitle pageId={page.id} value={page.title}>
+          <h1 className="mb-6 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+            {page.title}
+          </h1>
+        </EditablePageTitle>
+      )}
       <div className="space-y-12">
         <Blocks blocks={page.blocks} pageId={page.id} context={context} views={blockViews} />
       </div>
