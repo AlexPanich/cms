@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.github
+legacy
+storage
+coverage
+.env*
+!.env.example
+Dockerfile
+docker-compose.yml
