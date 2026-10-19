@@ -1,7 +1,8 @@
 import "server-only";
-import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { type SQL, and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { articles, galleries, galleryItems, media, menus, pages, texts } from "@/db/schema";
+import { validStoredBlocks } from "@/lib/blocks/registry";
 import { mediaUrl } from "@/lib/media";
 import { PAGE_SIZE, pageCount, parsePage } from "@/lib/pagination";
 import { classifySitePath } from "@/lib/site-routes";
@@ -15,18 +16,22 @@ const publishedPageFields = {
   path: pages.path,
   title: pages.title,
   metaDescription: pages.metaDescription,
-  content: pages.content,
+  blocks: pages.blocks,
   template: pages.template,
   isHome: pages.isHome,
   updatedAt: pages.updatedAt,
 };
+
+// Блоки, которые не проходят схему или чей тип убрали из реестра, на сайт не попадают.
+const withValidBlocks = <T extends { blocks: unknown[] }>(page: T | undefined) =>
+  page ? { ...page, blocks: validStoredBlocks(page.blocks) } : null;
 
 export async function getPublishedPage(executor: Executor, path: string) {
   const [page] = await executor
     .select(publishedPageFields)
     .from(pages)
     .where(and(eq(pages.path, path), eq(pages.published, true)));
-  return page ?? null;
+  return withValidBlocks(page);
 }
 
 export async function getHomePage(executor: Executor) {
@@ -34,7 +39,7 @@ export async function getHomePage(executor: Executor) {
     .select(publishedPageFields)
     .from(pages)
     .where(and(eq(pages.isHome, true), eq(pages.published, true)));
-  return page ?? null;
+  return withValidBlocks(page);
 }
 
 export type PublishedPage = NonNullable<Awaited<ReturnType<typeof getPublishedPage>>>;
@@ -158,6 +163,29 @@ export async function getGalleriesByKeys(executor: Executor, keys: readonly stri
   return result;
 }
 
+// Адреса и названия опубликованных страниц по id — для ссылок из блоков. Удалённой
+// или снятой с публикации страницы в ответе нет, и ссылка на неё не выводится.
+export async function getPageLinks(executor: Executor, ids: readonly number[]) {
+  const result = new Map<number, PageLink>();
+  if (ids.length === 0) return result;
+  const rows = await executor
+    .select({
+      id: pages.id,
+      path: pages.path,
+      isHome: pages.isHome,
+      title: pages.title,
+      menuTitle: pages.menuTitle,
+    })
+    .from(pages)
+    .where(and(inArray(pages.id, [...ids]), eq(pages.published, true)));
+  for (const row of rows) {
+    result.set(row.id, { href: pageHref(row), title: row.menuTitle ?? row.title });
+  }
+  return result;
+}
+
+export type PageLink = { href: string; title: string };
+
 export type PublicGallery = {
   title: string;
   images: { url: string; alt: string; width: number; height: number }[];
@@ -221,25 +249,22 @@ export async function searchSite(
 ) {
   const tsquery = sql`websearch_to_tsquery('russian', ${query})`;
   const headlineOptions = `StartSel=${HIGHLIGHT_START}, StopSel=${HIGHLIGHT_END}, MaxFragments=2, MaxWords=30, MinWords=10, FragmentDelimiter=" … "`;
-  // Текст документа TipTap — значения полей «text», как в поисковом векторе.
-  const plainText = (content: typeof pages.content | typeof articles.content) =>
-    sql`(select string_agg(value #>> '{}', ' ') from jsonb_array_elements(coalesce(jsonb_path_query_array(${content}, 'strict $.**.text'), '[]'::jsonb)))`;
-  const snippet = (
-    description: typeof pages.metaDescription | typeof articles.excerpt,
-    content: typeof pages.content | typeof articles.content,
-  ) =>
-    sql`ts_headline('russian', concat_ws(' ', ${description}, ${plainText(content)}), ${tsquery}, ${headlineOptions})`;
+  // Текст статьи — значения полей «text» документа TipTap, как в поисковом векторе.
+  // У страниц текст блоков уже собран в search_text.
+  const articleText = sql`(select string_agg(value #>> '{}', ' ') from jsonb_array_elements(coalesce(jsonb_path_query_array(${articles.content}, 'strict $.**.text'), '[]'::jsonb)))`;
+  const snippet = (description: SQL, text: SQL) =>
+    sql`ts_headline('russian', concat_ws(' ', ${description}, ${text}), ${tsquery}, ${headlineOptions})`;
 
   const matches = sql`
     select 'page' as kind, ${pages.title} as title,
       case when ${pages.isHome} then '/' else '/' || ${pages.path} end as href,
-      ${snippet(pages.metaDescription, pages.content)} as snippet,
+      ${snippet(sql`${pages.metaDescription}`, sql`${pages.searchText}`)} as snippet,
       ts_rank(${pages.searchVector}, ${tsquery}) as rank
     from ${pages}
     where ${pages.published} and ${pages.searchVector} @@ ${tsquery}
     union all
     select 'article', ${articles.title}, '/articles/' || ${articles.slug},
-      ${snippet(articles.excerpt, articles.content)},
+      ${snippet(sql`${articles.excerpt}`, articleText)},
       ts_rank(${articles.searchVector}, ${tsquery})
     from ${articles}
     where ${articles.published} and ${articles.searchVector} @@ ${tsquery}`;

@@ -76,7 +76,7 @@ export async function assertImageExists(tx: Tx, id: number, field: string): Prom
 
 const imageNotFound = () => new MediaError("media_not_found", "Изображение не найдено");
 
-// Сколько раз картинка используется: в галереях и как превью статей.
+// Сколько раз картинка используется: в галереях, как превью статей и в блоках страниц.
 // Новые ссылки на media из других модулей нужно добавить сюда.
 // Имена таблиц написаны явно: в запросе к одной таблице Drizzle пишет колонки без
 // таблицы, и в подзапросе "id" связался бы не с media, а с таблицей подзапроса.
@@ -86,7 +86,10 @@ const galleryUses = sql<number>`(
 const articleUses = sql<number>`(
   select count(*) from articles where articles.preview_id = media.id
 )`.mapWith(Number);
-const isUsed = sql`(${galleryUses} + ${articleUses}) > 0`;
+const pageUses = sql<number>`(
+  select count(*) from page_media where page_media.media_id = media.id
+)`.mapWith(Number);
+const isUsed = sql`(${galleryUses} + ${articleUses} + ${pageUses}) > 0`;
 
 // Файлы удаляем после фиксации транзакции: если она откатится, записи вернутся,
 // а файлы должны остаться на месте. Ошибка удаления файла не отменяет удаление записи.
@@ -108,7 +111,7 @@ export async function deleteUnusedImages(tx: Tx, ids: readonly number[]): Promis
   return deleted.map((row) => row.storageKey);
 }
 
-// Удаление из медиатеки: картинка пропадёт из галерей, а у статей уберётся превью.
+// Удаление из медиатеки: картинка пропадёт из галерей и блоков страниц, а у статей уберётся превью.
 export async function deleteImage(executor: Executor, id: number): Promise<void> {
   const [deleted] = await executor
     .delete(media)
@@ -155,6 +158,7 @@ export async function listImages(
         createdAt: media.createdAt,
         galleryUses,
         articleUses,
+        pageUses,
       })
       .from(media)
       .where(where)

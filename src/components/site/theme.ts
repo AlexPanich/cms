@@ -7,6 +7,7 @@ import type {
   SearchResult,
   SiteMenuItem,
 } from "@/server/site/service";
+import type { BlockViews } from "./blocks";
 import type { ContentContext } from "./rich-text";
 
 // Контракт темы. Ядро (src/app/(site)) загружает данные, ставит метаданные и JSON-LD,
@@ -68,6 +69,9 @@ export type ThemeModule = {
   SiteLayout: ComponentType<SiteLayoutProps>;
   // Лейаут для каждого шаблона из src/theme/page-templates.ts.
   templates: Record<PageTemplate, ComponentType<PageTemplateProps>>;
+  // Вид каждого блока из реестра (src/lib/blocks): каталог ядра и блоки темы. Шаблон
+  // выводит блоки страницы через <Blocks views={…}> из src/components/site/blocks.tsx.
+  blocks: BlockViews;
   ArticleList: ComponentType<ArticleListProps>;
   Article: ComponentType<ArticleProps>;
   Search: ComponentType<SearchProps>;

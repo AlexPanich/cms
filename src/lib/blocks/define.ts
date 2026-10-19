@@ -16,6 +16,11 @@ type Common = {
   help?: string;
 };
 
+// Схема поля. Вход описан так же, как выход: форма всегда передаёт полное значение, а данные
+// из БД проверяются как unknown (blockSchema). Иначе вход был бы unknown, и react-hook-form
+// не вывел бы поля формы.
+type FieldSchema<T> = z.ZodType<T, T>;
+
 // Необязательные поля хранят null, если не заполнены.
 type Opt<R extends boolean, T> = R extends true ? T : T | null;
 
@@ -24,13 +29,13 @@ export type TextField = Common & {
   required: boolean;
   max: number;
   multiline: boolean;
-  schema: z.ZodType<string>;
+  schema: FieldSchema<string>;
 };
 
 export type RichTextField<R extends boolean = boolean> = Common & {
   kind: "richText";
   required: R;
-  schema: z.ZodType<Opt<R, RichTextDoc>>;
+  schema: FieldSchema<Opt<R, RichTextDoc>>;
 };
 
 // alt пустой — берётся из карточки картинки в медиатеке.
@@ -41,7 +46,7 @@ export type ImageField<R extends boolean = boolean> = Common & {
   required: R;
   // Пропорции (ширина / высота), в которые тема кадрирует картинку; null — как есть.
   aspect: number | null;
-  schema: z.ZodType<Opt<R, ImageValue>>;
+  schema: FieldSchema<Opt<R, ImageValue>>;
 };
 
 // Ссылка на страницу хранит id: адрес страницы может измениться. Если страницу удалили
@@ -52,7 +57,7 @@ export type LinkValue =
 export type LinkField<R extends boolean = boolean> = Common & {
   kind: "link";
   required: R;
-  schema: z.ZodType<Opt<R, LinkValue>>;
+  schema: FieldSchema<Opt<R, LinkValue>>;
 };
 
 export type ListField<F extends Fields = Fields> = Common & {
@@ -62,7 +67,7 @@ export type ListField<F extends Fields = Fields> = Common & {
   max: number;
   // Название одного элемента в форме: «Карточка», «Вопрос».
   itemLabel: string;
-  schema: z.ZodType<FieldsData<F>[]>;
+  schema: FieldSchema<FieldsData<F>[]>;
 };
 
 export type SelectOption<V extends string = string> = { value: V; label: string };
@@ -71,13 +76,13 @@ export type SelectField<V extends string = string> = Common & {
   kind: "select";
   options: readonly SelectOption<V>[];
   default: V;
-  schema: z.ZodType<V>;
+  schema: FieldSchema<V>;
 };
 
 export type BooleanField = Common & {
   kind: "boolean";
   default: boolean;
-  schema: z.ZodType<boolean>;
+  schema: FieldSchema<boolean>;
 };
 
 export type Field =
@@ -138,7 +143,14 @@ export const field = {
     if (required) schema = schema.min(1, REQUIRED);
     // prefault, а не default: значение default zod не проверяет, и обязательное поле
     // без значения прошло бы пустой строкой. Так же у списка с min.
-    return { ...common, kind: "text", required, max, multiline, schema: schema.prefault("") };
+    return {
+      ...common,
+      kind: "text",
+      required,
+      max,
+      multiline,
+      schema: schema.prefault("") as FieldSchema<string>,
+    };
   },
 
   richText<const R extends boolean = false>(options: Common & { required?: R }): RichTextField<R> {
@@ -147,7 +159,7 @@ export const field = {
       ...common,
       kind: "richText",
       required,
-      schema: optional(richTextDocSchema, required) as z.ZodType<Opt<R, RichTextDoc>>,
+      schema: optional(richTextDocSchema, required) as FieldSchema<Opt<R, RichTextDoc>>,
     };
   },
 
@@ -160,7 +172,7 @@ export const field = {
       kind: "image",
       required,
       aspect,
-      schema: optional(imageValueSchema, required) as z.ZodType<Opt<R, ImageValue>>,
+      schema: optional(imageValueSchema, required) as FieldSchema<Opt<R, ImageValue>>,
     };
   },
 
@@ -170,7 +182,7 @@ export const field = {
       ...common,
       kind: "link",
       required,
-      schema: optional(linkValueSchema, required) as z.ZodType<Opt<R, LinkValue>>,
+      schema: optional(linkValueSchema, required) as FieldSchema<Opt<R, LinkValue>>,
     };
   },
 
@@ -189,7 +201,7 @@ export const field = {
       min,
       max,
       itemLabel,
-      schema: schema as unknown as z.ZodType<FieldsData<F>[]>,
+      schema: schema as unknown as FieldSchema<FieldsData<F>[]>,
     };
   },
 
@@ -204,13 +216,18 @@ export const field = {
       kind: "select",
       options: list,
       default: fallback,
-      schema: z.enum(values).catch(fallback) as unknown as z.ZodType<V>,
+      schema: z.enum(values).catch(fallback) as unknown as FieldSchema<V>,
     };
   },
 
   boolean(options: Common & { default?: boolean }): BooleanField {
     const { default: fallback = false, ...common } = options;
-    return { ...common, kind: "boolean", default: fallback, schema: z.boolean().default(fallback) };
+    return {
+      ...common,
+      kind: "boolean",
+      default: fallback,
+      schema: z.boolean().default(fallback) as FieldSchema<boolean>,
+    };
   },
 };
 
@@ -225,7 +242,7 @@ export type BlockDefinition<T extends string = string, F extends Fields = Fields
   // Для редактора и дизайнера: что это за блок и когда его брать.
   description: string;
   fields: F;
-  schema: z.ZodType<FieldsData<F>>;
+  schema: FieldSchema<FieldsData<F>>;
 };
 
 export function defineBlock<const T extends string, F extends Fields>(definition: {
@@ -239,7 +256,7 @@ export function defineBlock<const T extends string, F extends Fields>(definition
   }
   return {
     ...definition,
-    schema: fieldsSchema(definition.fields) as unknown as z.ZodType<FieldsData<F>>,
+    schema: fieldsSchema(definition.fields) as unknown as FieldSchema<FieldsData<F>>,
   };
 }
 

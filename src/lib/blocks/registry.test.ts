@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   type Block,
+  blocksExcerpt,
   blocksSchema,
   blocksSearchText,
+  collectBlockGalleryKeys,
   collectBlockMediaIds,
   collectBlockPageIds,
   parseStoredBlocks,
   resolveBlockVariant,
+  validStoredBlocks,
 } from "./registry";
 
 // Тема с собственным блоком: проверяем, что реестр подхватывает блоки и варианты темы.
@@ -119,6 +122,12 @@ describe("parseStoredBlocks", () => {
     ]);
   });
 
+  it("для сайта — только блоки, прошедшие схему", () => {
+    expect(validStoredBlocks([{ id: "b3", type: "slider", data: {} }, team])).toMatchObject([
+      { id: "b2" },
+    ]);
+  });
+
   it("не массив — пустой список", () => {
     expect(parseStoredBlocks(null)).toEqual([]);
     expect(parseStoredBlocks({ type: "doc" })).toEqual([]);
@@ -138,5 +147,32 @@ describe("данные из полей блоков", () => {
   it("id картинок и страниц без повторов", () => {
     expect(collectBlockMediaIds(blocks)).toEqual([3, 4]);
     expect(collectBlockPageIds(blocks)).toEqual([7, 8]);
+  });
+
+  it("описание по умолчанию — из первого непустого текста", () => {
+    const [, teamBlock] = blocks;
+    expect(blocksExcerpt(blocks)).toBe("Вступление");
+    expect(blocksExcerpt([teamBlock!])).toBe("Команда");
+    expect(blocksExcerpt([])).toBeNull();
+  });
+
+  it("ключи галерей из rich text всех блоков", () => {
+    const withGalleries = blocksSchema.parse([
+      {
+        id: "g1",
+        type: "text",
+        data: {
+          content: { type: "doc", content: [{ type: "gallery", attrs: { key: "office" } }] },
+        },
+      },
+      {
+        ...team,
+        data: {
+          ...team.data,
+          about: { type: "doc", content: [{ type: "gallery", attrs: { key: "team" } }] },
+        },
+      },
+    ]);
+    expect(collectBlockGalleryKeys(withGalleries)).toEqual(["office", "team"]);
   });
 });

@@ -1,9 +1,16 @@
 import "server-only";
-import { asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { DomainError } from "@/server/errors";
 import type { Executor, Tx } from "@/db";
 import { isForeignKeyViolation, isUniqueViolation } from "@/db/errors";
-import { pages } from "@/db/schema";
+import { media, pageMedia, pages } from "@/db/schema";
+import {
+  type Block,
+  blockSchema,
+  blocksSearchText,
+  collectBlockMediaIds,
+  validStoredBlocks,
+} from "@/lib/blocks/registry";
 import { type PageInput, pageInputSchema } from "./schema";
 import { buildTree, isSameOrDescendantPath, joinPath } from "./tree";
 
@@ -16,7 +23,8 @@ export type PageErrorCode =
   | "path_taken"
   | "home_taken"
   | "has_children"
-  | "invalid_order";
+  | "invalid_order"
+  | "block_not_found";
 
 export class PageError extends DomainError<PageErrorCode> {}
 
@@ -54,6 +62,21 @@ async function lockParent(tx: Tx, parentId: number) {
   return parent;
 }
 
+// Поисковый текст пишется вместе с блоками, а картинки из них — в page_media для подсчёта
+// использования. Удалённую из медиатеки картинку блок не держит: её просто нет в page_media,
+// а на сайте блок выводится без неё.
+async function syncPageMedia(tx: Tx, pageId: number, blocks: readonly Block[]) {
+  await tx.delete(pageMedia).where(eq(pageMedia.pageId, pageId));
+  const ids = collectBlockMediaIds(blocks);
+  if (ids.length === 0) return;
+  await tx.insert(pageMedia).select(
+    tx
+      .select({ pageId: sql<number>`${pageId}::int`.as("page_id"), mediaId: media.id })
+      .from(media)
+      .where(and(inArray(media.id, ids), eq(media.kind, "image"))),
+  );
+}
+
 export async function createPage(executor: Executor, input: PageInput): Promise<Page> {
   const data = pageInputSchema.parse(input);
   return executor.transaction(async (tx) => {
@@ -62,8 +85,14 @@ export async function createPage(executor: Executor, input: PageInput): Promise<
     try {
       const [page] = await tx
         .insert(pages)
-        .values({ ...data, path: joinPath(parentPath, data.slug), sort })
+        .values({
+          ...data,
+          path: joinPath(parentPath, data.slug),
+          sort,
+          searchText: blocksSearchText(data.blocks),
+        })
         .returning();
+      await syncPageMedia(tx, page.id, data.blocks);
       return page;
     } catch (error) {
       throw toPageError(error);
@@ -100,9 +129,10 @@ export async function updatePage(executor: Executor, id: number, input: PageInpu
     try {
       const [page] = await tx
         .update(pages)
-        .set({ ...data, path, sort })
+        .set({ ...data, path, sort, searchText: blocksSearchText(data.blocks) })
         .where(eq(pages.id, id))
         .returning();
+      await syncPageMedia(tx, id, data.blocks);
 
       if (path !== current.path) {
         await tx
@@ -116,6 +146,43 @@ export async function updatePage(executor: Executor, id: number, input: PageInpu
     } catch (error) {
       throw toPageError(error);
     }
+  });
+}
+
+// Правка одного блока (правка на сайте): data проверяется схемой типа блока, остальные
+// блоки остаются как есть, даже если сейчас не проходят схему. publishedOnly — только
+// у опубликованной страницы.
+export async function updatePageBlock(
+  executor: Executor,
+  pageId: number,
+  blockId: string,
+  data: unknown,
+  { publishedOnly = false } = {},
+): Promise<void> {
+  await executor.transaction(async (tx) => {
+    const [page] = await tx
+      .select({ blocks: pages.blocks })
+      .from(pages)
+      .where(and(eq(pages.id, pageId), publishedOnly ? eq(pages.published, true) : undefined))
+      .for("update");
+    if (!page) throw new PageError("page_not_found", "Страница не найдена");
+
+    const index = page.blocks.findIndex(
+      (block) => (block as { id?: unknown } | null)?.id === blockId,
+    );
+    if (index === -1) {
+      throw new PageError("block_not_found", "Блок не найден — возможно, его удалили");
+    }
+    const blocks = page.blocks.with(
+      index,
+      blockSchema.parse({ ...(page.blocks[index] as object), data }),
+    );
+    const valid = validStoredBlocks(blocks);
+    await tx
+      .update(pages)
+      .set({ blocks, searchText: blocksSearchText(valid) })
+      .where(eq(pages.id, pageId));
+    await syncPageMedia(tx, pageId, valid);
   });
 }
 

@@ -7,11 +7,12 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import type { RichTextDoc } from "../../lib/rich-text";
 import { id, searchVectorSql, timestamps, tsvector } from "./columns";
+import { media } from "./media";
 
 export const pages = pgTable(
   "pages",
@@ -26,14 +27,20 @@ export const pages = pgTable(
     title: text().notNull(),
     menuTitle: text(),
     metaDescription: text(),
-    content: jsonb().$type<RichTextDoc>(),
+    // Блоки страницы: [{ id, type, variant, data }], data проверяется схемой типа блока
+    // (src/lib/blocks/registry.ts). Читаются через parseStoredBlocks: в БД может лежать
+    // блок, который больше не проходит схему или чей тип убрали из реестра.
+    blocks: jsonb().$type<unknown[]>().notNull().default([]),
+    // Текст блоков для поиска. Его пишет сервис при сохранении (blocksSearchText): из JSON
+    // блоков Postgres не знает, какие поля — текст.
+    searchText: text().notNull().default(""),
     // Ключ лейаута из реестра шаблонов в коде.
     template: text().notNull().default("default"),
     published: boolean().notNull().default(false),
     isHome: boolean().notNull().default(false),
     sort: integer().notNull().default(0),
     searchVector: tsvector().generatedAlwaysAs((): SQL =>
-      searchVectorSql(pages.title, pages.metaDescription, pages.content),
+      searchVectorSql(pages.title, pages.metaDescription, sql`${pages.searchText}`),
     ),
     ...timestamps,
   },
@@ -46,5 +53,23 @@ export const pages = pgTable(
     check("pages_slug_format", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     check("pages_not_own_parent", sql`${t.parentId} <> ${t.id}`),
     index("pages_search_idx").using("gin", t.searchVector),
+  ],
+);
+
+// Картинки из блоков страницы — для подсчёта использования media. Пишется сервисом
+// при сохранении блоков вместе с ними.
+export const pageMedia = pgTable(
+  "page_media",
+  {
+    pageId: integer()
+      .notNull()
+      .references(() => pages.id, { onDelete: "cascade" }),
+    mediaId: integer()
+      .notNull()
+      .references(() => media.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.pageId, t.mediaId] }),
+    index("page_media_media_idx").on(t.mediaId),
   ],
 );

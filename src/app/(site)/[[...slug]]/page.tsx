@@ -4,9 +4,9 @@ import { connection } from "next/server";
 import { BreadcrumbsJsonLd } from "@/components/site/breadcrumbs-json-ld";
 import { JsonLd } from "@/components/site/json-ld";
 import { resolvePageTemplate } from "@/lib/templates";
-import { richTextExcerpt } from "@/lib/rich-text";
+import { blocksExcerpt } from "@/lib/blocks/registry";
 import { cachedAncestors, cachedSectionMenu } from "@/server/site/cached";
-import { loadContentContext } from "@/server/site/content";
+import { loadBlocksContext } from "@/server/site/content";
 import { pageHref, type PublishedPage } from "@/server/site/service";
 import { absoluteUrl } from "@/server/site/url";
 import { theme } from "@/theme";
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!page) return siteMetadata({ title: "Страница не найдена", noindex: true });
   return siteMetadata({
     title: page.isHome ? undefined : page.title,
-    description: page.metaDescription ?? richTextExcerpt(page.content),
+    description: page.metaDescription ?? blocksExcerpt(page.blocks),
     path: pageHref(page),
   });
 }
@@ -50,7 +50,7 @@ async function PageView({ page }: { page: PublishedPage }) {
   const [crumbs, section, context, site] = await Promise.all([
     page.isHome ? [] : cachedAncestors(page.path),
     page.isHome ? null : cachedSectionMenu(page.path),
-    loadContentContext(page.content),
+    loadBlocksContext(page.blocks),
     getSiteInfo(),
   ]);
   const Template = theme.templates[resolvePageTemplate(page.template)];

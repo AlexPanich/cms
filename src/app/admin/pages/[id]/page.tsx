@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PageHeader } from "@/components/admin/page-header";
 import { db } from "@/db";
+import { validStoredBlocks } from "@/lib/blocks/registry";
 import { resolvePageTemplate } from "@/lib/templates";
 import { requirePagePermission } from "@/server/auth/session";
 import { listGalleryOptions } from "@/server/galleries/service";
+import type { PageInput } from "@/server/pages/schema";
 import { getPage, getPageTree } from "@/server/pages/service";
 import { flattenTree, subtreeIds } from "@/server/pages/tree";
 import { PageForm } from "../_components/page-form";
@@ -62,7 +64,11 @@ export default async function EditPagePage({ params }: PageProps<"/admin/pages/[
           title: page.title,
           menuTitle: page.menuTitle ?? "",
           metaDescription: page.metaDescription ?? "",
-          content: page.content,
+          content:
+            validStoredBlocks(page.blocks).find((block) => block.type === "text")?.data.content ??
+            null,
+          // Блоки — как в БД: форма меняет только первый блок «Текст».
+          blocks: page.blocks as NonNullable<PageInput["blocks"]>,
           // Шаблон могли убрать из реестра — тогда предлагаем стандартный.
           template: resolvePageTemplate(page.template),
           published: page.published,

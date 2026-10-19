@@ -1,5 +1,6 @@
 import type { ThemeModule } from "@/components/site/theme";
 import { Article, ArticleList } from "./articles";
+import { blockViews } from "./blocks/views";
 import { EmptySite, NotFound } from "./not-found";
 import { Search } from "./search";
 import { SiteLayout } from "./site-layout";
@@ -10,6 +11,7 @@ import { templates } from "./templates";
 export const theme: ThemeModule = {
   SiteLayout,
   templates,
+  blocks: blockViews,
   ArticleList,
   Article,
   Search,

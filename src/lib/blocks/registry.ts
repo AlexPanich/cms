@@ -1,4 +1,4 @@
-import { richTextPlainText } from "@/lib/rich-text";
+import { collectGalleryKeys, richTextPlainText, textExcerpt } from "@/lib/rich-text";
 import { z } from "@/lib/zod";
 import { BLOCK_VARIANTS, THEME_BLOCKS } from "@/theme/blocks";
 import { CORE_BLOCKS } from "./catalog";
@@ -101,6 +101,11 @@ export function parseStoredBlocks(raw: unknown): StoredBlock[] {
   });
 }
 
+// Только блоки, которые можно вывести на сайте.
+export function validStoredBlocks(raw: unknown): Block[] {
+  return parseStoredBlocks(raw).flatMap((item) => (item.ok ? [item.block] : []));
+}
+
 function* blockValues(blocks: readonly Block[]) {
   for (const block of blocks) {
     const definition = getBlockDefinition(block.type);
@@ -116,6 +121,29 @@ export function blocksSearchText(blocks: readonly Block[]): string {
     if (entry.kind === "richText") parts.push(richTextPlainText(entry.value));
   }
   return parts.filter(Boolean).join("\n");
+}
+
+// Описание страницы по умолчанию — из первого непустого текстового поля блоков.
+export function blocksExcerpt(blocks: readonly Block[], maxLength = 160): string | null {
+  for (const entry of blockValues(blocks)) {
+    const text =
+      entry.kind === "text"
+        ? entry.value.replace(/\s+/g, " ").trim()
+        : entry.kind === "richText"
+          ? richTextPlainText(entry.value)
+          : "";
+    if (text) return textExcerpt(text, maxLength);
+  }
+  return null;
+}
+
+// Ключи галерей из rich text всех блоков — чтобы загрузить их одним запросом до вывода.
+export function collectBlockGalleryKeys(blocks: readonly Block[]): string[] {
+  const keys = new Set<string>();
+  for (const entry of blockValues(blocks)) {
+    if (entry.kind === "richText") for (const key of collectGalleryKeys(entry.value)) keys.add(key);
+  }
+  return [...keys];
 }
 
 // id картинок из блоков — для подсчёта использования media.

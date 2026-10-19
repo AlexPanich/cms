@@ -71,13 +71,16 @@ export function richTextPlainText(doc: RichTextDoc | null): string {
   return parts.join("").replace(/\s+/g, " ").trim();
 }
 
-// Начало текста документа для meta description, если описание не задано: обрезка
-// по границе слова. Поисковики показывают около 160 символов.
-export function richTextExcerpt(doc: RichTextDoc | null, maxLength = 160): string | null {
-  const text = richTextPlainText(doc);
+// Начало текста для meta description, если описание не задано: обрезка по границе слова.
+// Поисковики показывают около 160 символов.
+export function textExcerpt(text: string, maxLength = 160): string | null {
   if (!text) return null;
   if (text.length <= maxLength) return text;
   const cut = text.slice(0, maxLength - 1);
   const lastSpace = cut.lastIndexOf(" ");
   return `${(lastSpace > maxLength / 2 ? cut.slice(0, lastSpace) : cut).replace(/[\s,.;:—-]+$/, "")}…`;
+}
+
+export function richTextExcerpt(doc: RichTextDoc | null, maxLength = 160): string | null {
+  return textExcerpt(richTextPlainText(doc), maxLength);
 }
