@@ -9,12 +9,11 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
-# Образ для одноразового запуска миграций (нужны tsx и drizzle-orm из devDependencies).
+# Образ для одноразового запуска миграций и сида (нужны tsx и drizzle-orm из devDependencies).
 FROM deps AS migrator
-COPY src/env.ts ./src/env.ts
-COPY src/db/migrate.ts ./src/db/migrate.ts
+COPY src ./src
 COPY drizzle ./drizzle
-CMD ["pnpm", "exec", "tsx", "src/db/migrate.ts"]
+CMD ["sh", "-c", "pnpm exec tsx src/db/migrate.ts && pnpm exec tsx src/db/seed.ts"]
 
 FROM deps AS builder
 COPY . .

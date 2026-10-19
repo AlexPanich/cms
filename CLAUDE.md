@@ -8,8 +8,9 @@ CMS на Next.js 16 + TypeScript + PostgreSQL. Переписываем со с�
 ```bash
 docker compose up -d db   # только PostgreSQL для локальной разработки
 pnpm dev                  # dev-сервер
-pnpm db:generate          # SQL-миграция из изменений src/db/schema.ts
+pnpm db:generate          # SQL-миграция из изменений src/db/schema/
 pnpm db:migrate           # применить миграции
+pnpm db:seed              # системные роли и меню (идемпотентно)
 pnpm lint && pnpm typecheck && pnpm test && pnpm format:check   # всё, что гоняет CI
 pnpm build
 docker compose up --build # полный стек: db → migrate → app
@@ -22,10 +23,15 @@ docker compose up --build # полный стек: db → migrate → app
 - `src/app/`: App Router. Публичный сайт и админка в одном приложении. В `next.config.ts` включены `cacheComponents` и `output: "standalone"`.
 - `src/env.ts`: переменные окружения через zod. Читать только через `env()`, не через `process.env` напрямую. `env()` ленивая, чтобы `next build` работал без БД.
 - `src/db/index.ts`: клиент Drizzle (postgres.js) через `db()`, это `server-only`. `casing: "snake_case"`: поля в TS в camelCase, колонки в БД в snake_case.
-- `src/db/schema.ts`: схема (пока пустая, заполняется на этапе 2).
+- `src/db/schema/`: схема по модулям (`pages`, `menus`, `media`, `content`, `users`), всё реэкспортируется из `index.ts`. Ограничения целостности (CHECK, уникальность, FK) живут в БД, а не только в коде.
+- `src/db/seed.ts`: идемпотентный сид. `src/db/errors.ts`: распознавание ошибок Postgres (Drizzle кладёт исходную ошибку в `cause`).
+- `src/server/<модуль>/`: серверная логика модуля. `schema.ts` — zod-схема ввода, `service.ts` — операции с БД (`server-only`), чистые функции отдельно, чтобы тестировать без БД.
+- Сервисы принимают первым аргументом `Executor` (`db()` или транзакцию), сами валидируют ввод через zod и бросают типизированную ошибку модуля (например, `PageError` с `code`).
+- `src/lib/`: общий код без зависимостей от сервера: права (`permissions.ts`), `slugify`.
 - `src/db/migrate.ts`: программный мигратор. В Docker его запускает отдельный сервис `migrate` (стадия `migrator` в Dockerfile).
 - Route handlers и страницы, которые ходят в БД, должны вызывать `await connection()` из `next/server`. Иначе при `cacheComponents` Next попытается пререндерить их на сборке.
 - Тесты лежат рядом с кодом: `src/**/*.test.ts` (Vitest). Алиас `@/*` указывает на `src/*`.
+- Интеграционные тесты ходят в настоящий Postgres из `.env`, поэтому перед `pnpm test` база должна быть поднята и смигрирована. Каждый тест оборачивается в `withRollback` из `src/test/db.ts` и ничего не оставляет в БД.
 
 ## Правила
 
@@ -64,7 +70,7 @@ docker compose up --build # полный стек: db → migrate → app
 Полный план с принятыми решениями и деталями по этапам лежит в [`docs/PLAN.md`](docs/PLAN.md). Перед началом этапа читай его. Когда этап готов, отмечай его ✅ и там, и здесь.
 
 1. ✅ Каркас: Next.js, Drizzle, Docker, CI.
-2. Схема БД: страницы-дерево (пересчёт путей в транзакции), меню, `media`, тексты, статьи, пользователи, роли, права.
+2. ✅ Схема БД: страницы-дерево (пересчёт путей в транзакции), меню, `media`, тексты, статьи, пользователи, роли, права.
 3. Вход (Better Auth, регистрация закрыта) и проверка прав `can(user, permission)`.
 4. Админка (shadcn/ui, TanStack Table, dnd-kit, TipTap). Порядок: пользователи и роли → страницы → меню → тексты → статьи → галереи → документы.
 5. Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
