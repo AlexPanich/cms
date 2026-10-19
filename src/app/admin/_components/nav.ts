@@ -3,6 +3,7 @@ import {
   LayoutDashboardIcon,
   type LucideIcon,
   MenuIcon,
+  NewspaperIcon,
   ShieldCheckIcon,
   TextQuoteIcon,
   UsersIcon,
@@ -47,6 +48,13 @@ export const ADMIN_NAV: AdminNavItem[] = [
     description: "Блоки текста для шаблонов: телефон, адрес, слоган",
     icon: TextQuoteIcon,
     permission: "edit_texts",
+  },
+  {
+    href: "/admin/articles",
+    label: "Статьи",
+    description: "Новости и публикации с превью",
+    icon: NewspaperIcon,
+    permission: "edit_articles",
   },
   {
     href: "/admin/users",

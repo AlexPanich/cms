@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { rm } from "node:fs/promises";
+import path from "node:path";
 import { expect, type Page } from "@playwright/test";
 import postgres from "postgres";
 
@@ -45,6 +47,16 @@ export async function cleanupE2EData() {
   try {
     await sql`delete from menus where key like ${`${E2E_PREFIX}%`}`;
     await sql`delete from texts where key like ${`${E2E_PREFIX}%`}`;
+    await sql`delete from articles where slug like ${`${E2E_PREFIX}%`}`;
+    // Файлы, загруженные пользователями E2E, — до удаления самих пользователей.
+    const files = await sql<{ storage_key: string }[]>`
+      delete from media
+      where uploaded_by in (select id from users where email like ${`${E2E_PREFIX}%`})
+      returning storage_key`;
+    const storageDir = path.resolve(process.env.STORAGE_DIR ?? "./storage");
+    for (const { storage_key } of files) {
+      await rm(path.join(storageDir, storage_key), { force: true });
+    }
     // Один DELETE удаляет ветку целиком: внешний ключ parent_id проверяется в конце запроса.
     await sql`delete from pages where path like ${`${E2E_PREFIX}%`}`;
     await sql`delete from users where email like ${`${E2E_PREFIX}%`}`;

@@ -49,6 +49,7 @@ docker compose up --build # полный стек: db → migrate → app
 - Next 16 с `cacheComponents` не размонтирует посещённые страницы, а прячет их в React `<Activity>`: состояние форм сохраняется между визитами, и скрытая копия остаётся в DOM. Формы создания после успеха делают `form.reset()`; форма, зависящая от `searchParams`, получает `key` по этому параметру.
 - Порядок перетаскиванием — dnd-kit по образцу `pages/_components/page-tree.tsx` (оптимистичное обновление, откат при ошибке, объявления на русском); сервис принимает полный список id в новом порядке и проверяет, что это перестановка.
 - Rich text — `FormRichText` (TipTap, `src/components/admin/rich-text-editor.tsx`). Документ хранится как JSON и проверяется `richTextDocSchema` (`src/lib/rich-text.ts`).
+- Загрузка картинки — поле `FormImageUpload` (`src/components/admin/image-upload.tsx`) и server action, который вызывает `saveUploadedImage` (`src/server/media/service.ts`). Файл не доверяем ни по имени, ни по MIME: формат определяет sharp, сохраняется перекодированный WebP. Адрес файла — `mediaUrl(storageKey)`, в разметке — `next/image`.
 - Шаблоны страниц — реестр `PAGE_TEMPLATES` в `src/lib/templates.ts`.
 - Новый раздел добавляется в `ADMIN_NAV` (`src/app/admin/_components/nav.ts`) с его правом.
 - В E2E искать элементы через `getByRole` (скрытые копии из `<Activity>` он пропускает, `getByLabel` — нет), а после `goto`/`reload` дожидаться содержимого: админка сначала отдаёт «Загрузка…» из `<Suspense>`.

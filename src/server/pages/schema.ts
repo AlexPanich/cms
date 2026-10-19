@@ -2,15 +2,7 @@ import { z } from "zod";
 import { richTextDocSchema } from "@/lib/rich-text";
 import { SLUG_PATTERN } from "@/lib/slug";
 import { PAGE_TEMPLATE_KEYS } from "@/lib/templates";
-
-const optionalText = (max: number) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .transform((value) => value || null)
-    .nullable()
-    .default(null);
+import { optionalText } from "@/lib/zod";
 
 export const pageInputSchema = z.object({
   parentId: z.number().int().positive().nullable(),
