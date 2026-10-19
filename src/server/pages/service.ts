@@ -1,5 +1,6 @@
 import "server-only";
 import { asc, eq, isNull, sql } from "drizzle-orm";
+import { DomainError } from "@/server/errors";
 import type { Executor, Tx } from "@/db";
 import { isForeignKeyViolation, isUniqueViolation } from "@/db/errors";
 import { pages } from "@/db/schema";
@@ -17,19 +18,11 @@ export type PageErrorCode =
   | "has_children"
   | "invalid_order";
 
-export class PageError extends Error {
-  constructor(
-    readonly code: PageErrorCode,
-    message: string,
-  ) {
-    super(message);
-    this.name = "PageError";
-  }
-}
+export class PageError extends DomainError<PageErrorCode> {}
 
 function toPageError(error: unknown): unknown {
   if (isUniqueViolation(error, "pages_path_unique")) {
-    return new PageError("path_taken", "Страница с таким адресом уже существует");
+    return new PageError("path_taken", "Страница с таким адресом уже существует", "slug");
   }
   if (isUniqueViolation(error, "pages_single_home")) {
     return new PageError("home_taken", "Главная страница уже назначена");
@@ -56,7 +49,7 @@ async function lockParent(tx: Tx, parentId: number) {
     .where(eq(pages.id, parentId))
     .for("share");
   if (!parent) {
-    throw new PageError("parent_not_found", "Родительская страница не найдена");
+    throw new PageError("parent_not_found", "Родительская страница не найдена", "parentId");
   }
   return parent;
 }
@@ -91,7 +84,11 @@ export async function updatePage(executor: Executor, id: number, input: PageInpu
     if (data.parentId !== null) {
       const parent = await lockParent(tx, data.parentId);
       if (isSameOrDescendantPath(parent.path, current.path)) {
-        throw new PageError("cycle", "Нельзя вложить страницу в саму себя или в её потомка");
+        throw new PageError(
+          "cycle",
+          "Нельзя вложить страницу в саму себя или в её потомка",
+          "parentId",
+        );
       }
       parentPath = parent.path;
     }

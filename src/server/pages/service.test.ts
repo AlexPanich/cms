@@ -15,12 +15,7 @@ import {
 } from "./service";
 
 // Тесты сравнивают полный список страниц, поэтому начинают с пустой таблицы.
-// Удаление внутри транзакции откатывается вместе с ней — данные dev-базы не пострадают.
-const withRollback = (fn: (tx: Tx) => Promise<void>) =>
-  withRollbackBase(async (tx) => {
-    await tx.delete(pages);
-    await fn(tx);
-  });
+const withRollback = (fn: (tx: Tx) => Promise<void>) => withRollbackBase(fn, { clear: [pages] });
 
 const input = (slug: string, parentId: number | null = null): PageInput => ({
   slug,

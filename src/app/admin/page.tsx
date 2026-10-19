@@ -1,22 +1,36 @@
-import type { Metadata } from "next";
-import { PERMISSION_LABELS, PERMISSIONS } from "@/lib/permissions";
+import Link from "next/link";
+import { PageHeader } from "@/components/admin/page-header";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { can } from "@/lib/permissions";
 import { requirePagePermission } from "@/server/auth/session";
-
-export const metadata: Metadata = { title: "Админка" };
+import { ADMIN_NAV } from "./_components/nav";
 
 export default async function AdminPage() {
   const user = await requirePagePermission("view_admin");
-  const granted = PERMISSIONS.filter((permission) => user.permissions.has(permission));
+  const sections = ADMIN_NAV.filter((item) => item.href !== "/admin" && can(user, item.permission));
 
   return (
-    <div className="flex max-w-xl flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Здравствуйте, {user.name}</h1>
-      <p className="text-foreground/70">Разделы админки появятся на этапе 4. Ваши права:</p>
-      <ul className="list-disc pl-5">
-        {granted.map((permission) => (
-          <li key={permission}>{PERMISSION_LABELS[permission]}</li>
-        ))}
-      </ul>
-    </div>
+    <>
+      <PageHeader title={`Здравствуйте, ${user.name}`} description="Выберите раздел для работы" />
+      {sections.length === 0 ? (
+        <p className="text-muted-foreground">
+          Разделов, доступных для вашей роли, пока нет. Обратитесь к администратору.
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {sections.map((item) => (
+            <Link key={item.href} href={item.href} className="group">
+              <Card className="group-hover:bg-muted/50 transition-colors">
+                <CardHeader>
+                  <item.icon className="text-muted-foreground mb-2 size-5" />
+                  <CardTitle>{item.label}</CardTitle>
+                  <CardDescription>{item.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
