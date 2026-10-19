@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PencilIcon } from "lucide-react";
-import { createContext, type ReactNode, use, useState } from "react";
+import { createContext, type ReactNode, use, useId, useState } from "react";
 import { type Control, type FieldValues, useForm } from "react-hook-form";
 import { BlockFields } from "@/components/admin/blocks/block-fields";
 import {
@@ -26,7 +26,9 @@ import {
 import { FieldGroup } from "@/components/ui/field";
 import { Toaster } from "@/components/ui/sonner";
 import { z } from "@/lib/zod";
+import { fieldsSchema } from "@/lib/blocks/define";
 import { type Block, getBlockDefinition } from "@/lib/blocks/registry";
+import { pickSettingsFields, type SiteSettingsKey } from "@/lib/site-settings";
 import { pageTitleSchema, textBodySchema } from "@/server/front-edit/schema";
 import { saveFrontEdit, uploadFrontEditImage } from "@/app/(site)/actions";
 
@@ -298,6 +300,101 @@ function BlockDialog({
               name="data"
             />
           )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onDone} disabled={pending}>
+              Отмена
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {pending ? "Сохраняем…" : "Сохранить"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Часть настроек сайта (поля из списка) — форма в диалоге, как у блока. Сохраняются только
+// эти поля, остальные настройки сервер оставляет как есть.
+export function SettingsEditor({
+  fields,
+  label,
+  values,
+  galleries,
+  pages,
+  documents,
+  images,
+  children,
+}: {
+  fields: SiteSettingsKey[];
+  label: string;
+  values: Record<string, unknown>;
+  galleries: GalleryOption[];
+  pages: PageOption[];
+  documents: DocumentOption[];
+  images: Record<number, string>;
+  children: ReactNode;
+}) {
+  // Одни и те же настройки бывают на странице дважды (подвал и блок «Контакты»), а открыться
+  // должен только тот редактор, кнопку которого нажали.
+  const id = useId();
+  return (
+    <EditableRegion
+      id={`settings:${id}`}
+      label={`Изменить: ${label}`}
+      editor={(close) => (
+        <>
+          {children}
+          <BlockEditorProvider
+            galleries={galleries}
+            pages={pages}
+            documents={documents}
+            images={images}
+            upload={uploadFrontEditImage}
+          >
+            <SettingsDialog fields={fields} label={label} values={values} onDone={close} />
+          </BlockEditorProvider>
+        </>
+      )}
+    >
+      {children}
+    </EditableRegion>
+  );
+}
+
+function SettingsDialog({
+  fields: names,
+  label,
+  values,
+  onDone,
+}: {
+  fields: SiteSettingsKey[];
+  label: string;
+  values: Record<string, unknown>;
+  onDone: () => void;
+}) {
+  const fields = pickSettingsFields(names);
+  const form = useForm<FieldValues>({
+    resolver: zodResolver(fieldsSchema(fields)),
+    defaultValues: values,
+  });
+  const { onSubmit, pending } = useActionSubmit(
+    form,
+    (data) => saveFrontEdit({ field: "settings", data }),
+    { successMessage: "Настройки сохранены", onSuccess: onDone },
+  );
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && !pending && onDone()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <form onSubmit={onSubmit} className="flex flex-col gap-6">
+          <DialogHeader>
+            <DialogTitle>Настройки сайта: {label}</DialogTitle>
+            <DialogDescription>
+              Остальные настройки — в админке, в разделе «Настройки сайта»
+            </DialogDescription>
+          </DialogHeader>
+          <BlockFields control={form.control} fields={fields} />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onDone} disabled={pending}>
               Отмена

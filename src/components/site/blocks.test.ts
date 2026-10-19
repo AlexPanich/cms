@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolveDocument, resolveImage, resolveLink } from "./blocks";
 import type { ContentContext } from "./rich-text";
+import { readSiteSettings } from "@/lib/site-settings";
 
 const context: ContentContext = {
   galleries: new Map(),
@@ -10,6 +11,7 @@ const context: ContentContext = {
     [5, { url: "/media/documents/b.pdf", title: "Прайс", size: 100, extension: "pdf" }],
   ]),
   articles: [],
+  settings: readSiteSettings({}),
 };
 
 describe("resolveLink", () => {

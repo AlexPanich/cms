@@ -1,4 +1,4 @@
-import { type RichTextDoc, richTextDocSchema } from "@/lib/rich-text";
+import { collectGalleryKeys, type RichTextDoc, richTextDocSchema } from "@/lib/rich-text";
 import { SLUG_PATTERN } from "@/lib/slug";
 import { isSafeLinkUrl } from "@/lib/url";
 import { z } from "@/lib/zod";
@@ -25,11 +25,15 @@ type FieldSchema<T> = z.ZodType<T, T>;
 // Необязательные поля хранят null, если не заполнены.
 type Opt<R extends boolean, T> = R extends true ? T : T | null;
 
+// Формат строки: проверяется схемой, а в форме задаёт вид поля ввода.
+export type TextFormat = "email" | "phone" | "url";
+
 export type TextField = Common & {
   kind: "text";
   required: boolean;
   max: number;
   multiline: boolean;
+  format: TextFormat | null;
   schema: FieldSchema<string>;
 };
 
@@ -151,7 +155,24 @@ const linkValueSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-function fieldsSchema<F extends Fields>(fields: F) {
+const TEXT_FORMATS: Record<TextFormat, { check: (value: string) => boolean; message: string }> = {
+  email: {
+    check: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+    message: "Адрес почты в виде name@example.com",
+  },
+  // Цифры, пробелы, скобки и дефисы, в начале может быть «+»; цифр не меньше пяти.
+  phone: {
+    check: (value) => /^\+?[\d\s()-]+$/.test(value) && value.replace(/\D/g, "").length >= 5,
+    message: "Телефон из цифр, можно с «+», пробелами, скобками и дефисами",
+  },
+  url: {
+    check: (value) => /^https?:\/\//.test(value) && isSafeLinkUrl(value),
+    message: "Адрес должен начинаться с http:// или https://",
+  },
+};
+
+// Схема данных по описанию полей: лишние поля отбрасываются.
+export function fieldsSchema<F extends Fields>(fields: F) {
   const shape = Object.fromEntries(
     Object.entries(fields).map(([name, field]) => [name, field.schema]),
   ) as { [K in keyof F]: F[K]["schema"] };
@@ -160,11 +181,23 @@ function fieldsSchema<F extends Fields>(fields: F) {
 
 export const field = {
   // Строка. multiline: false — без переносов (заголовки, подписи).
-  text(options: Common & { required?: boolean; max?: number; multiline?: boolean }): TextField {
-    const { required = false, max = 200, multiline = false, ...common } = options;
+  // format — проверка вида значения; пустая строка у необязательного поля допустима.
+  text(
+    options: Common & {
+      required?: boolean;
+      max?: number;
+      multiline?: boolean;
+      format?: TextFormat;
+    },
+  ): TextField {
+    const { required = false, max = 200, multiline = false, format = null, ...common } = options;
     let schema = z.string().trim().max(max);
     if (!multiline) schema = schema.regex(/^[^\r\n]*$/, "Без переносов строк");
     if (required) schema = schema.min(1, REQUIRED);
+    if (format) {
+      const { check, message } = TEXT_FORMATS[format];
+      schema = schema.refine((value) => value === "" || check(value), message);
+    }
     // prefault, а не default: значение default zod не проверяет, и обязательное поле
     // без значения прошло бы пустой строкой. Так же у списка с min.
     return {
@@ -173,6 +206,7 @@ export const field = {
       required,
       max,
       multiline,
+      format,
       schema: schema.prefault("") as FieldSchema<string>,
     };
   },
@@ -328,4 +362,35 @@ export function* walkFields(fields: Fields, data: Record<string, unknown>): Gene
       for (const element of entry.value) yield* walkFields(entry.field.of, element);
     }
   }
+}
+
+// Ссылки из значений полей на другие данные: картинки, документы, галереи (поле и rich text)
+// и страницы. По ним данные загружаются одним запросом до вывода, а картинки считаются
+// использованными.
+export type FieldReferences = {
+  imageIds: number[];
+  documentIds: number[];
+  galleryKeys: string[];
+  pageIds: number[];
+};
+
+export function fieldReferences(entries: Iterable<FieldEntry>): FieldReferences {
+  const images = new Set<number>();
+  const documents = new Set<number>();
+  const galleries = new Set<string>();
+  const pages = new Set<number>();
+  for (const entry of entries) {
+    if (entry.kind === "image" && entry.value) images.add(entry.value.mediaId);
+    if (entry.kind === "document" && entry.value) documents.add(entry.value);
+    if (entry.kind === "gallery" && entry.value) galleries.add(entry.value);
+    if (entry.kind === "richText")
+      for (const key of collectGalleryKeys(entry.value)) galleries.add(key);
+    if (entry.kind === "link" && entry.value?.kind === "page") pages.add(entry.value.pageId);
+  }
+  return {
+    imageIds: [...images],
+    documentIds: [...documents],
+    galleryKeys: [...galleries],
+    pageIds: [...pages],
+  };
 }

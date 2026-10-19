@@ -1,10 +1,11 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { pages, texts } from "@/db/schema";
+import { pages, settingsMedia, siteSettings, texts } from "@/db/schema";
 import type { Tx } from "@/db";
 import { z } from "@/lib/zod";
 import { withRollback } from "@/test/db";
 import { createPage, getPage, PageError } from "@/server/pages/service";
+import { getSiteSettings, updateSiteSettings } from "@/server/settings/service";
 import { createText } from "@/server/texts/service";
 import { FrontEditError, type FrontEditErrorCode, saveFrontEdit } from "./service";
 import type { FrontEditInput } from "./schema";
@@ -131,6 +132,22 @@ describe("front-edit service", () => {
       );
     }));
 
+  it("меняет переданные настройки сайта, остальные оставляет", () =>
+    withRollback(
+      async (tx) => {
+        await updateSiteSettings(tx, { phone: "+7 999 000-00-00", address: "Москва" });
+        await saveFrontEdit(tx, { field: "settings", data: { phone: "+7 999 111-11-11" } });
+        expect(await getSiteSettings(tx)).toMatchObject({
+          phone: "+7 999 111-11-11",
+          address: "Москва",
+        });
+        await expect(
+          saveFrontEdit(tx, { field: "settings", data: { email: "не почта" } }),
+        ).rejects.toBeInstanceOf(z.ZodError);
+      },
+      { clear: [siteSettings, settingsMedia] },
+    ));
+
   it("отклоняет поля не из белого списка и неверные значения", () =>
     withRollback(async (tx) => {
       const page = await publishedPage(tx, "front-edit-invalid");
@@ -141,6 +158,7 @@ describe("front-edit service", () => {
         { field: "page.content", pageId: page.id, value: null },
         { field: "page.block", pageId: page.id, blockId: "", data: {} },
         { field: "text.body", key: "../etc", value: "x" },
+        { field: "settings", data: "телефон" },
       ] as unknown as FrontEditInput[];
       for (const input of invalid) {
         await expect(saveFrontEdit(tx, input)).rejects.toBeInstanceOf(z.ZodError);

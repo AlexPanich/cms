@@ -175,6 +175,27 @@ export async function setTextBody(key: string, body: string): Promise<string> {
   }
 }
 
+// Настройки сайта целиком (data записи site_settings). Возвращает прежние — чтобы вернуть
+// их после теста; null — записи не было.
+export async function setSiteSettings(
+  data: Record<string, unknown> | null,
+): Promise<Record<string, unknown> | null> {
+  const sql = connect();
+  try {
+    const [previous] = await sql`select data from site_settings where id = 1`;
+    if (data === null) {
+      await sql`delete from site_settings`;
+    } else {
+      await sql`
+        insert into site_settings (id, data) values (1, ${sql.json(data as postgres.JSONValue)})
+        on conflict (id) do update set data = excluded.data`;
+    }
+    return previous?.data ?? null;
+  } finally {
+    await sql.end();
+  }
+}
+
 export async function cleanupE2EData() {
   const sql = connect();
   try {

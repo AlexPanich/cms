@@ -27,6 +27,9 @@ export type SiteLayoutProps = {
   site: SiteInfo;
   mainMenu: SiteMenuItem[];
   footerMenu: SiteMenuItem[];
+  // Настройки сайта (логотип, контакты, соцсети) — context.settings; картинки из них
+  // выводятся через resolveImage. Правка на сайте — обёртка EditableSettings.
+  context: ContentContext;
   children: ReactNode;
 };
 

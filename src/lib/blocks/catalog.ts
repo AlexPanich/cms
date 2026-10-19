@@ -155,6 +155,20 @@ export const documentsBlock = defineBlock({
   },
 });
 
+// Контакты не хранятся в блоке: их берут из настроек сайта (src/lib/site-settings.ts),
+// чтобы телефон или адрес менялись в одном месте для всех страниц.
+export const contactsBlock = defineBlock({
+  type: "contacts",
+  label: "Контакты",
+  description:
+    "Телефон, почта, адрес, часы работы и соцсети из раздела «Настройки сайта» — для страницы контактов",
+  fields: {
+    title: field.text({ label: "Заголовок", max: 120 }),
+    intro: field.text({ label: "Вступление", max: 300, multiline: true }),
+    showSocials: field.boolean({ label: "Показывать соцсети", default: true }),
+  },
+});
+
 export const CORE_BLOCKS = [
   textBlock,
   heroBlock,
@@ -165,6 +179,7 @@ export const CORE_BLOCKS = [
   faqBlock,
   articlesBlock,
   documentsBlock,
+  contactsBlock,
 ] as const;
 
 // Больше всего статей, которое может попросить блок «Последние статьи».

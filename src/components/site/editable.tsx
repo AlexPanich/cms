@@ -1,16 +1,18 @@
 import { cache, type ReactNode } from "react";
 import { db } from "@/db";
-import type { Field } from "@/lib/blocks/define";
+import { type Field, type Fields, fieldReferences, walkFields } from "@/lib/blocks/define";
 import { hasFieldKind } from "@/lib/blocks/form";
 import { type Block, collectBlockMediaIds, getBlockDefinition } from "@/lib/blocks/registry";
 import { SITE_TEXTS, type SiteTextKey } from "@/lib/site";
+import { pickSettingsFields, type SiteSettingsKey } from "@/lib/site-settings";
 import { listDocumentOptions } from "@/server/documents/service";
 import { listGalleryOptions } from "@/server/galleries/service";
 import { listImageUrls } from "@/server/media/service";
 import { getPageTree } from "@/server/pages/service";
 import { flattenTree } from "@/server/pages/tree";
+import { cachedSiteSettings } from "@/server/site/cached";
 import { getFrontEditor } from "@/server/site/front-editor";
-import { BlockEditor, PageTitleEditor, TextEditor } from "./front-edit-lazy";
+import { BlockEditor, PageTitleEditor, SettingsEditor, TextEditor } from "./front-edit-lazy";
 
 // Обёртки для правки на сайте: пользователю с правом edit_from_front выводят клиентский
 // редактор, всем остальным — только содержимое. Править можно лишь поля из белого списка
@@ -46,6 +48,18 @@ const linkPageOptions = cache(async () =>
   })),
 );
 
+// Списки для полей формы — только те, что нужны её полям, и адреса уже выбранных картинок.
+async function fieldOptions(fields: Fields, imageIds: number[]) {
+  const needs = (kind: Field["kind"]) => hasFieldKind(fields, kind);
+  const [galleries, pages, documents, images] = await Promise.all([
+    needs("richText") || needs("gallery") ? galleryOptions() : [],
+    needs("link") ? linkPageOptions() : [],
+    needs("document") ? documentOptions() : [],
+    listImageUrls(db(), imageIds),
+  ]);
+  return { galleries, pages, documents, images };
+}
+
 // Блок страницы: в режиме правки у него кнопка «Изменить», она открывает форму блока
 // в диалоге. Сохраняются только данные блока (page.block), тип и оформление — в админке.
 export async function EditableBlock({
@@ -59,24 +73,35 @@ export async function EditableBlock({
 }) {
   const definition = getBlockDefinition(block.type);
   if (!definition || !(await getFrontEditor())) return children;
-  const needs = (kind: Field["kind"]) => hasFieldKind(definition.fields, kind);
-  const [galleries, pages, documents, images] = await Promise.all([
-    needs("richText") || needs("gallery") ? galleryOptions() : [],
-    needs("link") ? linkPageOptions() : [],
-    needs("document") ? documentOptions() : [],
-    listImageUrls(db(), collectBlockMediaIds([block])),
-  ]);
+  const options = await fieldOptions(definition.fields, collectBlockMediaIds([block]));
   return (
-    <BlockEditor
-      pageId={pageId}
-      block={block}
-      galleries={galleries}
-      pages={pages}
-      documents={documents}
-      images={images}
-    >
+    <BlockEditor pageId={pageId} block={block} {...options}>
       {children}
     </BlockEditor>
+  );
+}
+
+// Настройки сайта из списка fields (контакты в подвале, логотип): кнопка «Изменить»
+// открывает их форму в диалоге. Остальные настройки не меняются. label — что правится,
+// для подписи кнопки: «контакты».
+export async function EditableSettings({
+  fields,
+  label,
+  children,
+}: {
+  fields: readonly SiteSettingsKey[];
+  label: string;
+  children: ReactNode;
+}) {
+  if (!(await getFrontEditor())) return children;
+  const settings = await cachedSiteSettings();
+  const picked = pickSettingsFields(fields);
+  const values = Object.fromEntries(fields.map((name) => [name, settings[name]]));
+  const options = await fieldOptions(picked, fieldReferences(walkFields(picked, values)).imageIds);
+  return (
+    <SettingsEditor fields={[...fields]} label={label} values={values} {...options}>
+      {children}
+    </SettingsEditor>
   );
 }
 

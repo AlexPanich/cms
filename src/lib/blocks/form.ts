@@ -7,7 +7,8 @@ import { BLOCK_ID_PATTERN, getBlockDefinition, resolveBlockVariant } from "./reg
 
 export type FormBlock = { id: string; type: string; variant: string | null; data: unknown };
 
-function emptyValue(item: Field): unknown {
+// Пустое значение поля: у нового блока и вместо значения, которое не прошло схему.
+export function emptyFieldValue(item: Field): unknown {
   switch (item.kind) {
     case "text":
       return "";
@@ -28,7 +29,7 @@ function fieldValue(item: Field, raw: unknown): unknown {
   if (item.kind === "list" && Array.isArray(raw)) {
     return raw.slice(0, item.max).map((element) => fieldsFormData(item.of, element));
   }
-  return emptyValue(item);
+  return emptyFieldValue(item);
 }
 
 // Значения полей для формы: у нового блока — пустые, у сохранённого — что удалось прочитать.

@@ -38,6 +38,7 @@ import type {
   LinkField,
   LinkValue,
   ListField,
+  TextFormat,
 } from "@/lib/blocks/define";
 import { fieldsFormData } from "@/lib/blocks/form";
 import { IMAGE_ACCEPT, MAX_IMAGE_BYTES } from "@/lib/media";
@@ -45,13 +46,16 @@ import { FormCheckbox, FormInput, FormRichText, FormSelect, FormTextarea } from 
 import { useBlockEditor } from "./editor-context";
 
 // Форма блока строится по описанию полей (src/lib/blocks/define.ts). name — путь к данным
-// блока в форме: «blocks.2.data» в админке, «data» в правке на сайте.
+// блока в форме: «blocks.2.data» в админке, «data» в правке на сайте; без name поля лежат
+// в корне формы (настройки сайта).
 
 type FieldProps<F extends BlockField = BlockField> = {
   control: Control<FieldValues>;
   field: F;
   name: string;
 };
+
+const TEXT_INPUT_TYPES: Record<TextFormat, string> = { email: "email", phone: "tel", url: "url" };
 
 type ErrorLike = { message?: string } | undefined;
 
@@ -68,12 +72,17 @@ export function BlockFields({
 }: {
   control: Control<FieldValues>;
   fields: Fields;
-  name: string;
+  name?: string;
 }) {
   return (
     <FieldGroup>
       {Object.entries(fields).map(([key, item]) => (
-        <BlockFieldInput key={key} control={control} field={item} name={`${name}.${key}`} />
+        <BlockFieldInput
+          key={key}
+          control={control}
+          field={item}
+          name={name ? `${name}.${key}` : key}
+        />
       ))}
     </FieldGroup>
   );
@@ -88,7 +97,12 @@ function BlockFieldInput({ control, field: item, name }: FieldProps) {
       return item.multiline ? (
         <FormTextarea {...common} rows={3} maxLength={item.max} />
       ) : (
-        <FormInput {...common} maxLength={item.max} autoComplete="off" />
+        <FormInput
+          {...common}
+          maxLength={item.max}
+          autoComplete="off"
+          type={item.format ? TEXT_INPUT_TYPES[item.format] : undefined}
+        />
       );
     case "richText":
       return <FormRichText {...common} galleries={galleries} />;

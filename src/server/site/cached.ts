@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/db";
 import { SITE_CACHE_TAGS as TAGS } from "@/lib/site-cache";
 import { SITE_TEXT_KEYS } from "@/lib/site";
+import { getSiteSettings } from "@/server/settings/service";
 import {
   getAncestors,
   getDocumentsByIds,
@@ -35,6 +36,13 @@ export async function cachedSiteTexts() {
   cacheLife("hours");
   cacheTag(TAGS.texts);
   return getSiteTexts(db(), SITE_TEXT_KEYS);
+}
+
+export async function cachedSiteSettings() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(TAGS.settings);
+  return getSiteSettings(db());
 }
 
 export async function cachedPage(path: string) {

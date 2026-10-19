@@ -24,13 +24,14 @@ import {
   resolveImage,
   resolveLink,
 } from "@/components/site/blocks";
-import { EditableBlock } from "@/components/site/editable";
+import { EditableBlock, EditableSettings } from "@/components/site/editable";
 import { RichText } from "@/components/site/rich-text";
 import type { FeatureIcon } from "@/lib/blocks/catalog";
 import type { LinkValue } from "@/lib/blocks/define";
 import { formatFileSize } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { articleDate } from "../article-card";
+import { CONTACT_SETTINGS, Contacts, hasContacts } from "../contacts";
 import { Gallery } from "../gallery";
 import { PROSE, WIDGETS } from "../rich-text";
 
@@ -361,6 +362,25 @@ function DocumentsBlock({ block, pageId, context }: BlockProps<"documents">) {
   );
 }
 
+// Сами контакты — из настроек сайта: их правят здесь же, отдельной кнопкой.
+function ContactsBlock({ block, pageId, context }: BlockProps<"contacts">) {
+  const { title, intro, showSocials } = block.data;
+  if (!hasContacts(context.settings, showSocials)) return null;
+  return (
+    <EditableBlock pageId={pageId} block={block}>
+      <section>
+        <SectionTitle>{title || "Контакты"}</SectionTitle>
+        {intro && (
+          <p className="text-muted-foreground -mt-3 mb-6 max-w-2xl whitespace-pre-line">{intro}</p>
+        )}
+        <EditableSettings fields={CONTACT_SETTINGS} label="контакты">
+          <Contacts settings={context.settings} socials={showSocials} className="text-lg" />
+        </EditableSettings>
+      </section>
+    </EditableBlock>
+  );
+}
+
 export const blockViews: BlockViews = {
   text: TextBlock,
   hero: HeroBlock,
@@ -371,4 +391,5 @@ export const blockViews: BlockViews = {
   faq: FaqBlock,
   articles: ArticlesBlock,
   documents: DocumentsBlock,
+  contacts: ContactsBlock,
 };

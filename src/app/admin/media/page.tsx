@@ -17,11 +17,12 @@ import { deleteImage } from "./actions";
 export const metadata: Metadata = { title: "Изображения" };
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium" });
-function usage({ galleryUses, articleUses, pageUses }: ImageListItem): string | null {
+function usage({ galleryUses, articleUses, pageUses, settingsUses }: ImageListItem): string | null {
   const parts = [
     galleryUses > 0 && `галерей: ${galleryUses}`,
     articleUses > 0 && `превью статей: ${articleUses}`,
     pageUses > 0 && `страниц: ${pageUses}`,
+    settingsUses > 0 && "настройки сайта",
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : null;
 }

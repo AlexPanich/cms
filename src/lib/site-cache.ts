@@ -10,6 +10,8 @@ export const SITE_CACHE_TAGS = {
   galleries: "site:galleries",
   // Картинки и документы из блоков страниц.
   media: "site:media",
+  // Настройки сайта: логотип, контакты, соцсети.
+  settings: "site:settings",
 } as const;
 
 export type SiteCacheTag = (typeof SITE_CACHE_TAGS)[keyof typeof SITE_CACHE_TAGS];
@@ -24,5 +26,6 @@ export const SITE_CACHE_TAGS_BY_PERMISSION: Partial<Record<Permission, readonly 
   edit_texts: [SITE_CACHE_TAGS.texts],
   edit_articles: [SITE_CACHE_TAGS.articles],
   edit_media: [SITE_CACHE_TAGS.galleries, SITE_CACHE_TAGS.articles, SITE_CACHE_TAGS.media],
-  edit_from_front: [SITE_CACHE_TAGS.pages, SITE_CACHE_TAGS.texts],
+  edit_settings: [SITE_CACHE_TAGS.settings],
+  edit_from_front: [SITE_CACHE_TAGS.pages, SITE_CACHE_TAGS.texts, SITE_CACHE_TAGS.settings],
 };

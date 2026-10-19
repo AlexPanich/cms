@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import type { RichTextDoc } from "@/lib/rich-text";
 import type { z } from "@/lib/zod";
-import { type FieldsData, defineBlock, field, walkFields } from "./define";
+import { type FieldsData, defineBlock, field, fieldReferences, walkFields } from "./define";
 
 const doc = { type: "doc" as const, content: [{ type: "paragraph" }] };
 
@@ -23,6 +23,25 @@ describe("field.text", () => {
     expect(messages(title.schema.safeParse("a\nb"))).toEqual(["Без переносов строк"]);
     const text = field.text({ label: "Текст", multiline: true });
     expect(text.schema.parse("a\nb")).toBe("a\nb");
+  });
+
+  it("проверяет формат, пустое необязательное значение допустимо", () => {
+    const email = field.text({ label: "Почта", format: "email" });
+    expect(email.schema.parse(" hi@example.com ")).toBe("hi@example.com");
+    expect(email.schema.parse("")).toBe("");
+    expect(email.schema.safeParse("hi@example").success).toBe(false);
+
+    const phone = field.text({ label: "Телефон", format: "phone" });
+    expect(phone.schema.parse("+7 (999) 123-45-67")).toBe("+7 (999) 123-45-67");
+    expect(phone.schema.safeParse("12-34").success).toBe(false);
+    expect(phone.schema.safeParse("звоните").success).toBe(false);
+
+    const url = field.text({ label: "Адрес", format: "url", required: true });
+    expect(url.schema.parse("https://vk.com/club")).toBe("https://vk.com/club");
+    expect(messages(url.schema.safeParse(""))).toEqual(["Обязательное поле"]);
+    for (const value of ["/about", "mailto:a@b.ru", "javascript:alert(1)", "vk.com"]) {
+      expect(url.schema.safeParse(value).success, value).toBe(false);
+    }
   });
 });
 
@@ -199,5 +218,42 @@ describe("walkFields", () => {
       ["text", "Боря"],
       ["image", null],
     ]);
+  });
+});
+
+describe("fieldReferences", () => {
+  it("собирает картинки, документы, галереи и страницы без повторов", () => {
+    const fields = {
+      logo: field.image({ label: "Логотип" }),
+      about: field.richText({ label: "О нас" }),
+      items: field.list(
+        {
+          image: field.image({ label: "Картинка" }),
+          file: field.document({ label: "Файл" }),
+          photos: field.gallery({ label: "Фото" }),
+          link: field.link({ label: "Ссылка" }),
+        },
+        { label: "Элементы", itemLabel: "Элемент", max: 5 },
+      ),
+    };
+    const data = {
+      logo: { mediaId: 1, alt: "" },
+      about: { type: "doc", content: [{ type: "gallery", attrs: { key: "team" } }] },
+      items: [
+        {
+          image: { mediaId: 1, alt: "" },
+          file: 5,
+          photos: "office",
+          link: { kind: "page", pageId: 7, label: "" },
+        },
+        { image: { mediaId: 2, alt: "" }, file: null, photos: null, link: null },
+      ],
+    };
+    expect(fieldReferences(walkFields(fields, data))).toEqual({
+      imageIds: [1, 2],
+      documentIds: [5],
+      galleryKeys: ["team", "office"],
+      pageIds: [7],
+    });
   });
 });

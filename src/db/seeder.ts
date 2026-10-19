@@ -19,6 +19,7 @@ const SYSTEM_ROLES: { key: string; name: string; permissions: readonly Permissio
       "edit_texts",
       "edit_articles",
       "edit_media",
+      "edit_settings",
       "edit_from_front",
     ],
   },
