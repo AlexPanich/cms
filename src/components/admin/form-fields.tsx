@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { GalleryOption } from "./gallery-node";
 import { RichTextEditor } from "./rich-text-editor";
 
 type BaseProps<T extends FieldValues> = {
@@ -233,7 +234,8 @@ export function FormRichText<T extends FieldValues>({
   name,
   label,
   description,
-}: BaseProps<T>) {
+  galleries,
+}: BaseProps<T> & { galleries?: GalleryOption[] }) {
   return (
     <Controller
       control={control}
@@ -249,6 +251,7 @@ export function FormRichText<T extends FieldValues>({
             onChange={field.onChange}
             onBlur={field.onBlur}
             invalid={fieldState.invalid}
+            galleries={galleries}
           />
           {description && <FieldDescription>{description}</FieldDescription>}
           <FieldError errors={[fieldState.error]} />

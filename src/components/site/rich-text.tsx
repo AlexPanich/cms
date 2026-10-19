@@ -1,0 +1,90 @@
+import { Fragment, type ReactNode } from "react";
+import { galleryKeyOf, type RichTextDoc, type RichTextNode } from "@/lib/rich-text";
+import { isSafeLinkUrl } from "@/lib/url";
+import type { PublicGallery } from "@/server/site/service";
+import { Gallery } from "./gallery";
+
+// Данные виджетов, загруженные заранее (src/server/site/content.ts).
+export type ContentContext = { galleries: ReadonlyMap<string, PublicGallery> };
+
+type Render = (node: RichTextNode, children: ReactNode, context: ContentContext) => ReactNode;
+
+const num = (value: unknown, fallback: number) =>
+  typeof value === "number" && Number.isInteger(value) ? value : fallback;
+
+// Явный реестр узлов: документ — это данные, и вывести можно только то, что здесь перечислено.
+// Неизвестный узел пропускается вместе с содержимым. HTML из документа не выводится никогда.
+const NODES: Record<string, Render> = {
+  paragraph: (_, children) => <p>{children}</p>,
+  heading: (node, children) => {
+    // h1 — заголовок страницы, поэтому уровни в тексте начинаются со второго.
+    const level = Math.min(Math.max(num(node.attrs?.level, 2), 2), 4);
+    const Tag = `h${level}` as "h2" | "h3" | "h4";
+    return <Tag>{children}</Tag>;
+  },
+  bulletList: (_, children) => <ul>{children}</ul>,
+  orderedList: (node, children) => <ol start={num(node.attrs?.start, 1)}>{children}</ol>,
+  listItem: (_, children) => <li>{children}</li>,
+  blockquote: (_, children) => <blockquote>{children}</blockquote>,
+  codeBlock: (_, children) => (
+    <pre>
+      <code>{children}</code>
+    </pre>
+  ),
+  horizontalRule: () => <hr />,
+  hardBreak: () => <br />,
+  text: (node) => renderMarks(node.text ?? "", node.marks ?? []),
+  // Виджеты.
+  gallery: (node, _, context) => {
+    const key = galleryKeyOf(node);
+    const gallery = key ? context.galleries.get(key) : undefined;
+    return gallery ? <Gallery gallery={gallery} /> : null;
+  },
+};
+
+function renderMarks(text: string, marks: NonNullable<RichTextNode["marks"]>): ReactNode {
+  return marks.reduce<ReactNode>((content, mark) => {
+    switch (mark.type) {
+      case "bold":
+        return <strong>{content}</strong>;
+      case "italic":
+        return <em>{content}</em>;
+      case "strike":
+        return <s>{content}</s>;
+      case "underline":
+        return <u>{content}</u>;
+      case "code":
+        return <code>{content}</code>;
+      case "link": {
+        // Редактор проверяет адрес при вводе, но документ мог прийти и в обход редактора.
+        const href = mark.attrs?.href;
+        return typeof href === "string" && isSafeLinkUrl(href) ? (
+          <a href={href}>{content}</a>
+        ) : (
+          content
+        );
+      }
+      default:
+        return content;
+    }
+  }, text);
+}
+
+function renderNodes(nodes: RichTextNode[] | undefined, context: ContentContext): ReactNode {
+  return nodes?.map((node, index) => {
+    const render = NODES[node.type];
+    if (!render) return null;
+    return (
+      <Fragment key={index}>{render(node, renderNodes(node.content, context), context)}</Fragment>
+    );
+  });
+}
+
+export function RichText({ doc, context }: { doc: RichTextDoc | null; context: ContentContext }) {
+  if (!doc?.content?.length) return null;
+  return (
+    <div className="prose prose-neutral dark:prose-invert max-w-none">
+      {renderNodes(doc.content, context)}
+    </div>
+  );
+}

@@ -11,6 +11,7 @@ import {
   FormTextarea,
 } from "@/components/admin/form-fields";
 import { FormImageUpload } from "@/components/admin/image-upload";
+import type { GalleryOption } from "@/components/admin/gallery-node";
 import { useActionSubmit } from "@/components/admin/use-action-submit";
 import { Button } from "@/components/ui/button";
 import { FieldGroup, FieldSeparator } from "@/components/ui/field";
@@ -23,8 +24,10 @@ type FormValues = z.input<typeof articleInputSchema>;
 
 export function ArticleForm({
   article,
+  galleries,
 }: {
   article?: { id: number; previewUrl: string | null } & FormValues;
+  galleries: GalleryOption[];
 }) {
   const router = useRouter();
   const form = useForm<FormValues, unknown, z.output<typeof articleInputSchema>>({
@@ -84,7 +87,12 @@ export function ArticleForm({
           description="Короткий текст для списка статей, до 500 символов"
           rows={3}
         />
-        <FormRichText control={form.control} name="content" label="Текст статьи" />
+        <FormRichText
+          control={form.control}
+          name="content"
+          label="Текст статьи"
+          galleries={galleries}
+        />
 
         <FieldSeparator />
 

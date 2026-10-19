@@ -58,6 +58,14 @@ docker compose up --build # полный стек: db → migrate → app
 - В E2E искать элементы через `getByRole` (скрытые копии из `<Activity>` он пропускает, `getByLabel` — нет), а после `goto`/`reload` дожидаться содержимого: админка сначала отдаёт «Загрузка…» из `<Suspense>`.
 - E2E лежат в `e2e/`: всё, что создают тесты, помечается префиксом `e2e-` и удаляется в teardown. Сессия администратора общая (`e2e/.auth/admin.json`), потому что вход ограничен 3 попытками за 10 секунд.
 
+## Публичный сайт
+
+- Маршруты — в `src/app/(site)/`, данные — `src/server/site/service.ts` (только опубликованное).
+- Новый раздел первого уровня (как `/articles`) добавляй и в `RESERVED_ROOT_SLUGS` (`src/lib/slug.ts`), иначе страница с таким slug станет недоступной.
+- Новый шаблон: ключ в `PAGE_TEMPLATES` (`src/lib/templates.ts`) и лейаут в `(site)/_templates/templates.tsx`.
+- Новый виджет в контенте: узел TipTap в редакторе (по образцу `src/components/admin/gallery-node.tsx`), вывод в реестре `NODES` (`src/components/site/rich-text.tsx`), загрузка данных в `loadContentContext` (`src/server/site/content.ts`). Документ — это данные: узлы не из реестра не выводятся.
+- Тексты лейаута — `SITE_TEXTS` (`src/lib/site.ts`), их создаёт сид.
+
 ## Правила
 
 - Любой ввод (формы, server actions, query-параметры) валидируется zod-схемой.
@@ -102,7 +110,7 @@ docker compose up --build # полный стек: db → migrate → app
 2. ✅ Схема БД: страницы-дерево (пересчёт путей в транзакции), меню, `media`, тексты, статьи, пользователи, роли, права.
 3. ✅ Вход (Better Auth, регистрация закрыта) и проверка прав `can(user, permission)`.
 4. ✅ Админка (shadcn/ui, TanStack Table, dnd-kit, TipTap). Порядок: пользователи и роли → страницы → меню → тексты → статьи → галереи → документы.
-5. Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
+5. ✅ Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
 6. Редактирование на сайте: клиентский компонент для пользователей с правом `edit_from_front`, поля только из белого списка.
 7. E2E-тесты (Playwright) и деплой в Docker.
 

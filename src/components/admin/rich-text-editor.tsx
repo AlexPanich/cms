@@ -6,6 +6,7 @@ import {
   BoldIcon,
   Heading2Icon,
   Heading3Icon,
+  ImagesIcon,
   ItalicIcon,
   LinkIcon,
   ListIcon,
@@ -18,7 +19,15 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { RichTextDoc } from "@/lib/rich-text";
+import { type GalleryOption, GalleryNode } from "./gallery-node";
 
 type RichTextEditorProps = {
   id: string;
@@ -27,6 +36,8 @@ type RichTextEditorProps = {
   onChange: (value: RichTextDoc | null) => void;
   onBlur?: () => void;
   invalid?: boolean;
+  // Галереи, которые можно вставить в текст. Без них кнопки вставки нет.
+  galleries?: GalleryOption[];
 };
 
 export function RichTextEditor({
@@ -36,6 +47,7 @@ export function RichTextEditor({
   onChange,
   onBlur,
   invalid,
+  galleries,
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -48,6 +60,8 @@ export function RichTextEditor({
           protocols: ["http", "https", "mailto", "tel"],
         },
       }),
+      // Узел нужен и без списка галерей: иначе уже вставленные галереи пропадут из документа.
+      GalleryNode.configure({ galleries: galleries ?? [] }),
     ],
     content: value ?? "",
     // Next рендерит компонент на сервере — редактор создаём только в браузере.
@@ -72,13 +86,13 @@ export function RichTextEditor({
       data-invalid={invalid}
       className="border-input focus-within:border-ring focus-within:ring-ring/50 data-[invalid=true]:border-destructive rounded-lg border focus-within:ring-3"
     >
-      {editor && <Toolbar editor={editor} />}
+      {editor && <Toolbar editor={editor} galleries={galleries} />}
       <EditorContent editor={editor} />
     </div>
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({ editor, galleries }: { editor: Editor; galleries?: GalleryOption[] }) {
   const state = useEditorState({
     editor,
     selector: ({ editor }) => ({
@@ -95,7 +109,8 @@ function Toolbar({ editor }: { editor: Editor }) {
       canRedo: editor.can().redo(),
     }),
   });
-  const [linkOpen, setLinkOpen] = useState(false);
+  const [panel, setPanel] = useState<"link" | "gallery" | null>(null);
+  const toggle = (name: "link" | "gallery") => setPanel((open) => (open === name ? null : name));
   const chain = () => editor.chain().focus();
 
   return (
@@ -159,11 +174,20 @@ function Toolbar({ editor }: { editor: Editor }) {
         </ToolbarButton>
         <ToolbarButton
           label="Ссылка"
-          active={state.link || linkOpen}
-          onClick={() => setLinkOpen((open) => !open)}
+          active={state.link || panel === "link"}
+          onClick={() => toggle("link")}
         >
           <LinkIcon />
         </ToolbarButton>
+        {galleries && (
+          <ToolbarButton
+            label="Вставить галерею"
+            active={panel === "gallery"}
+            onClick={() => toggle("gallery")}
+          >
+            <ImagesIcon />
+          </ToolbarButton>
+        )}
         <ToolbarButton
           label="Отменить"
           disabled={!state.canUndo}
@@ -179,7 +203,10 @@ function Toolbar({ editor }: { editor: Editor }) {
           <Redo2Icon />
         </ToolbarButton>
       </div>
-      {linkOpen && <LinkForm editor={editor} onClose={() => setLinkOpen(false)} />}
+      {panel === "link" && <LinkForm editor={editor} onClose={() => setPanel(null)} />}
+      {panel === "gallery" && galleries && (
+        <GalleryForm editor={editor} galleries={galleries} onClose={() => setPanel(null)} />
+      )}
     </div>
   );
 }
@@ -244,6 +271,56 @@ function LinkForm({ editor, onClose }: { editor: Editor; onClose: () => void }) 
       />
       <Button type="button" size="sm" onClick={apply}>
         {href.trim() ? "Применить" : hadLink ? "Убрать ссылку" : "Закрыть"}
+      </Button>
+    </div>
+  );
+}
+
+function GalleryForm({
+  editor,
+  galleries,
+  onClose,
+}: {
+  editor: Editor;
+  galleries: GalleryOption[];
+  onClose: () => void;
+}) {
+  const [key, setKey] = useState<string | null>(null);
+
+  if (galleries.length === 0) {
+    return (
+      <p className="text-muted-foreground border-t p-2 text-sm">
+        Галерей пока нет — создайте их в разделе «Галереи».
+      </p>
+    );
+  }
+
+  const insert = () => {
+    if (!key) return;
+    editor.chain().focus().insertGallery(key).run();
+    onClose();
+  };
+
+  return (
+    <div className="flex gap-2 border-t p-2">
+      <Select
+        items={galleries.map((gallery) => ({ value: gallery.key, label: gallery.title }))}
+        value={key}
+        onValueChange={(value) => setKey(value as string | null)}
+      >
+        <SelectTrigger className="w-full" aria-label="Галерея">
+          <SelectValue placeholder="Выберите галерею" />
+        </SelectTrigger>
+        <SelectContent>
+          {galleries.map((gallery) => (
+            <SelectItem key={gallery.key} value={gallery.key}>
+              {gallery.title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button type="button" size="sm" disabled={!key} onClick={insert}>
+        Вставить
       </Button>
     </div>
   );

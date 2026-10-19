@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { db } from "@/db";
 import { getArticle } from "@/server/articles/service";
 import { requirePagePermission } from "@/server/auth/session";
+import { listGalleryOptions } from "@/server/galleries/service";
 import { ArticleForm } from "../_components/article-form";
 import { deleteArticle } from "../actions";
 
@@ -21,6 +22,7 @@ export default async function ArticlePage({ params }: PageProps<"/admin/articles
   const article =
     Number.isSafeInteger(numericId) && numericId > 0 ? await getArticle(db(), numericId) : null;
   if (!article) notFound();
+  const galleries = await listGalleryOptions(db());
 
   return (
     <>
@@ -48,6 +50,7 @@ export default async function ArticlePage({ params }: PageProps<"/admin/articles
       {/* key: после сохранения превью и поля формы берутся из свежих данных. */}
       <ArticleForm
         key={article.updatedAt.toISOString()}
+        galleries={galleries}
         article={{
           id: article.id,
           slug: article.slug,

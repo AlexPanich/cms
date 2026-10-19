@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { db } from "@/db";
 import { isPageTemplate } from "@/lib/templates";
 import { requirePagePermission } from "@/server/auth/session";
+import { listGalleryOptions } from "@/server/galleries/service";
 import { getPage, getPageTree } from "@/server/pages/service";
 import { flattenTree, subtreeIds } from "@/server/pages/tree";
 import { PageForm } from "../_components/page-form";
@@ -22,7 +23,8 @@ export default async function EditPagePage({ params }: PageProps<"/admin/pages/[
   if (!page) notFound();
 
   // В родители нельзя выбрать саму страницу и её потомков — сервер тоже это проверяет.
-  const flat = flattenTree(await getPageTree(db()));
+  const [tree, galleries] = await Promise.all([getPageTree(db()), listGalleryOptions(db())]);
+  const flat = flattenTree(tree);
   const self = flat.find((node) => node.id === page.id);
   const excluded = new Set(self ? subtreeIds(self) : [page.id]);
   const parents = flat
@@ -52,6 +54,7 @@ export default async function EditPagePage({ params }: PageProps<"/admin/pages/[
 
       <PageForm
         parents={parents}
+        galleries={galleries}
         page={{
           id: page.id,
           parentId: page.parentId,

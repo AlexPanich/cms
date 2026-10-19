@@ -28,6 +28,49 @@ export async function insertRootPages(slugs: string[]) {
   }
 }
 
+// Опубликованная страница с текстом из абзацев. parentPath — путь родителя, если страница вложенная.
+export async function insertPublishedPage({
+  slug,
+  title,
+  paragraphs = [],
+  parentPath,
+}: {
+  slug: string;
+  title: string;
+  paragraphs?: string[];
+  parentPath?: string;
+}) {
+  const content = {
+    type: "doc",
+    content: paragraphs.map((text) => ({ type: "paragraph", content: [{ type: "text", text }] })),
+  };
+  const sql = connect();
+  try {
+    const [parent] = parentPath
+      ? await sql`select id from pages where path = ${parentPath}`
+      : [{ id: null }];
+    const path = parentPath ? `${parentPath}/${slug}` : slug;
+    await sql`
+      insert into pages (parent_id, slug, path, title, content, published)
+      values (${parent.id}, ${slug}, ${path}, ${title}, ${sql.json(content)}, true)`;
+  } finally {
+    await sql.end();
+  }
+}
+
+// Пункт главного меню на страницу. Удаляется вместе со страницей.
+export async function addToMainMenu(path: string) {
+  const sql = connect();
+  try {
+    await sql`
+      insert into menu_items (menu_id, page_id, sort)
+      select menus.id, pages.id, 1000 from menus, pages
+      where menus.key = 'main' and pages.path = ${path}`;
+  } finally {
+    await sql.end();
+  }
+}
+
 // Отдельное меню для теста, чтобы не трогать «main» и «footer». Пункты — ссылки с названиями labels.
 export async function insertMenu(key: string, labels: string[] = []): Promise<number> {
   const sql = connect();

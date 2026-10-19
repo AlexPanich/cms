@@ -4,9 +4,10 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { parseEnv } from "../env";
 import { ADMIN_ROLE, type Permission, PERMISSIONS } from "../lib/permissions";
+import { SITE_TEXTS } from "../lib/site";
 import * as schema from "./schema";
 
-const { menus, rolePermissions, roles } = schema;
+const { menus, rolePermissions, roles, texts } = schema;
 
 const SYSTEM_ROLES: { key: string; name: string; permissions: readonly Permission[] }[] = [
   { key: ADMIN_ROLE, name: "Администратор", permissions: PERMISSIONS },
@@ -33,6 +34,7 @@ const MENUS = [
 // Идемпотентен: запускается после миграций при каждом деплое.
 // Права новой роли выставляются один раз, дальше ими управляют из админки.
 // Исключение — admin: ему всегда выдаются все права, включая добавленные позже.
+// Меню и тексты лейаута тоже создаются только если их ещё нет.
 async function main() {
   const { DATABASE_URL } = parseEnv(process.env);
   const client = postgres(DATABASE_URL, { max: 1 });
@@ -60,6 +62,11 @@ async function main() {
       }
 
       await tx.insert(menus).values(MENUS).onConflictDoNothing({ target: menus.key });
+      // Тексты лейаута создаются один раз, дальше их правят в админке.
+      await tx
+        .insert(texts)
+        .values(SITE_TEXTS.map((text) => ({ ...text })))
+        .onConflictDoNothing({ target: texts.key });
     });
     console.log("Сид применён");
   } finally {

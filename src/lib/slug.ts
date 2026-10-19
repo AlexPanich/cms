@@ -2,6 +2,17 @@
 // То же правило закреплено CHECK-ограничением в таблице pages.
 export const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
+// Адреса первого уровня, занятые разделами приложения: корневая страница с таким slug
+// была бы недоступна, потому что маршрут раздела важнее страниц из дерева.
+export const RESERVED_ROOT_SLUGS: readonly string[] = [
+  "admin",
+  "api",
+  "articles",
+  "login",
+  "media",
+  "search",
+];
+
 const CYRILLIC: Record<string, string> = {
   а: "a",
   б: "b",

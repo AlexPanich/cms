@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { type SQL, sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
   boolean,
@@ -11,7 +11,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import type { RichTextDoc } from "../../lib/rich-text";
-import { id, timestamps } from "./columns";
+import { id, searchVectorSql, timestamps, tsvector } from "./columns";
 
 export const pages = pgTable(
   "pages",
@@ -32,6 +32,9 @@ export const pages = pgTable(
     published: boolean().notNull().default(false),
     isHome: boolean().notNull().default(false),
     sort: integer().notNull().default(0),
+    searchVector: tsvector().generatedAlwaysAs((): SQL =>
+      searchVectorSql(pages.title, pages.metaDescription, pages.content),
+    ),
     ...timestamps,
   },
   (t) => [
@@ -42,5 +45,6 @@ export const pages = pgTable(
     index("pages_parent_sort_idx").on(t.parentId, t.sort),
     check("pages_slug_format", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     check("pages_not_own_parent", sql`${t.parentId} <> ${t.id}`),
+    index("pages_search_idx").using("gin", t.searchVector),
   ],
 );

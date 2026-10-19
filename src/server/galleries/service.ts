@@ -233,3 +233,11 @@ export async function listGalleries(
     total,
   };
 }
+
+// Для вставки галереи в текст: только ключ и название.
+export async function listGalleryOptions(executor: Executor) {
+  return executor
+    .select({ key: galleries.key, title: galleries.title })
+    .from(galleries)
+    .orderBy(asc(galleries.title), asc(galleries.id));
+}

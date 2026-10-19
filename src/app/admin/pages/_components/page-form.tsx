@@ -11,6 +11,7 @@ import {
   FormSelect,
   FormTextarea,
 } from "@/components/admin/form-fields";
+import type { GalleryOption } from "@/components/admin/gallery-node";
 import { useActionSubmit } from "@/components/admin/use-action-submit";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,10 +49,12 @@ const templateOptions = PAGE_TEMPLATES.map((template) => ({
 export function PageForm({
   page,
   parents,
+  galleries,
   defaultParentId = null,
 }: {
   page?: { id: number } & FormValues;
   parents: ParentOption[];
+  galleries: GalleryOption[];
   defaultParentId?: number | null;
 }) {
   const router = useRouter();
@@ -143,7 +146,12 @@ export function PageForm({
           />
         </div>
 
-        <FormRichText control={form.control} name="content" label="Содержимое" />
+        <FormRichText
+          control={form.control}
+          name="content"
+          label="Содержимое"
+          galleries={galleries}
+        />
 
         <FieldSeparator />
 
