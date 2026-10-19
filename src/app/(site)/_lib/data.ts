@@ -1,25 +1,27 @@
 import "server-only";
-import { cache } from "react";
-import { db } from "@/db";
-import { FALLBACK_SITE_NAME, SITE_TEXT_KEYS } from "@/lib/site";
+import { FALLBACK_SITE_NAME } from "@/lib/site";
+import { pageCount } from "@/lib/pagination";
 import { SLUG_PATTERN } from "@/lib/slug";
 import {
-  getHomePage,
-  getPublishedArticle,
-  getPublishedPage,
-  getSiteTexts,
-} from "@/server/site/service";
+  cachedArticle,
+  cachedArticles,
+  cachedPage,
+  cachedRouteIndex,
+  cachedSiteTexts,
+} from "@/server/site/cached";
 
-// cache — чтобы generateMetadata и страница не ходили в БД дважды за один запрос.
+// Данные публичных страниц — из кеша (src/server/site/cached.ts). Чтение по пути или slug
+// идёт только для адресов из индекса опубликованного, иначе любой запрос на несуществующий
+// адрес создавал бы новую запись в кеше.
 
-export const getSiteInfo = cache(async () => {
-  const texts = await getSiteTexts(db(), SITE_TEXT_KEYS);
+export async function getSiteInfo() {
+  const texts = await cachedSiteTexts();
   return {
     name: texts["site-name"] || FALLBACK_SITE_NAME,
     description: texts["site-description"],
     footer: texts.footer,
   };
-});
+}
 
 // Сегменты URL проверяются по формату slug до запроса в БД.
 export function pathFromSegments(segments: string[] | undefined): string | null {
@@ -30,10 +32,21 @@ export function pathFromSegments(segments: string[] | undefined): string | null 
   return segments.join("/");
 }
 
-export const getPageForPath = cache(async (path: string) =>
-  path === "" ? getHomePage(db()) : getPublishedPage(db(), path),
-);
+export async function getPageForPath(path: string) {
+  if (path === "") return cachedPage("");
+  const index = await cachedRouteIndex();
+  return index.pagePaths.includes(path) ? cachedPage(path) : null;
+}
 
-export const getArticleForSlug = cache(async (slug: string) =>
-  SLUG_PATTERN.test(slug) ? getPublishedArticle(db(), slug) : null,
-);
+export async function getArticleForSlug(slug: string) {
+  if (!SLUG_PATTERN.test(slug)) return null;
+  const index = await cachedRouteIndex();
+  return index.articleSlugs.includes(slug) ? cachedArticle(slug) : null;
+}
+
+// null — номер страницы за пределами списка.
+export async function getArticlesPage(page: number) {
+  const index = await cachedRouteIndex();
+  const pages = pageCount(index.articleSlugs.length);
+  return page > pages ? null : { ...(await cachedArticles(page)), pageCount: pages };
+}

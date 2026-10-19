@@ -68,6 +68,8 @@ docker compose up --build # полный стек: db → migrate → app
 - Новый шаблон: ключ в `PAGE_TEMPLATES` (`src/lib/templates.ts`) и лейаут в `(site)/_templates/templates.tsx`.
 - Новый виджет в контенте: узел TipTap в редакторе (по образцу `src/components/admin/gallery-node.tsx`), вывод в реестре `NODES` (`src/components/site/rich-text.tsx`), загрузка данных в `loadContentContext` (`src/server/site/content.ts`). Документ — это данные: узлы не из реестра не выводятся.
 - Тексты лейаута — `SITE_TEXTS` (`src/lib/site.ts`), их создаёт сид.
+- Данные для публичных страниц читаются только через `src/server/site/cached.ts` (`"use cache"` + `cacheTag` по типу данных). Кеш сбрасывает `runAction` по `SITE_CACHE_TAGS_BY_PERMISSION` (`src/lib/site-cache.ts`): новый тип данных — новый тег и строка в этой карте. Чтение по пути или slug — только для адресов из `cachedRouteIndex`, иначе любой запрос на несуществующий адрес станет записью в кеше.
+- Правки в БД в обход админки (SQL, E2E-фикстуры) сайт не увидит до сброса кеша: `POST /api/site-cache`, в E2E — `resetSiteCache(page)`.
 
 ## Правила
 

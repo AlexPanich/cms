@@ -71,6 +71,13 @@ export async function addToMainMenu(path: string) {
   }
 }
 
+// Данные, вставленные прямо в БД, сайт не увидит, пока не сброшен его кеш.
+// Запрос идёт с сессией администратора из контекста страницы.
+export async function resetSiteCache(page: Page) {
+  const response = await page.request.post("/api/site-cache");
+  expect(response.ok()).toBe(true);
+}
+
 // Отдельное меню для теста, чтобы не трогать «main» и «footer». Пункты — ссылки с названиями labels.
 export async function insertMenu(key: string, labels: string[] = []): Promise<number> {
   const sql = connect();

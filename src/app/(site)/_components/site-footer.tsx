@@ -1,12 +1,11 @@
 import { connection } from "next/server";
-import { db } from "@/db";
-import { getSiteMenu } from "@/server/site/service";
+import { cachedSiteMenu } from "@/server/site/cached";
 import { getSiteInfo } from "../_lib/data";
 import { SiteNav } from "./site-nav";
 
 export async function SiteFooter() {
   await connection();
-  const [site, menu] = await Promise.all([getSiteInfo(), getSiteMenu(db(), "footer")]);
+  const [site, menu] = await Promise.all([getSiteInfo(), cachedSiteMenu("footer")]);
 
   return (
     <div className="text-muted-foreground mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-8 text-sm sm:flex-row sm:justify-between">

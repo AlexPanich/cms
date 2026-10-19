@@ -18,6 +18,7 @@ import {
   getHomePage,
   getPublishedArticle,
   getPublishedPage,
+  getRouteIndex,
   getSectionMenu,
   getSiteMenu,
   getSitemapEntries,
@@ -253,5 +254,23 @@ describe("публичный сайт", () => {
         expect(await resolve(pathname), pathname).toEqual({ status: "not_found" });
       }
       expect(await resolve("/home")).toEqual({ status: "redirect", location: "/" });
+      // Одна опубликованная статья — одна страница списка.
+      expect(await resolveSiteRoute(tx, "/articles", "1")).toEqual({ status: "ok" });
+      expect(await resolveSiteRoute(tx, "/articles", "2")).toEqual({ status: "not_found" });
+      expect(await resolveSiteRoute(tx, "/articles", "мусор")).toEqual({ status: "ok" });
+    }));
+
+  it("собирает индекс опубликованных адресов", () =>
+    withRollback(async (tx) => {
+      await insertPage(tx, { path: "home", isHome: true });
+      await insertPage(tx, { path: "about" });
+      await insertPage(tx, { path: "draft", published: false });
+      await tx.insert(articles).values([
+        { slug: "news", title: "Новость", published: true, publishedAt: new Date() },
+        { slug: "draft", title: "Черновик" },
+      ]);
+      const index = await getRouteIndex(tx);
+      expect(index.pagePaths.sort()).toEqual(["about", "home"]);
+      expect(index).toMatchObject({ homePath: "home", articleSlugs: ["news"] });
     }));
 });

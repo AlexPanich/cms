@@ -38,7 +38,11 @@ async function siteProxy(request: NextRequest) {
 
   let resolution;
   try {
-    resolution = await resolveSiteRoute(db(), request.nextUrl.pathname);
+    resolution = await resolveSiteRoute(
+      db(),
+      request.nextUrl.pathname,
+      request.nextUrl.searchParams.get("page") ?? undefined,
+    );
   } catch (error) {
     // БД недоступна — пусть страница сама покажет ошибку.
     console.error("proxy: не удалось проверить адрес", error);

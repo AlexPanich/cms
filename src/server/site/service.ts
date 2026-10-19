@@ -3,7 +3,7 @@ import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { articles, galleries, galleryItems, media, menus, pages, texts } from "@/db/schema";
 import { mediaUrl } from "@/lib/media";
-import { PAGE_SIZE } from "@/lib/pagination";
+import { PAGE_SIZE, pageCount, parsePage } from "@/lib/pagination";
 import { classifySitePath } from "@/lib/site-routes";
 import { getMenuItems } from "@/server/menus/service";
 
@@ -275,9 +275,11 @@ export type RouteResolution =
   { status: "ok" } | { status: "not_found" } | { status: "redirect"; location: string };
 
 // Для proxy: есть ли по адресу опубликованная страница или статья. У главной один адрес — «/».
+// page — параметр ?page= списка статей: за пределами списка — 404.
 export async function resolveSiteRoute(
   executor: Executor,
   pathname: string,
+  page: unknown = undefined,
 ): Promise<RouteResolution> {
   const route = classifySitePath(pathname);
   switch (route.kind) {
@@ -285,6 +287,15 @@ export async function resolveSiteRoute(
       return { status: "ok" };
     case "invalid":
       return { status: "not_found" };
+    case "articleList": {
+      const number = parsePage(page);
+      if (number === 1) return { status: "ok" };
+      const [{ total }] = await executor
+        .select({ total: count() })
+        .from(articles)
+        .where(eq(articles.published, true));
+      return number <= pageCount(total) ? { status: "ok" } : { status: "not_found" };
+    }
     case "article": {
       const [row] = await executor
         .select({ id: articles.id })
@@ -302,3 +313,22 @@ export async function resolveSiteRoute(
     }
   }
 }
+
+// Все опубликованные адреса одним списком — чтобы кешировать данные только для них
+// (произвольные пути из запросов не становятся ключами кеша).
+export async function getRouteIndex(executor: Executor) {
+  const [pageRows, articleRows] = await Promise.all([
+    executor
+      .select({ path: pages.path, isHome: pages.isHome })
+      .from(pages)
+      .where(eq(pages.published, true)),
+    executor.select({ slug: articles.slug }).from(articles).where(eq(articles.published, true)),
+  ]);
+  return {
+    pagePaths: pageRows.map((row) => row.path),
+    homePath: pageRows.find((row) => row.isHome)?.path ?? null,
+    articleSlugs: articleRows.map((row) => row.slug),
+  };
+}
+
+export type RouteIndex = Awaited<ReturnType<typeof getRouteIndex>>;

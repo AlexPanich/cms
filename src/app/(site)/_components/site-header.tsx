@@ -1,14 +1,13 @@
 import { SearchIcon } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
-import { db } from "@/db";
-import { getSiteMenu } from "@/server/site/service";
+import { cachedSiteMenu } from "@/server/site/cached";
 import { getSiteInfo } from "../_lib/data";
 import { SiteNav } from "./site-nav";
 
 export async function SiteHeader() {
   await connection();
-  const [site, menu] = await Promise.all([getSiteInfo(), getSiteMenu(db(), "main")]);
+  const [site, menu] = await Promise.all([getSiteInfo(), cachedSiteMenu("main")]);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-8 gap-y-3 px-4 py-4">

@@ -3,7 +3,6 @@ import Image from "next/image";
 import { connection } from "next/server";
 import { JsonLd } from "@/components/site/json-ld";
 import { RichText } from "@/components/site/rich-text";
-import { db } from "@/db";
 import { richTextExcerpt } from "@/lib/rich-text";
 import { loadContentContext } from "@/server/site/content";
 import { absoluteUrl } from "@/server/site/url";
@@ -35,10 +34,7 @@ export default async function ArticlePage({ params }: Props) {
   await connection();
   const article = await getArticleForSlug((await params).slug);
   if (!article) return <NotFoundView />;
-  const [context, site] = await Promise.all([
-    loadContentContext(db(), article.content),
-    getSiteInfo(),
-  ]);
+  const [context, site] = await Promise.all([loadContentContext(article.content), getSiteInfo()]);
   const crumbs = [{ href: "/articles", title: "Статьи" }];
 
   return (

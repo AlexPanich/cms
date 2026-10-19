@@ -1,10 +1,10 @@
 import type { ComponentType } from "react";
 import { RichText } from "@/components/site/rich-text";
-import { db } from "@/db";
 import type { PageTemplate } from "@/lib/templates";
 import { isPageTemplate } from "@/lib/templates";
 import { loadContentContext } from "@/server/site/content";
-import { getAncestors, getSectionMenu, pageHref, type PublishedPage } from "@/server/site/service";
+import { cachedAncestors, cachedSectionMenu } from "@/server/site/cached";
+import { pageHref, type PublishedPage } from "@/server/site/service";
 import { JsonLd } from "@/components/site/json-ld";
 import { absoluteUrl } from "@/server/site/url";
 import { Breadcrumbs, BreadcrumbsJsonLd } from "../_components/breadcrumbs";
@@ -15,8 +15,8 @@ type TemplateProps = { page: PublishedPage };
 
 async function PageBody({ page }: TemplateProps) {
   const [ancestors, context, site] = await Promise.all([
-    page.isHome ? [] : getAncestors(db(), page.path),
-    loadContentContext(db(), page.content),
+    page.isHome ? [] : cachedAncestors(page.path),
+    loadContentContext(page.content),
     getSiteInfo(),
   ]);
   return (
@@ -54,7 +54,7 @@ async function PageBody({ page }: TemplateProps) {
 
 // Текст и меню раздела сбоку (если у ветки есть подстраницы).
 async function DefaultTemplate({ page }: TemplateProps) {
-  const section = page.isHome ? null : await getSectionMenu(db(), page.path);
+  const section = page.isHome ? null : await cachedSectionMenu(page.path);
   if (!section) return <WideTemplate page={page} />;
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_14rem]">

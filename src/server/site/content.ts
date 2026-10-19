@@ -1,13 +1,11 @@
 import "server-only";
 import type { ContentContext } from "@/components/site/rich-text";
-import type { Executor } from "@/db";
 import { collectGalleryKeys, type RichTextDoc } from "@/lib/rich-text";
-import { getGalleriesByKeys } from "./service";
+import { cachedGalleries } from "./cached";
 
-// Загружает данные всех виджетов документа заранее — одним запросом на тип виджета.
-export async function loadContentContext(
-  executor: Executor,
-  doc: RichTextDoc | null,
-): Promise<ContentContext> {
-  return { galleries: await getGalleriesByKeys(executor, collectGalleryKeys(doc)) };
+// Загружает данные всех виджетов документа заранее — одним (кешированным) запросом на тип виджета.
+export async function loadContentContext(doc: RichTextDoc | null): Promise<ContentContext> {
+  // Ключи по порядку — чтобы один и тот же набор галерей был одной записью в кеше.
+  const keys = collectGalleryKeys(doc).sort();
+  return { galleries: new Map(keys.length > 0 ? await cachedGalleries(keys) : []) };
 }

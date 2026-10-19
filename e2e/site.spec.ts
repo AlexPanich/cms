@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 import sharp from "sharp";
-import { addToMainMenu, expectToast, insertPublishedPage, insertRootPages } from "./fixtures";
+import {
+  addToMainMenu,
+  expectToast,
+  insertPublishedPage,
+  insertRootPages,
+  resetSiteCache,
+} from "./fixtures";
 
 test("публичная страница: меню, раздел, крошки, поиск и sitemap", async ({ page, request }) => {
   const stamp = Date.now();
@@ -16,6 +22,7 @@ test("публичная страница: меню, раздел, крошки,
   });
   await insertRootPages([`e2e-draft-${stamp}`]);
   await addToMainMenu(root);
+  await resetSiteCache(page);
 
   await page.goto(`/${root}/child`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(`E2E Подстраница ${stamp}`);
@@ -119,4 +126,38 @@ test("галерея, вставленная в текст страницы че
   await page.goto(`/${slug}`);
   await expect(page.getByRole("img", { name: "Голубой" })).toBeVisible();
   await expect(page.getByText(galleryTitle, { exact: true })).toBeVisible();
+});
+
+test("кеш сайта сбрасывается после правки в админке", async ({ page, request }) => {
+  const stamp = Date.now();
+  const slug = `e2e-cache-${stamp}`;
+  await insertPublishedPage({ slug, title: `E2E Было ${stamp}` });
+  await resetSiteCache(page);
+
+  // Первый показ кладёт страницу в кеш.
+  await page.goto(`/${slug}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`E2E Было ${stamp}`);
+
+  await page.goto("/admin/pages");
+  await page.getByRole("link", { name: `E2E Было ${stamp}`, exact: true }).click();
+  await page.getByRole("textbox", { name: "Заголовок" }).fill(`E2E Стало ${stamp}`);
+  await page.getByRole("button", { name: "Сохранить" }).click();
+  await expectToast(page, "Страница сохранена");
+
+  await page.goto(`/${slug}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`E2E Стало ${stamp}`);
+
+  // Снятие с публикации — сразу 404.
+  await page.goto("/admin/pages");
+  await page.getByRole("link", { name: `E2E Стало ${stamp}`, exact: true }).click();
+  await page.getByRole("checkbox", { name: "Опубликована" }).click();
+  await page.getByRole("button", { name: "Сохранить" }).click();
+  await expectToast(page, "Страница сохранена");
+  expect((await request.get(`/${slug}`)).status()).toBe(404);
+});
+
+test("сброс кеша доступен только после входа", async ({ browser }) => {
+  const guest = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+  expect((await guest.request.post("/api/site-cache")).status()).toBe(401);
+  await guest.close();
 });

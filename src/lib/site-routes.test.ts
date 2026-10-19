@@ -6,7 +6,7 @@ describe("classifySitePath", () => {
     ["/", { kind: "other" }],
     ["/about", { kind: "page", path: "about" }],
     ["/about/team", { kind: "page", path: "about/team" }],
-    ["/articles", { kind: "other" }],
+    ["/articles", { kind: "articleList" }],
     ["/articles/first-news", { kind: "article", slug: "first-news" }],
     ["/search", { kind: "other" }],
     ["/login", { kind: "other" }],

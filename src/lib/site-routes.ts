@@ -5,7 +5,8 @@ import { RESERVED_ROOT_SLUGS, SLUG_PATTERN } from "./slug";
 export type SiteRoute =
   | { kind: "page"; path: string }
   | { kind: "article"; slug: string }
-  // Главная, список статей, поиск и разделы приложения: проверять нечего.
+  | { kind: "articleList" }
+  // Главная, поиск и разделы приложения: проверять нечего.
   | { kind: "other" }
   | { kind: "invalid" };
 
@@ -18,7 +19,7 @@ export function classifySitePath(pathname: string): SiteRoute {
   const [first] = segments;
 
   if (first === "articles") {
-    if (segments.length === 1) return { kind: "other" };
+    if (segments.length === 1) return { kind: "articleList" };
     return segments.length === 2 && SLUG_PATTERN.test(segments[1])
       ? { kind: "article", slug: segments[1] }
       : { kind: "invalid" };
