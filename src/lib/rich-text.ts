@@ -57,9 +57,8 @@ export function collectGalleryKeys(doc: RichTextDoc | null): string[] {
   return [...keys];
 }
 
-// Начало текста документа для meta description, если описание не задано: блоки через
-// пробел, обрезка по границе слова. Поисковики показывают около 160 символов.
-export function richTextExcerpt(doc: RichTextDoc | null, maxLength = 160): string | null {
+// Текст документа одной строкой: блоки через пробел, оформление не разрывает слова.
+export function richTextPlainText(doc: RichTextDoc | null): string {
   const parts: string[] = [];
   const visit = (nodes: RichTextNode[] | undefined) => {
     for (const node of nodes ?? []) {
@@ -69,7 +68,13 @@ export function richTextExcerpt(doc: RichTextDoc | null, maxLength = 160): strin
     }
   };
   visit(doc?.content);
-  const text = parts.join("").replace(/\s+/g, " ").trim();
+  return parts.join("").replace(/\s+/g, " ").trim();
+}
+
+// Начало текста документа для meta description, если описание не задано: обрезка
+// по границе слова. Поисковики показывают около 160 символов.
+export function richTextExcerpt(doc: RichTextDoc | null, maxLength = 160): string | null {
+  const text = richTextPlainText(doc);
   if (!text) return null;
   if (text.length <= maxLength) return text;
   const cut = text.slice(0, maxLength - 1);
