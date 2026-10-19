@@ -77,7 +77,7 @@
 - Вход идёт из браузера через `/api/auth` (клиент `better-auth/react`), поэтому работают встроенные rate limit (3 попытки входа за 10 секунд) и проверка Origin.
 - `proxy.ts` быстро отправляет гостей с `/admin` на `/login?next=…`, не обращаясь к БД. Настоящая проверка — `requirePagePermission` на страницах (редирект на вход или 403 через `forbidden()`) и `requirePermission` в server actions (`AuthError`).
 - Права читаются из БД на каждый запрос, поэтому изменение ролей действует сразу. `next` после входа проходит через `safeRedirectPath` (защита от open redirect).
-- Пользователи создаются `createUserWithPassword` (`src/server/users/service.ts`): пользователь, аккаунт `credential` с хешем из `better-auth/crypto` и роли — одной транзакцией. Первый администратор — `pnpm user:create-admin --email …`.
+- Пользователи создаются `createUserWithPassword` (`src/server/users/service.ts`): пользователь, аккаунт `credential` с хешем из `better-auth/crypto` и роли — одной транзакцией. Первый администратор — `pnpm user:create-admin --email …` или страница `/setup`, открытая, пока пользователей нет.
 - Ограничение: страницы стримятся (Partial Prerendering), поэтому 403 и редирект с `/login` для уже вошедшего отдаются в теле ответа со статусом 200. Доступ при этом закрыт; гость получает настоящий 307 от `proxy.ts`.
 
 ### 4. Админка ✅

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { db } from "@/db";
 import { safeRedirectPath } from "@/lib/redirect";
 import { getCurrentUser } from "@/server/auth/session";
+import { hasUsers } from "@/server/setup/service";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Вход" };
@@ -25,5 +27,7 @@ async function Login({ searchParams }: Pick<PageProps<"/login">, "searchParams">
   const target = safeRedirectPath(typeof next === "string" ? next : null);
 
   if (await getCurrentUser()) redirect(target);
+  // Первый запуск: входить некому, сначала создаём администратора.
+  if (!(await hasUsers(db()))) redirect("/setup");
   return <LoginForm next={target} />;
 }
