@@ -1,8 +1,16 @@
 import { defineBlock, field } from "./define";
+import {
+  EXAMPLE_DOCUMENTS,
+  EXAMPLE_GALLERY,
+  EXAMPLE_PAGE,
+  exampleDoc,
+  exampleImage,
+} from "./examples";
 
 // Базовый каталог блоков ядра. Тема обязана нарисовать каждый, а свои типы добавляет
 // в src/theme/blocks/. Блок, который пригодится другим клиентам, переносится сюда.
-// Описание — для редактора и дизайнера: что это за блок и когда его брать.
+// Описание — для редактора и дизайнера: что это за блок и когда его брать. Пример —
+// для каталога /_blocks: тексты реалистичной длины, чтобы по нему можно было проверить тему.
 
 // Обычная текстовая страница — один такой блок.
 export const textBlock = defineBlock({
@@ -11,6 +19,13 @@ export const textBlock = defineBlock({
   description: "Форматированный текст: заголовки, списки, ссылки, картинки, галереи",
   fields: {
     content: field.richText({ label: "Текст", required: true }),
+  },
+  example: {
+    content: exampleDoc(
+      "## О мастерской",
+      "Мы делаем мебель из массива дуба и ясеня под размеры вашей квартиры. Каждый заказ начинается с замера и эскиза, а заканчивается сборкой на месте.",
+      "Работаем с 2012 года, на изделия даём гарантию пять лет.",
+    ),
   },
 });
 
@@ -24,6 +39,12 @@ export const heroBlock = defineBlock({
     subtitle: field.text({ label: "Подзаголовок", max: 300, multiline: true }),
     button: field.link({ label: "Кнопка" }),
     image: field.image({ label: "Картинка", aspect: 16 / 9 }),
+  },
+  example: {
+    title: "Мебель из массива на заказ",
+    subtitle: "Проектируем, изготавливаем и собираем за шесть недель. Замер и эскиз — бесплатно.",
+    button: { kind: "page", pageId: EXAMPLE_PAGE, label: "Рассчитать стоимость" },
+    image: exampleImage(0, "Мастерская"),
   },
 });
 
@@ -66,6 +87,33 @@ export const featuresBlock = defineBlock({
       { label: "Карточки", itemLabel: "Карточка", min: 1, max: 12 },
     ),
   },
+  example: {
+    title: "Почему выбирают нас",
+    intro: "Отвечаем за результат на каждом этапе: от замера до сборки.",
+    items: [
+      {
+        icon: "clock",
+        image: null,
+        title: "Точно в срок",
+        text: "Сроки фиксируем в договоре и не переносим.",
+        link: null,
+      },
+      {
+        icon: "shield",
+        image: null,
+        title: "Гарантия пять лет",
+        text: "Бесплатно устраним любой дефект производства.",
+        link: { kind: "page", pageId: EXAMPLE_PAGE, label: "Условия гарантии" },
+      },
+      {
+        icon: "truck",
+        image: null,
+        title: "Доставка и сборка",
+        text: "Привезём и соберём сами, вывезем упаковку.",
+        link: null,
+      },
+    ],
+  },
 });
 
 export const mediaTextBlock = defineBlock({
@@ -78,6 +126,15 @@ export const mediaTextBlock = defineBlock({
     image: field.image({ label: "Картинка", required: true, aspect: 4 / 3 }),
     button: field.link({ label: "Кнопка" }),
   },
+  example: {
+    title: "Своё производство",
+    content: exampleDoc(
+      "Цех площадью 600 м² в Твери: станки с ЧПУ, покрасочная камера и склад высушенной древесины.",
+      "Приезжайте посмотреть, как делается ваша мебель.",
+    ),
+    image: exampleImage(1, "Цех"),
+    button: { kind: "page", pageId: EXAMPLE_PAGE, label: "Записаться на экскурсию" },
+  },
 });
 
 export const galleryBlock = defineBlock({
@@ -88,6 +145,7 @@ export const galleryBlock = defineBlock({
     title: field.text({ label: "Заголовок", max: 120 }),
     gallery: field.gallery({ label: "Галерея", required: true }),
   },
+  example: { title: "Наши работы", gallery: EXAMPLE_GALLERY },
 });
 
 export const ctaBlock = defineBlock({
@@ -98,6 +156,11 @@ export const ctaBlock = defineBlock({
     title: field.text({ label: "Заголовок", required: true, max: 120 }),
     text: field.text({ label: "Текст", max: 300, multiline: true }),
     button: field.link({ label: "Кнопка", required: true }),
+  },
+  example: {
+    title: "Обсудим ваш проект?",
+    text: "Оставьте заявку — перезвоним в течение часа и договоримся о замере.",
+    button: { kind: "page", pageId: EXAMPLE_PAGE, label: "Оставить заявку" },
   },
 });
 
@@ -114,6 +177,25 @@ export const faqBlock = defineBlock({
       },
       { label: "Вопросы", itemLabel: "Вопрос", min: 1, max: 30 },
     ),
+  },
+  example: {
+    title: "Частые вопросы",
+    items: [
+      {
+        question: "Сколько стоит замер?",
+        answer: exampleDoc("Замер в пределах города бесплатный, за городом — 1000 ₽."),
+      },
+      {
+        question: "Можно ли изменить проект после договора?",
+        answer: exampleDoc(
+          "Да, до начала производства. Сроки и цена пересчитываются, если меняются материалы.",
+        ),
+      },
+      {
+        question: "Как оплатить заказ?",
+        answer: exampleDoc("Половина — при заключении договора, остальное — после сборки."),
+      },
+    ],
   },
 });
 
@@ -133,6 +215,7 @@ export const articlesBlock = defineBlock({
     }),
     showAll: field.boolean({ label: "Ссылка «Все статьи»", default: true }),
   },
+  example: { title: "Новости мастерской", count: "3", showAll: true },
 });
 
 export const documentsBlock = defineBlock({
@@ -153,6 +236,10 @@ export const documentsBlock = defineBlock({
       { label: "Документы", itemLabel: "Документ", min: 1, max: 50 },
     ),
   },
+  example: {
+    title: "Документы",
+    items: EXAMPLE_DOCUMENTS.map((document) => ({ document, title: "" })),
+  },
 });
 
 // Контакты не хранятся в блоке: их берут из настроек сайта (src/lib/site-settings.ts),
@@ -166,6 +253,11 @@ export const contactsBlock = defineBlock({
     title: field.text({ label: "Заголовок", max: 120 }),
     intro: field.text({ label: "Вступление", max: 300, multiline: true }),
     showSocials: field.boolean({ label: "Показывать соцсети", default: true }),
+  },
+  example: {
+    title: "Как нас найти",
+    intro: "Шоурум открыт каждый день, кроме воскресенья. Лучше позвонить заранее.",
+    showSocials: true,
   },
 });
 

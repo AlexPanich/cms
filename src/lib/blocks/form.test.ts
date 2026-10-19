@@ -11,6 +11,7 @@ vi.mock("@/theme/blocks", async () => {
         type: "team",
         label: "Команда",
         description: "",
+        example: {},
         fields: {
           title: field.text({ label: "Заголовок", required: true }),
           people: field.list(

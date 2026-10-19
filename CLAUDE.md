@@ -12,6 +12,7 @@ pnpm db:generate          # SQL-миграция из изменений src/db/
 pnpm db:migrate           # применить миграции
 pnpm db:seed              # системные роли и меню (идемпотентно)
 pnpm user:create-admin --email admin@example.com   # первый администратор из консоли (или /setup в браузере)
+pnpm blocks:catalog        # docs/BLOCKS.md из описаний блоков (CI проверяет через --check)
 pnpm lint && pnpm typecheck && pnpm test && pnpm format:check   # быстрые проверки CI
 pnpm build && pnpm test:e2e   # E2E на Playwright (поднимает pnpm start сам)
 pnpm build
@@ -72,6 +73,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 - Метаданные публичных страниц — только через `siteMetadata` (`(site)/_lib/metadata.ts`): canonical, Open Graph, noindex. Структурированные данные — `JsonLd` (`src/components/site/json-ld.tsx`). Обёртки с `cache` из React для повторных запросов в одном рендере — `(site)/_lib/data.ts`.
 - Новый раздел первого уровня (как `/articles`) добавляй и в `RESERVED_ROOT_SLUGS` (`src/lib/slug.ts`), иначе страница с таким slug станет недоступной.
 - Новый шаблон: ключ в `PAGE_TEMPLATES` темы (`src/theme/page-templates.ts`) и лейаут в `src/theme/templates.tsx`. Ключ `default` обязателен, без него не соберётся.
+- Каталог для дизайнера: у `defineBlock` обязательный `example` (картинки и прочие ссылки — из `src/lib/blocks/examples.ts`), по нему рисуется `/_blocks` (`src/app/(catalog)/%5Fblocks`, данные-заглушки — `src/server/site/catalog.ts`). После изменения блоков, полей или вариантов — `pnpm blocks:catalog` и коммит `docs/BLOCKS.md`. Правила для макета — `docs/DESIGN-GUIDE.md`.
 - Блоки: поля и тип блока — `field.*` и `defineBlock` (`src/lib/blocks/define.ts`), каталог ядра — `catalog.ts`, свои блоки и варианты темы — `src/theme/blocks/index.ts`. Схему блока меняй только совместимо: новое поле необязательное или со значением по умолчанию, поля не переименовываются. Новый тип блока требует вид в `src/theme/blocks/views.tsx` (`BlockViews`). Данные полей блока на сайте (картинки, документы, галереи, ссылки, последние статьи) приходят в `context`, тема выводит их через `resolveImage`/`resolveDocument`/`resolveLink` из `src/components/site/blocks.tsx`. Блоки страницы пишет только сервис страниц: вместе с ними он обновляет `search_text` и `page_media`. Чтение из БД — через `parseStoredBlocks`/`validStoredBlocks`, данные для ссылок и виджетов — `loadBlocksContext`.
 - Новый виджет в контенте: узел TipTap в редакторе (по образцу `src/components/admin/gallery-node.tsx`), вывод в реестре `NODES` (`src/components/site/rich-text.tsx`), загрузка данных в `loadContentContext` (`src/server/site/content.ts`). Документ — это данные: узлы не из реестра не выводятся.
 - Тексты лейаута — `SITE_TEXTS` (`src/lib/site.ts`), их создаёт сид.

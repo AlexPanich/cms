@@ -10,6 +10,8 @@ describe("classifySitePath", () => {
     ["/articles/first-news", { kind: "article", slug: "first-news" }],
     ["/search", { kind: "other" }],
     ["/login", { kind: "other" }],
+    ["/_blocks", { kind: "other" }],
+    ["/_blocks/x", { kind: "invalid" }],
     ["/articles/a/b", { kind: "invalid" }],
     ["/articles/Bad", { kind: "invalid" }],
     ["/About", { kind: "invalid" }],

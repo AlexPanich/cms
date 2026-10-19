@@ -144,6 +144,7 @@ describe("defineBlock", () => {
       type: "media-text",
       label: "Картинка и текст",
       description: "",
+      example: {},
       fields: {
         title: field.text({ label: "Заголовок", required: true }),
         image: field.image({ label: "Картинка" }),
@@ -158,6 +159,7 @@ describe("defineBlock", () => {
       type: "typed",
       label: "",
       description: "",
+      example: {},
       fields: {
         title: field.text({ label: "" }),
         body: field.richText({ label: "", required: true }),
@@ -187,7 +189,7 @@ describe("defineBlock", () => {
 
   it("отклоняет недопустимый тип", () => {
     expect(() =>
-      defineBlock({ type: "Media_Text", label: "", description: "", fields: {} }),
+      defineBlock({ type: "Media_Text", label: "", description: "", fields: {}, example: {} }),
     ).toThrow();
   });
 });
