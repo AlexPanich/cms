@@ -1,15 +1,11 @@
 import { SearchIcon } from "lucide-react";
 import Link from "next/link";
-import { connection } from "next/server";
-import { cachedSiteMenu } from "@/server/site/cached";
-import { getSiteInfo } from "../_lib/data";
-import { EditableText } from "./editable";
+import { EditableText } from "@/components/site/editable";
+import type { SiteInfo } from "@/components/site/theme";
+import type { SiteMenuItem } from "@/server/site/service";
 import { SiteNav } from "./site-nav";
 
-export async function SiteHeader() {
-  await connection();
-  const [site, menu] = await Promise.all([getSiteInfo(), cachedSiteMenu("main")]);
-
+export function SiteHeader({ site, menu }: { site: SiteInfo; menu: SiteMenuItem[] }) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-8 gap-y-3 px-4 py-4">
       <EditableText textKey="site-name" value={site.name}>

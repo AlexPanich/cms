@@ -57,7 +57,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 - Загрузка картинки — поле `FormImageUpload` (`src/components/admin/image-upload.tsx`) и server action, который вызывает `saveUploadedImage` (`src/server/media/service.ts`). Файл не доверяем ни по имени, ни по MIME: формат определяет sharp, сохраняется перекодированный WebP. Адрес файла — `mediaUrl(storageKey)`, в разметке — `next/image`.
 - Картинка используется, если на неё ссылается галерея или превью статьи — подсчёт `galleryUses`/`articleUses` в `src/server/media/service.ts`. Новую ссылку на `media` добавляй туда же, иначе картинку сочтут неиспользуемой и удалят вместе с галереей. Записи `media` удаляются в транзакции, а файлы — после неё (`deleteStoredFiles`).
 - Документ — запись `media` с `kind = document` (`src/server/documents/`): расширение из белого списка `DOCUMENT_EXTENSIONS`, содержимое сверяется с сигнатурой (`detect.ts`), отдаётся только как вложение. Новый формат добавляется и в список, и в `DOCUMENT_TYPES`.
-- Шаблоны страниц — реестр `PAGE_TEMPLATES` в `src/lib/templates.ts`.
+- Шаблоны страниц объявляет тема: `PAGE_TEMPLATES` в `src/theme/page-templates.ts` (без зависимостей — его импортирует форма), помощники — `src/lib/templates.ts`. Неизвестный ключ из БД — `resolvePageTemplate` → `default`.
 - Новый раздел добавляется в `ADMIN_NAV` (`src/app/admin/_components/nav.ts`) с его правом.
 - В E2E искать элементы через `getByRole` (скрытые копии из `<Activity>` он пропускает, `getByLabel` — нет), а после `goto`/`reload` дожидаться содержимого: админка сначала отдаёт «Загрузка…» из `<Suspense>`.
 - E2E лежат в `e2e/`: всё, что создают тесты, помечается префиксом `e2e-` и удаляется в teardown. Сессия администратора общая (`e2e/.auth/admin.json`), потому что вход ограничен 3 попытками за 10 секунд.
@@ -65,15 +65,16 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 ## Публичный сайт
 
 - Маршруты — в `src/app/(site)/`, данные — `src/server/site/service.ts` (только опубликованное).
+- Разметка и оформление — тема в `src/theme/` (импорт `@/theme`), контракт `ThemeModule` — `src/components/site/theme.ts`. Маршрут загружает данные, ставит метаданные и JSON-LD и передаёт данные пропсами в компонент темы; тема в БД не ходит. Общие компоненты для тем — `src/components/site/` (`Editable…`, `RichText`). Новый вид страницы — новое поле в `ThemeModule`. Токены темы — в `src/theme/theme.css` только под `[data-site]`, не на `:root`: иначе тема перекрасит админку.
 - Публичные страницы рендерятся без стриминга ради SEO: в `(site)` не используй `<Suspense>` и `loading.tsx`, у новых страниц — `export const instant = false`. Иначе текст уйдёт в скрытый блок, а метаданные — из `<head>`.
-- Статус 404/308 рендер с Cache Components поставить не может (всегда 200) — его ставит `src/proxy.ts` через `resolveSiteRoute` до рендера. Новый тип публичного адреса добавляй в `classifySitePath` (`src/lib/site-routes.ts`) и `resolveSiteRoute`. «Не найдена» страница рисует сама (`NotFoundView`), а не через `notFound()` — так сохраняются её метаданные.
+- Статус 404/308 рендер с Cache Components поставить не может (всегда 200) — его ставит `src/proxy.ts` через `resolveSiteRoute` до рендера. Новый тип публичного адреса добавляй в `classifySitePath` (`src/lib/site-routes.ts`) и `resolveSiteRoute`. «Не найдена» страница рисует сама (`theme.NotFound`), а не через `notFound()` — так сохраняются её метаданные.
 - Метаданные публичных страниц — только через `siteMetadata` (`(site)/_lib/metadata.ts`): canonical, Open Graph, noindex. Структурированные данные — `JsonLd` (`src/components/site/json-ld.tsx`). Обёртки с `cache` из React для повторных запросов в одном рендере — `(site)/_lib/data.ts`.
 - Новый раздел первого уровня (как `/articles`) добавляй и в `RESERVED_ROOT_SLUGS` (`src/lib/slug.ts`), иначе страница с таким slug станет недоступной.
-- Новый шаблон: ключ в `PAGE_TEMPLATES` (`src/lib/templates.ts`) и лейаут в `(site)/_templates/templates.tsx`.
+- Новый шаблон: ключ в `PAGE_TEMPLATES` темы (`src/theme/page-templates.ts`) и лейаут в `src/theme/templates.tsx`. Ключ `default` обязателен, без него не соберётся.
 - Новый виджет в контенте: узел TipTap в редакторе (по образцу `src/components/admin/gallery-node.tsx`), вывод в реестре `NODES` (`src/components/site/rich-text.tsx`), загрузка данных в `loadContentContext` (`src/server/site/content.ts`). Документ — это данные: узлы не из реестра не выводятся.
 - Тексты лейаута — `SITE_TEXTS` (`src/lib/site.ts`), их создаёт сид.
 - Данные для публичных страниц читаются только через `src/server/site/cached.ts` (`"use cache"` + `cacheTag` по типу данных). Кеш сбрасывает `runAction` по `SITE_CACHE_TAGS_BY_PERMISSION` (`src/lib/site-cache.ts`): новый тип данных — новый тег и строка в этой карте. Чтение по пути или slug — только для адресов из `cachedRouteIndex`, иначе любой запрос на несуществующий адрес станет записью в кеше.
-- Правка на сайте: белый список полей — `frontEditInputSchema` (`src/server/front-edit/schema.ts`), новое поле добавляется туда и в сервис. На странице — серверные обёртки из `(site)/_components/editable.tsx`: редактор выводится только пользователю с `edit_from_front`.
+- Правка на сайте: белый список полей — `frontEditInputSchema` (`src/server/front-edit/schema.ts`), новое поле добавляется туда и в сервис. На странице — серверные обёртки из `src/components/site/editable.tsx`, тема оборачивает ими поля в разметке: редактор выводится только пользователю с `edit_from_front`.
 - Тяжёлый клиентский код, нужный не всем посетителям, подключай через `next/dynamic` (как `front-edit-lazy.tsx`): Next грузит на каждую страницу все клиентские модули, импортированные в сегменте, даже если они не отрендерены.
 - Правки в БД в обход админки (SQL, E2E-фикстуры) сайт не увидит до сброса кеша: `POST /api/site-cache`, в E2E — `resetSiteCache(page)`.
 
@@ -126,6 +127,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 5. ✅ Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
 6. ✅ Редактирование на сайте: клиентский компонент для пользователей с правом `edit_from_front`, поля только из белого списка.
 7. ✅ E2E-тесты (Playwright) и деплой в Docker.
+8. Темы и блоки: дизайн клиента в `src/theme/`, страница из блоков каталога, каталог для дизайнера, отдельный репозиторий на клиента.
 
 ## Особенности окружения
 

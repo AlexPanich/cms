@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PageHeader } from "@/components/admin/page-header";
 import { db } from "@/db";
-import { isPageTemplate } from "@/lib/templates";
+import { resolvePageTemplate } from "@/lib/templates";
 import { requirePagePermission } from "@/server/auth/session";
 import { listGalleryOptions } from "@/server/galleries/service";
 import { getPage, getPageTree } from "@/server/pages/service";
@@ -64,7 +64,7 @@ export default async function EditPagePage({ params }: PageProps<"/admin/pages/[
           metaDescription: page.metaDescription ?? "",
           content: page.content,
           // Шаблон могли убрать из реестра — тогда предлагаем стандартный.
-          template: isPageTemplate(page.template) ? page.template : "default",
+          template: resolvePageTemplate(page.template),
           published: page.published,
           isHome: page.isHome,
         }}

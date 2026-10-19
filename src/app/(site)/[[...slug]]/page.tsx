@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { permanentRedirect } from "next/navigation";
 import { connection } from "next/server";
+import { BreadcrumbsJsonLd } from "@/components/site/breadcrumbs-json-ld";
+import { JsonLd } from "@/components/site/json-ld";
+import { resolvePageTemplate } from "@/lib/templates";
 import { richTextExcerpt } from "@/lib/rich-text";
-import { pageHref } from "@/server/site/service";
-import { NotFoundView } from "../_components/not-found-view";
-import { getPageForPath, pathFromSegments } from "../_lib/data";
+import { cachedAncestors, cachedSectionMenu } from "@/server/site/cached";
+import { loadContentContext } from "@/server/site/content";
+import { pageHref, type PublishedPage } from "@/server/site/service";
+import { absoluteUrl } from "@/server/site/url";
+import { theme } from "@/theme";
+import { getPageForPath, getSiteInfo, pathFromSegments } from "../_lib/data";
 import { siteMetadata } from "../_lib/metadata";
-import { PageTemplateView } from "../_templates/templates";
 
 type Props = PageProps<"/[[...slug]]">;
 
@@ -34,25 +38,43 @@ export default async function SitePage({ params }: Props) {
   const path = pathFromSegments((await params).slug);
   const page = path === null ? null : await getPageForPath(path);
 
-  if (!page) return path === "" ? <EmptySite /> : <NotFoundView />;
+  if (!page) return path === "" ? <theme.EmptySite /> : <theme.NotFound />;
   // У главной один адрес — «/».
   if (page.isHome && path !== "") permanentRedirect("/");
 
-  return <PageTemplateView page={page} />;
+  return <PageView page={page} />;
 }
 
-// Свежая установка: главная страница ещё не назначена.
-function EmptySite() {
+async function PageView({ page }: { page: PublishedPage }) {
+  const href = pageHref(page);
+  const [crumbs, section, context, site] = await Promise.all([
+    page.isHome ? [] : cachedAncestors(page.path),
+    page.isHome ? null : cachedSectionMenu(page.path),
+    loadContentContext(page.content),
+    getSiteInfo(),
+  ]);
+  const Template = theme.templates[resolvePageTemplate(page.template)];
+
   return (
-    <div className="flex flex-col gap-3 py-16 text-center">
-      <h1 className="text-2xl font-semibold">Сайт ещё не наполнен</h1>
-      <p className="text-muted-foreground">
-        Создайте страницу и отметьте её главной в{" "}
-        <Link href="/admin/pages" className="underline underline-offset-4">
-          админке
-        </Link>
-        .
-      </p>
-    </div>
+    <>
+      {page.isHome ? (
+        // Сайт целиком: название и поиск по сайту прямо из выдачи.
+        <JsonLd
+          data={{
+            "@type": "WebSite",
+            name: site.name,
+            url: absoluteUrl("/"),
+            potentialAction: {
+              "@type": "SearchAction",
+              target: `${absoluteUrl("/search")}?q={search_term_string}`,
+              "query-input": "required name=search_term_string",
+            },
+          }}
+        />
+      ) : (
+        <BreadcrumbsJsonLd items={crumbs} current={{ href, title: page.title }} />
+      )}
+      <Template page={page} href={href} crumbs={crumbs} section={section} context={context} />
+    </>
   );
 }

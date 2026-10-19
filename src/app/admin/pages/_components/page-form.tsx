@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import type { ActionResult } from "@/lib/action-result";
 import { slugify } from "@/lib/slug";
-import { PAGE_TEMPLATES } from "@/lib/templates";
+import { DEFAULT_PAGE_TEMPLATE, PAGE_TEMPLATES } from "@/lib/templates";
 import { pageInputSchema } from "@/server/pages/schema";
 import { createPage, updatePage } from "../actions";
 
@@ -67,7 +67,7 @@ export function PageForm({
       menuTitle: "",
       metaDescription: "",
       content: null,
-      template: "default",
+      template: DEFAULT_PAGE_TEMPLATE,
       published: false,
       isHome: false,
     },

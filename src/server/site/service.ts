@@ -193,6 +193,10 @@ export async function listPublishedArticles(executor: Executor, { page }: { page
   return { items: rows.map(withPreview), total };
 }
 
+export type PublishedArticleCard = Awaited<
+  ReturnType<typeof listPublishedArticles>
+>["items"][number];
+
 export async function getPublishedArticle(executor: Executor, slug: string) {
   const [row] = await executor
     .select({ ...articleCardFields, content: articles.content, updatedAt: articles.updatedAt })
@@ -201,6 +205,8 @@ export async function getPublishedArticle(executor: Executor, slug: string) {
     .where(and(eq(articles.slug, slug), eq(articles.published, true)));
   return row ? withPreview(row) : null;
 }
+
+export type PublishedArticle = NonNullable<Awaited<ReturnType<typeof getPublishedArticle>>>;
 
 // Маркеры подсветки в ts_headline. Результат выводится как текст, а не HTML:
 // маркеры потом превращаются в <mark>, поэтому HTML в тексте ничего не сломает.

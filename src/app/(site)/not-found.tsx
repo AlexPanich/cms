@@ -1,5 +1,5 @@
-import { NotFoundView } from "./_components/not-found-view";
+import { theme } from "@/theme";
 
 export default function NotFound() {
-  return <NotFoundView />;
+  return <theme.NotFound />;
 }

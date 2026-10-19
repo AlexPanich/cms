@@ -1,12 +1,28 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { collectGalleryKeys, type RichTextDoc, type RichTextNode } from "@/lib/rich-text";
-import { type ContentContext, RichText } from "./rich-text";
+import { type ContentContext, RichText, type RichTextWidgets } from "./rich-text";
 
 const empty: ContentContext = { galleries: new Map() };
 
+const widgets: RichTextWidgets = {
+  gallery: ({ gallery }) => (
+    <figure>
+      {gallery.images.map((image) => image.alt)}
+      <figcaption>{gallery.title}</figcaption>
+    </figure>
+  ),
+};
+
 const render = (content: RichTextNode[], context = empty) =>
-  renderToStaticMarkup(<RichText doc={{ type: "doc", content }} context={context} />);
+  renderToStaticMarkup(
+    <RichText
+      doc={{ type: "doc", content }}
+      context={context}
+      widgets={widgets}
+      className="prose"
+    />,
+  );
 
 const text = (value: string, marks?: RichTextNode["marks"]): RichTextNode => ({
   type: "text",
@@ -34,7 +50,7 @@ describe("RichText", () => {
         },
       ]),
     ).toBe(
-      '<div class="prose prose-neutral dark:prose-invert max-w-none"><h2>Заголовок</h2>' +
+      '<div class="prose"><h2>Заголовок</h2>' +
         '<p><em><strong>жирный</strong></em><br/><a href="/about">ссылка</a></p>' +
         '<ol start="3"><li><p>п</p></li></ol></div>',
     );
@@ -78,10 +94,7 @@ describe("RichText", () => {
         ],
       ]),
     });
-    expect(html).toContain(
-      '<figcaption class="text-muted-foreground mt-2 text-sm">Офис</figcaption>',
-    );
-    expect(html).toContain('alt="Вход"');
+    expect(html).toContain("<figure>Вход<figcaption>Офис</figcaption></figure>");
     expect(html.match(/<figure/g)).toHaveLength(1);
   });
 });

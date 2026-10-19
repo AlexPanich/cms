@@ -13,7 +13,7 @@ import { FieldGroup } from "@/components/ui/field";
 import { Toaster } from "@/components/ui/sonner";
 import { z } from "@/lib/zod";
 import { pageContentSchema, pageTitleSchema, textBodySchema } from "@/server/front-edit/schema";
-import { saveFrontEdit } from "../actions";
+import { saveFrontEdit } from "@/app/(site)/actions";
 
 // Правка на сайте. Эти компоненты рендерятся только для пользователей с правом edit_from_front
 // (см. editable.tsx) и загружаются отдельным чанком (front-edit-lazy.tsx).

@@ -1,13 +1,17 @@
-import { Fragment, type ReactNode } from "react";
+import { type ComponentType, Fragment, type ReactNode } from "react";
 import { galleryKeyOf, type RichTextDoc, type RichTextNode } from "@/lib/rich-text";
 import { isSafeLinkUrl } from "@/lib/url";
 import type { PublicGallery } from "@/server/site/service";
-import { Gallery } from "./gallery";
 
 // Данные виджетов, загруженные заранее (src/server/site/content.ts).
 export type ContentContext = { galleries: ReadonlyMap<string, PublicGallery> };
 
-type Render = (node: RichTextNode, children: ReactNode, context: ContentContext) => ReactNode;
+// Как выглядят виджеты, решает тема.
+export type RichTextWidgets = { gallery: ComponentType<{ gallery: PublicGallery }> };
+
+type RenderContext = ContentContext & { widgets: RichTextWidgets };
+
+type Render = (node: RichTextNode, children: ReactNode, context: RenderContext) => ReactNode;
 
 const num = (value: unknown, fallback: number) =>
   typeof value === "number" && Number.isInteger(value) ? value : fallback;
@@ -38,7 +42,7 @@ const NODES: Record<string, Render> = {
   gallery: (node, _, context) => {
     const key = galleryKeyOf(node);
     const gallery = key ? context.galleries.get(key) : undefined;
-    return gallery ? <Gallery gallery={gallery} /> : null;
+    return gallery ? <context.widgets.gallery gallery={gallery} /> : null;
   },
 };
 
@@ -70,7 +74,7 @@ function renderMarks(text: string, marks: NonNullable<RichTextNode["marks"]>): R
   }, text);
 }
 
-function renderNodes(nodes: RichTextNode[] | undefined, context: ContentContext): ReactNode {
+function renderNodes(nodes: RichTextNode[] | undefined, context: RenderContext): ReactNode {
   return nodes?.map((node, index) => {
     const render = NODES[node.type];
     if (!render) return null;
@@ -80,11 +84,18 @@ function renderNodes(nodes: RichTextNode[] | undefined, context: ContentContext)
   });
 }
 
-export function RichText({ doc, context }: { doc: RichTextDoc | null; context: ContentContext }) {
+// Оформление текста (className) и виджетов задаёт тема, разметку узлов — ядро.
+export function RichText({
+  doc,
+  context,
+  widgets,
+  className,
+}: {
+  doc: RichTextDoc | null;
+  context: ContentContext;
+  widgets: RichTextWidgets;
+  className?: string;
+}) {
   if (!doc?.content?.length) return null;
-  return (
-    <div className="prose prose-neutral dark:prose-invert max-w-none">
-      {renderNodes(doc.content, context)}
-    </div>
-  );
+  return <div className={className}>{renderNodes(doc.content, { ...context, widgets })}</div>;
 }
