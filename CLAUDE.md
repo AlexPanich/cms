@@ -16,6 +16,7 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm format:check   # быстрые
 pnpm build && pnpm test:e2e   # E2E на Playwright (поднимает pnpm start сам)
 pnpm build
 docker compose up --build # полный стек: db → migrate → app
+docker compose -f docker-compose.prod.yml up -d --build   # продакшен: + Caddy (HTTPS) и резервные копии
 ```
 
 После изменений прогоняй lint, typecheck и test. Если менялась схема, сначала `pnpm db:generate`, и сгенерированную миграцию в `drizzle/` коммить вместе со схемой. Руками миграции не правь.
@@ -32,6 +33,7 @@ docker compose up --build # полный стек: db → migrate → app
 - `src/lib/`: общий код без зависимостей от сервера: права и `can()` (`permissions.ts`), `slugify`, длина пароля, `safeRedirectPath`, `isSafeLinkUrl` (проверка href по белому списку протоколов), клиент Better Auth (`auth-client.ts`).
 - `src/server/auth/`: Better Auth (`auth.ts`, `getAuth()`), права пользователя из БД, `getCurrentUser`/`requirePermission`/`requirePagePermission`. Обработчик — `src/app/api/auth/[...all]/route.ts`.
 - `src/scripts/`: CLI-скрипты, запускаются через `tsx --conditions=react-server` (иначе падает импорт `server-only`).
+- Продакшен — `docker-compose.prod.yml` (проект `cms-prod`): Caddy (`docker/Caddyfile`) — единственный вход снаружи, он же ставит `X-Forwarded-For`, по которому Better Auth считает попытки входа. Порт `app` наружу не открывать. Резервные копии — `docker/backup.sh` в сервисе `backup`. Экземпляр приложения один: кеш и rate limit в памяти.
 - `src/db/migrate.ts`: программный мигратор. В Docker его запускает отдельный сервис `migrate` (стадия `migrator` в Dockerfile).
 - Route handlers и страницы, которые ходят в БД, должны вызывать `await connection()` из `next/server`. Иначе при `cacheComponents` Next попытается пререндерить их на сборке.
 - В запросе к одной таблице Drizzle пишет колонки без имени таблицы, поэтому в коррелированном подзапросе через `sql\`\`` внешнюю колонку нужно писать явно (`media.id`), иначе она свяжется с таблицей подзапроса.
@@ -119,7 +121,7 @@ docker compose up --build # полный стек: db → migrate → app
 4. ✅ Админка (shadcn/ui, TanStack Table, dnd-kit, TipTap). Порядок: пользователи и роли → страницы → меню → тексты → статьи → галереи → документы.
 5. ✅ Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
 6. ✅ Редактирование на сайте: клиентский компонент для пользователей с правом `edit_from_front`, поля только из белого списка.
-7. E2E-тесты (Playwright) и деплой в Docker.
+7. ✅ E2E-тесты (Playwright) и деплой в Docker.
 
 ## Особенности окружения
 

@@ -24,6 +24,10 @@ function createAuth() {
       expiresIn: 60 * 60 * 24 * 7,
       updateAge: 60 * 60 * 24,
     },
+    // IP клиента для rate limit — из X-Forwarded-For с одним адресом. В продакшене его ставит
+    // Caddy (docker/Caddyfile), без прокси — сам Next по адресу соединения. Открывать
+    // приложение наружу в обход прокси нельзя: клиент подделал бы заголовок.
+    advanced: { ipAddress: { ipAddressHeaders: ["x-forwarded-for"] } },
     telemetry: { enabled: false },
     // nextCookies должен быть последним: ставит cookie сессии из server actions.
     plugins: [nextCookies()],

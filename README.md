@@ -34,3 +34,38 @@ docker compose up --build
 Нужен `.env` с `BETTER_AUTH_SECRET` (и `BETTER_AUTH_URL`, если сайт открывается не с `http://localhost:3000`). Первый администратор: `docker compose run --rm migrate pnpm user:create-admin --email admin@example.com`.
 
 Поднимаются три сервиса: `db`, `migrate` (применяет миграции и сид, затем завершается) и `app` на порту `APP_PORT` (по умолчанию 3000). Загруженные файлы хранятся в томе `storage`. Состояние сервиса отдаёт `GET /api/health`.
+
+## Продакшен
+
+Один сервер с Docker: `docker-compose.prod.yml` поднимает `db`, `migrate`, `app`, `caddy` (HTTPS с сертификатом Let's Encrypt) и `backup`. Наружу открыты только порты 80 и 443 у Caddy: база и приложение доступны лишь внутри сети compose.
+
+```bash
+cp .env.production.example .env   # заполнить SITE_DOMAIN, POSTGRES_PASSWORD, BETTER_AUTH_SECRET
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml run --rm migrate pnpm user:create-admin --email admin@example.com
+```
+
+DNS-запись домена должна указывать на сервер до первого запуска, иначе Caddy не получит сертификат. Обновление — `git pull` и та же команда `up -d --build`: миграции применятся до старта приложения.
+
+Тома: `db-data` (БД), `storage` (загруженные файлы), `caddy-data` (сертификаты).
+
+### Резервные копии
+
+Сервис `backup` при запуске и затем раз в `BACKUP_INTERVAL_HOURS` часов кладёт в `BACKUP_DIR` (по умолчанию `./backups`) дамп БД `db-<метка>.dump` и архив файлов `storage-<метка>.tar.gz`. Копии старше `BACKUP_KEEP_DAYS` дней удаляются. Каталог лежит на том же сервере — копируйте его наружу (rsync, снапшоты хостинга).
+
+```bash
+# копия прямо сейчас
+docker compose -f docker-compose.prod.yml exec backup sh /usr/local/bin/backup.sh once
+
+# восстановление: БД и файлы заменяются содержимым копии
+docker compose -f docker-compose.prod.yml stop app
+docker compose -f docker-compose.prod.yml exec backup sh /usr/local/bin/backup.sh restore 20261019-030000
+docker compose -f docker-compose.prod.yml start app
+```
+
+Дамп и архив делаются друг за другом, а не одним снимком: файл, загруженный между ними, может оказаться в архиве без записи в БД. Такой файл ни на что не влияет.
+
+### Ограничения
+
+Приложение рассчитано на один экземпляр: кеш публичного сайта и счётчики попыток входа хранятся в памяти процесса. Для нескольких экземпляров нужны общий `cacheHandlers` (например, на Redis) и хранилище rate limit в БД — см. `docs/PLAN.md`, этап 7.
+

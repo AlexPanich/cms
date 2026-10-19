@@ -50,6 +50,22 @@ test("страница с текстом, подстраница и пересч
 
   await page.goto("/admin/pages");
   await expect(page.getByText(`/${slug}-new/dochernyaya`)).toBeVisible();
+
+  // Опубликованная страница видна на сайте по новому адресу, старый адрес — 404.
+  await page.goto(`/${slug}-new`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
+  await expect(page.locator("strong", { hasText: "жирно" })).toBeVisible();
+  expect((await page.request.get(`/${slug}`)).status()).toBe(404);
+
+  // Подстраница создана черновиком: на сайте её нет, пока не опубликуют.
+  expect((await page.request.get(`/${slug}-new/dochernyaya`)).status()).toBe(404);
+  await page.goto("/admin/pages");
+  await page.getByRole("link", { name: "Дочерняя", exact: true }).click();
+  await page.getByRole("checkbox", { name: "Опубликована" }).click();
+  await page.getByRole("button", { name: "Сохранить" }).click();
+  await expectToast(page, "Страница сохранена");
+  await page.goto(`/${slug}-new/dochernyaya`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Дочерняя");
 });
 
 test("порядок страниц меняется перетаскиванием с клавиатуры", async ({ page }) => {

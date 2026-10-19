@@ -44,3 +44,27 @@ jobs:
         with:
           name: playwright-traces
           path: test-results/
+
+  # Продакшен-стек целиком: образы, миграции, Caddy с HTTPS и резервная копия.
+  # Caddy для localhost выпускает сертификат своим локальным центром, поэтому curl -k.
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      SITE_DOMAIN: localhost
+      POSTGRES_PASSWORD: ci-password
+      BETTER_AUTH_SECRET: ci-secret-not-used-in-production-0123456789
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck docker/backup.sh
+      - run: docker compose -f docker-compose.prod.yml up -d --build
+      - name: Сайт отвечает через Caddy
+        run: |
+          for i in $(seq 1 60); do
+            curl -fsSk https://localhost/api/health && exit 0
+            sleep 2
+          done
+          exit 1
+      - name: Первая резервная копия создана при запуске
+        run: ls backups/db-*.dump backups/storage-*.tar.gz
+      - if: failure()
+        run: docker compose -f docker-compose.prod.yml logs
