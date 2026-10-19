@@ -4,6 +4,7 @@ import {
   type LucideIcon,
   MenuIcon,
   ShieldCheckIcon,
+  TextQuoteIcon,
   UsersIcon,
 } from "lucide-react";
 import type { Permission } from "@/lib/permissions";
@@ -39,6 +40,13 @@ export const ADMIN_NAV: AdminNavItem[] = [
     description: "Пункты меню сайта и их порядок",
     icon: MenuIcon,
     permission: "edit_menus",
+  },
+  {
+    href: "/admin/texts",
+    label: "Тексты",
+    description: "Блоки текста для шаблонов: телефон, адрес, слоган",
+    icon: TextQuoteIcon,
+    permission: "edit_texts",
   },
   {
     href: "/admin/users",

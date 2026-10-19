@@ -44,6 +44,7 @@ export async function cleanupE2EData() {
   const sql = connect();
   try {
     await sql`delete from menus where key like ${`${E2E_PREFIX}%`}`;
+    await sql`delete from texts where key like ${`${E2E_PREFIX}%`}`;
     // Один DELETE удаляет ветку целиком: внешний ключ parent_id проверяется в конце запроса.
     await sql`delete from pages where path like ${`${E2E_PREFIX}%`}`;
     await sql`delete from users where email like ${`${E2E_PREFIX}%`}`;

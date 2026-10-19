@@ -14,14 +14,19 @@ import { id, timestamps } from "./columns";
 import { media } from "./media";
 
 // Именованные текстовые блоки, которые шаблоны вставляют по ключу.
-export const texts = pgTable("texts", {
-  id: id(),
-  key: text().notNull().unique(),
-  title: text().notNull(),
-  body: text().notNull().default(""),
-  published: boolean().notNull().default(true),
-  ...timestamps,
-});
+export const texts = pgTable(
+  "texts",
+  {
+    id: id(),
+    key: text().notNull().unique(),
+    title: text().notNull(),
+    // Простой текст: на сайте экранируется, переводы строк сохраняются.
+    body: text().notNull().default(""),
+    published: boolean().notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [check("texts_key_format", sql`${t.key} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`)],
+);
 
 export const articles = pgTable(
   "articles",
