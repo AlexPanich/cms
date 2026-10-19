@@ -16,8 +16,11 @@ export type CurrentUser = {
 };
 
 // Права читаются из БД на каждый запрос (не из cookie), поэтому изменение ролей действует сразу.
+// headers() — первым: на сборке Next останавливает на нём пререндер, и до getAuth(), которому
+// нужны переменные окружения, дело не доходит. Иначе `next build` без env падает.
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
-  const session = await getAuth().api.getSession({ headers: await headers() });
+  const requestHeaders = await headers();
+  const session = await getAuth().api.getSession({ headers: requestHeaders });
   if (!session) return null;
 
   const { id, name, email } = session.user;
