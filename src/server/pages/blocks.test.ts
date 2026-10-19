@@ -15,6 +15,7 @@ vi.mock("@/theme/blocks", async () => {
         type: "photo",
         label: "Фото",
         description: "",
+        example: {},
         fields: {
           caption: field.text({ label: "Подпись" }),
           image: field.image({ label: "Картинка" }),

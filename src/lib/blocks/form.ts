@@ -1,4 +1,4 @@
-import type { Field, Fields } from "./define";
+import { emptyFieldValue, type Field, type Fields } from "./define";
 import { BLOCK_ID_PATTERN, getBlockDefinition, resolveBlockVariant } from "./registry";
 
 // Данные блоков для формы редактора. Блок из БД мог не пройти схему (поле удалили из темы,
@@ -6,22 +6,6 @@ import { BLOCK_ID_PATTERN, getBlockDefinition, resolveBlockVariant } from "./reg
 // негодных пустые. Форма покажет ошибки, и блок можно исправить, а не только удалить.
 
 export type FormBlock = { id: string; type: string; variant: string | null; data: unknown };
-
-// Пустое значение поля: у нового блока и вместо значения, которое не прошло схему.
-export function emptyFieldValue(item: Field): unknown {
-  switch (item.kind) {
-    case "text":
-      return "";
-    case "list":
-      return [];
-    case "select":
-      return item.default;
-    case "boolean":
-      return item.default;
-    default:
-      return null;
-  }
-}
 
 function fieldValue(item: Field, raw: unknown): unknown {
   const parsed = item.schema.safeParse(raw);

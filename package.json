@@ -16,6 +16,7 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
+    "blocks:catalog": "tsx src/scripts/blocks-catalog.ts",
     "user:create-admin": "tsx --conditions=react-server src/scripts/create-admin.ts",
     "test:e2e": "playwright test"
   },

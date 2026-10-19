@@ -12,8 +12,12 @@ export type SiteRoute =
 
 const MAX_DEPTH = 20;
 
+// Каталог блоков темы для дизайнера (src/app/(catalog)). Подчёркивание не бывает в slug,
+// поэтому адрес не пересекается со страницами.
+export const BLOCK_CATALOG_PATH = "/_blocks";
+
 export function classifySitePath(pathname: string): SiteRoute {
-  if (pathname === "/") return { kind: "other" };
+  if (pathname === "/" || pathname === BLOCK_CATALOG_PATH) return { kind: "other" };
   // Слэш в конце Next сам перенаправляет на адрес без него.
   const segments = pathname.slice(1).split("/");
   const [first] = segments;

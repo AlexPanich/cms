@@ -1,6 +1,12 @@
 import { THEME_SETTINGS } from "@/theme/settings";
-import { type Field, type Fields, type FieldsData, field, fieldsSchema } from "./blocks/define";
-import { emptyFieldValue } from "./blocks/form";
+import {
+  emptyFieldValue,
+  type Field,
+  type Fields,
+  type FieldsData,
+  field,
+  fieldsSchema,
+} from "./blocks/define";
 
 // Настройки сайта: логотип, контакты, соцсети. Описаны полями блоков (src/lib/blocks/define.ts),
 // хранятся одной записью (таблица site_settings), правятся в админке и на сайте. Тема

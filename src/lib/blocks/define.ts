@@ -309,6 +309,22 @@ export const field = {
   },
 };
 
+// Пустое значение поля: у нового блока и вместо значения, которое не прошло схему.
+export function emptyFieldValue(item: Field): unknown {
+  switch (item.kind) {
+    case "text":
+      return "";
+    case "list":
+      return [];
+    case "select":
+      return item.default;
+    case "boolean":
+      return item.default;
+    default:
+      return null;
+  }
+}
+
 // Тип блока: латиница в нижнем регистре и дефисы («media-text»). Хранится в данных
 // страницы, поэтому не переименовывается.
 export const BLOCK_TYPE_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -320,14 +336,22 @@ export type BlockDefinition<T extends string = string, F extends Fields = Fields
   // Для редактора и дизайнера: что это за блок и когда его брать.
   description: string;
   fields: F;
+  // Пример данных для каталога /_blocks: заполненный блок, каким его увидит посетитель.
+  // Картинки, страницы, галереи и документы — из src/lib/blocks/examples.ts.
+  example: BlockExample<F>;
   schema: FieldSchema<FieldsData<F>>;
 };
+
+// Пример данных: незаданные поля получат значение по умолчанию, а пройдёт ли пример схему,
+// проверяет src/lib/blocks/theme.test.ts.
+export type BlockExample<F extends Fields> = { [K in keyof F]?: FieldsData<F>[K] };
 
 export function defineBlock<const T extends string, F extends Fields>(definition: {
   type: T;
   label: string;
   description: string;
   fields: F;
+  example: NoInfer<BlockExample<F>>;
 }): BlockDefinition<T, F> {
   if (!BLOCK_TYPE_PATTERN.test(definition.type)) {
     throw new Error(`Недопустимый тип блока: ${definition.type}`);
