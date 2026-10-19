@@ -3,18 +3,28 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PencilIcon } from "lucide-react";
 import { createContext, type ReactNode, use, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Control, type FieldValues, useForm } from "react-hook-form";
+import { BlockFields } from "@/components/admin/blocks/block-fields";
+import { BlockEditorProvider, type PageOption } from "@/components/admin/blocks/editor-context";
 import { ButtonLink } from "@/components/admin/button-link";
-import { FormInput, FormRichText, FormTextarea } from "@/components/admin/form-fields";
+import { FormInput, FormTextarea } from "@/components/admin/form-fields";
 import type { GalleryOption } from "@/components/admin/gallery-node";
 import { useActionSubmit } from "@/components/admin/use-action-submit";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
 import { Toaster } from "@/components/ui/sonner";
 import { z } from "@/lib/zod";
-import { textBlock } from "@/lib/blocks/catalog";
+import { type Block, getBlockDefinition } from "@/lib/blocks/registry";
 import { pageTitleSchema, textBodySchema } from "@/server/front-edit/schema";
-import { saveFrontEdit } from "@/app/(site)/actions";
+import { saveFrontEdit, uploadFrontEditImage } from "@/app/(site)/actions";
 
 // Правка на сайте. Эти компоненты рендерятся только для пользователей с правом edit_from_front
 // (см. editable.tsx) и загружаются отдельным чанком (front-edit-lazy.tsx).
@@ -200,34 +210,40 @@ function PageTitleForm({
   );
 }
 
-// Блок «Текст»: форма — схема блока, сохраняется блок целиком по id.
-type TextBlockData = z.input<typeof textBlock.schema>;
-
-export function TextBlockEditor({
+// Блок страницы: форма строится по полям его типа, как в админке, и открывается в диалоге.
+// Сохраняется блок целиком по id; тип блока сервер берёт из страницы, а не из запроса.
+export function BlockEditor({
   pageId,
-  blockId,
-  value,
+  block,
   galleries,
+  pages,
+  images,
   children,
 }: {
   pageId: number;
-  blockId: string;
-  value: TextBlockData;
+  block: Block;
   galleries: GalleryOption[];
+  pages: PageOption[];
+  images: Record<number, string>;
   children: ReactNode;
 }) {
+  const label = getBlockDefinition(block.type)?.label ?? block.type;
   return (
     <EditableRegion
-      id={`page.block:${pageId}:${blockId}`}
-      label="Изменить текст страницы"
+      id={`page.block:${pageId}:${block.id}`}
+      label={`Изменить блок «${label}»`}
       editor={(close) => (
-        <TextBlockForm
-          pageId={pageId}
-          blockId={blockId}
-          value={value}
-          galleries={galleries}
-          onDone={close}
-        />
+        <>
+          {children}
+          <BlockEditorProvider
+            galleries={galleries}
+            pages={pages}
+            images={images}
+            upload={uploadFrontEditImage}
+          >
+            <BlockDialog pageId={pageId} block={block} label={label} onDone={close} />
+          </BlockEditorProvider>
+        </>
       )}
     >
       {children}
@@ -235,38 +251,57 @@ export function TextBlockEditor({
   );
 }
 
-function TextBlockForm({
+function BlockDialog({
   pageId,
-  blockId,
-  value,
-  galleries,
+  block,
+  label,
   onDone,
 }: {
   pageId: number;
-  blockId: string;
-  value: TextBlockData;
-  galleries: GalleryOption[];
+  block: Block;
+  label: string;
   onDone: () => void;
 }) {
-  const form = useForm<TextBlockData, unknown, z.output<typeof textBlock.schema>>({
-    resolver: zodResolver(textBlock.schema),
-    defaultValues: value,
+  const definition = getBlockDefinition(block.type);
+  const schema = z.object({ data: definition?.schema ?? z.never() });
+  const form = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: { data: block.data },
   });
   const { onSubmit, pending } = useActionSubmit(
     form,
-    (data) => saveFrontEdit({ field: "page.block", pageId, blockId, data }),
-    { successMessage: "Текст страницы сохранён", onSuccess: onDone },
+    ({ data }) => saveFrontEdit({ field: "page.block", pageId, blockId: block.id, data }),
+    { successMessage: "Блок сохранён", onSuccess: onDone },
   );
 
   return (
-    <EditorForm onSubmit={onSubmit} onCancel={onDone} pending={pending}>
-      <FormRichText
-        control={form.control}
-        name="content"
-        label="Текст страницы"
-        galleries={galleries}
-      />
-    </EditorForm>
+    <Dialog open onOpenChange={(open) => !open && !pending && onDone()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <form onSubmit={onSubmit} className="flex flex-col gap-6">
+          <DialogHeader>
+            <DialogTitle>Блок «{label}»</DialogTitle>
+            <DialogDescription>
+              Порядок блоков и оформление меняются в админке, в форме страницы
+            </DialogDescription>
+          </DialogHeader>
+          {definition && (
+            <BlockFields
+              control={form.control as unknown as Control<FieldValues>}
+              fields={definition.fields}
+              name="data"
+            />
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onDone} disabled={pending}>
+              Отмена
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {pending ? "Сохраняем…" : "Сохранить"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

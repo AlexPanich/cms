@@ -12,6 +12,7 @@ import {
   deleteImage,
   deleteStoredFiles,
   listImages,
+  listImageUrls,
   saveUploadedImage,
   updateImageInfo,
 } from "./service";
@@ -97,6 +98,23 @@ describe("медиатека", () => {
         );
       } finally {
         await deleteStoredFiles([used.storageKey, unused.storageKey]);
+      }
+    }));
+
+  it("отдаёт адреса картинок по id для превью в формах", () =>
+    withRollback(async (tx) => {
+      const image = await saveUploadedImage(
+        tx,
+        new File([new Uint8Array(await png())], "a.png"),
+        null,
+      );
+      try {
+        expect(await listImageUrls(tx, [image.id, image.id + 1000])).toEqual({
+          [image.id]: `/media/${image.storageKey}`,
+        });
+        expect(await listImageUrls(tx, [])).toEqual({});
+      } finally {
+        await deleteStoredFiles([image.storageKey]);
       }
     }));
 

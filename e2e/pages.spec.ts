@@ -14,7 +14,12 @@ test("страница с текстом, подстраница и пересч
   await page.getByLabel("Заголовок", { exact: true }).blur();
   await expect(page.getByLabel("Адрес (slug)")).toHaveValue(slug);
 
-  const editor = page.getByRole("textbox", { name: "Содержимое" });
+  await page.getByRole("button", { name: "Добавить блок" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /^Текст/ })
+    .click();
+  const editor = page.getByRole("textbox", { name: "Текст" });
   await editor.click();
   await editor.pressSequentially("Первый абзац ");
   await page.getByRole("button", { name: "Жирный" }).click();
@@ -33,10 +38,8 @@ test("страница с текстом, подстраница и пересч
   await expect(page.getByText(`/${slug}/${childSlug}`)).toBeVisible();
 
   await page.getByRole("link", { name: title, exact: true }).click();
-  await expect(page.getByRole("textbox", { name: "Содержимое" })).toContainText("Первый абзац");
-  await expect(page.getByRole("textbox", { name: "Содержимое" }).locator("strong")).toHaveText(
-    "жирно",
-  );
+  await expect(page.getByRole("textbox", { name: "Текст" })).toContainText("Первый абзац");
+  await expect(page.getByRole("textbox", { name: "Текст" }).locator("strong")).toHaveText("жирно");
 
   await page.getByLabel("Адрес (slug)").fill(`${slug}-new`);
   await page.getByRole("button", { name: "Сохранить" }).click();
@@ -44,7 +47,7 @@ test("страница с текстом, подстраница и пересч
   await expect(page.getByText(`/${slug}-new`, { exact: true })).toBeVisible();
 
   // Удалить страницу с потомками нельзя.
-  await page.getByRole("button", { name: "Удалить" }).click();
+  await page.getByRole("button", { name: "Удалить", exact: true }).click();
   const dialog = page.getByRole("alertdialog");
   await expect(dialog).toContainText("есть вложенные страницы");
   await dialog.getByRole("button", { name: "Удалить" }).click();
@@ -69,6 +72,68 @@ test("страница с текстом, подстраница и пересч
   await expectToast(page, "Страница сохранена");
   await page.goto(`/${slug}-new/${childSlug}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(child);
+});
+
+test("блоки страницы: добавление, проверка, порядок и сворачивание", async ({ page }) => {
+  const stamp = Date.now();
+  const title = `E2E Блоки ${stamp}`;
+  const slug = `e2e-bloki-${stamp}`;
+
+  await page.goto("/admin/pages/new");
+  await page.getByLabel("Заголовок", { exact: true }).fill(title);
+  await page.getByLabel("Заголовок", { exact: true }).blur();
+  await page.getByRole("checkbox", { name: "Опубликована" }).click();
+
+  const addText = async () => {
+    await page.getByRole("button", { name: "Добавить блок" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: /^Текст/ })
+      .click();
+  };
+  const editors = page.getByRole("textbox", { name: "Текст" });
+  for (const [index, text] of ["Первый блок", "Второй блок"].entries()) {
+    await addText();
+    await editors.nth(index).click();
+    await editors.nth(index).pressSequentially(text);
+  }
+
+  // Пустой обязательный текст не сохраняется, блок помечен.
+  await addText();
+  await page.getByRole("button", { name: "Создать страницу" }).click();
+  await expect(page.getByText("Обязательное поле")).toBeVisible();
+  await expect(page.getByText("Нужно исправить")).toBeVisible();
+  await page.getByRole("button", { name: "Удалить блок «Текст» (3)" }).click();
+  await expect(editors).toHaveCount(2);
+
+  // Второй блок ставится первым с клавиатуры (см. тест порядка страниц ниже).
+  const over = (target: number) =>
+    page.getByText(`Блок «Текст» (2) над позицией «Текст» (${target}).`);
+  await page.getByRole("button", { name: "Перетащить блок «Текст» (2)" }).focus();
+  await page.keyboard.press("Space");
+  await expect(over(2)).toBeAttached();
+  await expect(async () => {
+    if ((await over(2).count()) > 0) await page.keyboard.press("ArrowUp");
+    await expect(over(1)).toBeAttached({ timeout: 300 });
+  }).toPass({ timeout: 5_000 });
+  await page.keyboard.press("Space");
+  await expect(editors.first()).toHaveText("Второй блок");
+
+  // Свёрнутый блок показывает начало текста.
+  await page.getByRole("button", { name: "Свернуть все" }).click();
+  await expect(editors.first()).toBeHidden();
+  await expect(page.getByRole("button", { name: /Текст Второй блок/ })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  await page.getByRole("button", { name: "Создать страницу" }).click();
+  await expectToast(page, "Страница создана");
+
+  await page.goto(`/${slug}`);
+  const main = page.getByRole("main");
+  await expect(main).toContainText("Первый блок");
+  const text = await main.innerText();
+  expect(text.indexOf("Второй блок")).toBeLessThan(text.indexOf("Первый блок"));
 });
 
 test("порядок страниц меняется перетаскиванием с клавиатуры", async ({ page }) => {

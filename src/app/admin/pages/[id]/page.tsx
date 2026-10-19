@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PageHeader } from "@/components/admin/page-header";
 import { db } from "@/db";
-import { validStoredBlocks } from "@/lib/blocks/registry";
+import { blocksFormValue } from "@/lib/blocks/form";
+import { type Block, collectBlockMediaIds } from "@/lib/blocks/registry";
 import { resolvePageTemplate } from "@/lib/templates";
 import { requirePagePermission } from "@/server/auth/session";
 import { listGalleryOptions } from "@/server/galleries/service";
-import type { PageInput } from "@/server/pages/schema";
+import { listImageUrls } from "@/server/media/service";
 import { getPage, getPageTree } from "@/server/pages/service";
 import { flattenTree, subtreeIds } from "@/server/pages/tree";
 import { PageForm } from "../_components/page-form";
@@ -25,8 +26,15 @@ export default async function EditPagePage({ params }: PageProps<"/admin/pages/[
   if (!page) notFound();
 
   // В родители нельзя выбрать саму страницу и её потомков — сервер тоже это проверяет.
-  const [tree, galleries] = await Promise.all([getPageTree(db()), listGalleryOptions(db())]);
+  // Блоки, которые не проходят схему, попадают в форму с тем, что удалось прочитать.
+  const blocks = blocksFormValue(page.blocks);
+  const [tree, galleries, images] = await Promise.all([
+    getPageTree(db()),
+    listGalleryOptions(db()),
+    listImageUrls(db(), collectBlockMediaIds(blocks as Block[])),
+  ]);
   const flat = flattenTree(tree);
+  const linkPages = flat.map(({ id, title, depth }) => ({ id, title, depth }));
   const self = flat.find((node) => node.id === page.id);
   const excluded = new Set(self ? subtreeIds(self) : [page.id]);
   const parents = flat
@@ -57,6 +65,8 @@ export default async function EditPagePage({ params }: PageProps<"/admin/pages/[
       <PageForm
         parents={parents}
         galleries={galleries}
+        linkPages={linkPages}
+        images={images}
         page={{
           id: page.id,
           parentId: page.parentId,
@@ -64,11 +74,7 @@ export default async function EditPagePage({ params }: PageProps<"/admin/pages/[
           title: page.title,
           menuTitle: page.menuTitle ?? "",
           metaDescription: page.metaDescription ?? "",
-          content:
-            validStoredBlocks(page.blocks).find((block) => block.type === "text")?.data.content ??
-            null,
-          // Блоки — как в БД: форма меняет только первый блок «Текст».
-          blocks: page.blocks as NonNullable<PageInput["blocks"]>,
+          blocks,
           // Шаблон могли убрать из реестра — тогда предлагаем стандартный.
           template: resolvePageTemplate(page.template),
           published: page.published,

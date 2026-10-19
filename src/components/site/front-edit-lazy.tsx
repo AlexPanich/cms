@@ -11,7 +11,7 @@ export const FrontEditProvider = dynamic(() =>
 export const PageTitleEditor = dynamic(() =>
   import("./front-edit").then((module) => module.PageTitleEditor),
 );
-export const TextBlockEditor = dynamic(() =>
-  import("./front-edit").then((module) => module.TextBlockEditor),
+export const BlockEditor = dynamic(() =>
+  import("./front-edit").then((module) => module.BlockEditor),
 );
 export const TextEditor = dynamic(() => import("./front-edit").then((module) => module.TextEditor));

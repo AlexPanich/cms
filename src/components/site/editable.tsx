@@ -1,10 +1,14 @@
-import type { ReactNode } from "react";
+import { cache, type ReactNode } from "react";
 import { db } from "@/db";
-import type { Block } from "@/lib/blocks/registry";
+import { hasFieldKind } from "@/lib/blocks/form";
+import { type Block, collectBlockMediaIds, getBlockDefinition } from "@/lib/blocks/registry";
 import { SITE_TEXTS, type SiteTextKey } from "@/lib/site";
 import { listGalleryOptions } from "@/server/galleries/service";
+import { listImageUrls } from "@/server/media/service";
+import { getPageTree } from "@/server/pages/service";
+import { flattenTree } from "@/server/pages/tree";
 import { getFrontEditor } from "@/server/site/front-editor";
-import { PageTitleEditor, TextBlockEditor, TextEditor } from "./front-edit-lazy";
+import { BlockEditor, PageTitleEditor, TextEditor } from "./front-edit-lazy";
 
 // Обёртки для правки на сайте: пользователю с правом edit_from_front выводят клиентский
 // редактор, всем остальным — только содержимое. Править можно лишь поля из белого списка
@@ -27,22 +31,40 @@ export async function EditablePageTitle({
   );
 }
 
-export async function EditableTextBlock({
+// Данные для формы блока — только редактору и без кеша сайта; на странице много блоков,
+// поэтому списки загружаются один раз за запрос.
+const galleryOptions = cache(() => listGalleryOptions(db()));
+// Ссылаться из блока на сайте можно только на опубликованные страницы.
+const linkPageOptions = cache(async () =>
+  flattenTree(await getPageTree(db(), { publishedOnly: true })).map(({ id, title, depth }) => ({
+    id,
+    title,
+    depth,
+  })),
+);
+
+// Блок страницы: в режиме правки у него кнопка «Изменить», она открывает форму блока
+// в диалоге. Сохраняются только данные блока (page.block), тип и оформление — в админке.
+export async function EditableBlock({
   pageId,
   block,
   children,
 }: {
   pageId: number;
-  block: Block<"text">;
+  block: Block;
   children: ReactNode;
 }) {
-  if (!(await getFrontEditor())) return children;
-  // Список галерей для вставки в текст — только редактору и без кеша.
-  const galleries = await listGalleryOptions(db());
+  const definition = getBlockDefinition(block.type);
+  if (!definition || !(await getFrontEditor())) return children;
+  const [galleries, pages, images] = await Promise.all([
+    hasFieldKind(definition.fields, "richText") ? galleryOptions() : [],
+    hasFieldKind(definition.fields, "link") ? linkPageOptions() : [],
+    listImageUrls(db(), collectBlockMediaIds([block])),
+  ]);
   return (
-    <TextBlockEditor pageId={pageId} blockId={block.id} value={block.data} galleries={galleries}>
+    <BlockEditor pageId={pageId} block={block} galleries={galleries} pages={pages} images={images}>
       {children}
-    </TextBlockEditor>
+    </BlockEditor>
   );
 }
 
