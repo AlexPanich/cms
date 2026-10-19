@@ -143,8 +143,8 @@ describe("defineBlock", () => {
         ),
       },
     });
-    expectTypeOf(block.schema).toEqualTypeOf<z.ZodType<FieldsData<typeof block.fields>>>();
     type Data = FieldsData<typeof block.fields>;
+    expectTypeOf(block.schema).toEqualTypeOf<z.ZodType<Data, Data>>();
     expectTypeOf<Data["title"]>().toEqualTypeOf<string>();
     // Обязательное поле без null: контекст defineBlock не должен расширять required до boolean.
     expectTypeOf<Data["body"]>().toEqualTypeOf<RichTextDoc>();

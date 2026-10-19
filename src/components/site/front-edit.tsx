@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
 import { Toaster } from "@/components/ui/sonner";
 import { z } from "@/lib/zod";
-import { pageContentSchema, pageTitleSchema, textBodySchema } from "@/server/front-edit/schema";
+import { textBlock } from "@/lib/blocks/catalog";
+import { pageTitleSchema, textBodySchema } from "@/server/front-edit/schema";
 import { saveFrontEdit } from "@/app/(site)/actions";
 
 // Правка на сайте. Эти компоненты рендерятся только для пользователей с правом edit_from_front
@@ -199,25 +200,34 @@ function PageTitleForm({
   );
 }
 
-const contentFormSchema = z.object({ content: pageContentSchema });
+// Блок «Текст»: форма — схема блока, сохраняется блок целиком по id.
+type TextBlockData = z.input<typeof textBlock.schema>;
 
-export function PageContentEditor({
+export function TextBlockEditor({
   pageId,
+  blockId,
   value,
   galleries,
   children,
 }: {
   pageId: number;
-  value: z.input<typeof pageContentSchema>;
+  blockId: string;
+  value: TextBlockData;
   galleries: GalleryOption[];
   children: ReactNode;
 }) {
   return (
     <EditableRegion
-      id={`page.content:${pageId}`}
+      id={`page.block:${pageId}:${blockId}`}
       label="Изменить текст страницы"
       editor={(close) => (
-        <PageContentForm pageId={pageId} value={value} galleries={galleries} onDone={close} />
+        <TextBlockForm
+          pageId={pageId}
+          blockId={blockId}
+          value={value}
+          galleries={galleries}
+          onDone={close}
+        />
       )}
     >
       {children}
@@ -225,28 +235,26 @@ export function PageContentEditor({
   );
 }
 
-function PageContentForm({
+function TextBlockForm({
   pageId,
+  blockId,
   value,
   galleries,
   onDone,
 }: {
   pageId: number;
-  value: z.input<typeof pageContentSchema>;
+  blockId: string;
+  value: TextBlockData;
   galleries: GalleryOption[];
   onDone: () => void;
 }) {
-  const form = useForm<
-    z.input<typeof contentFormSchema>,
-    unknown,
-    z.output<typeof contentFormSchema>
-  >({
-    resolver: zodResolver(contentFormSchema),
-    defaultValues: { content: value },
+  const form = useForm<TextBlockData, unknown, z.output<typeof textBlock.schema>>({
+    resolver: zodResolver(textBlock.schema),
+    defaultValues: value,
   });
   const { onSubmit, pending } = useActionSubmit(
     form,
-    ({ content }) => saveFrontEdit({ field: "page.content", pageId, value: content }),
+    (data) => saveFrontEdit({ field: "page.block", pageId, blockId, data }),
     { successMessage: "Текст страницы сохранён", onSuccess: onDone },
   );
 

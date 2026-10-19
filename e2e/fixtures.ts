@@ -40,10 +40,26 @@ export async function insertPublishedPage({
   paragraphs?: string[];
   parentPath?: string;
 }) {
-  const content = {
-    type: "doc",
-    content: paragraphs.map((text) => ({ type: "paragraph", content: [{ type: "text", text }] })),
-  };
+  // Текст — один блок «Текст», как у страницы, созданной в админке. Поисковый текст
+  // пишет сервис страниц, поэтому здесь его тоже нужно задать.
+  const blocks = paragraphs.length
+    ? [
+        {
+          id: crypto.randomUUID(),
+          type: "text",
+          variant: null,
+          data: {
+            content: {
+              type: "doc",
+              content: paragraphs.map((text) => ({
+                type: "paragraph",
+                content: [{ type: "text", text }],
+              })),
+            },
+          },
+        },
+      ]
+    : [];
   const sql = connect();
   try {
     const [parent] = parentPath
@@ -51,8 +67,9 @@ export async function insertPublishedPage({
       : [{ id: null }];
     const path = parentPath ? `${parentPath}/${slug}` : slug;
     await sql`
-      insert into pages (parent_id, slug, path, title, content, published)
-      values (${parent.id}, ${slug}, ${path}, ${title}, ${sql.json(content)}, true)`;
+      insert into pages (parent_id, slug, path, title, blocks, search_text, published)
+      values (${parent.id}, ${slug}, ${path}, ${title}, ${sql.json(blocks)},
+        ${paragraphs.join("\n")}, true)`;
   } finally {
     await sql.end();
   }

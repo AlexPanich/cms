@@ -1,8 +1,8 @@
-import { EditablePageContent, EditablePageTitle } from "@/components/site/editable";
-import { RichText } from "@/components/site/rich-text";
+import { Blocks } from "@/components/site/blocks";
+import { EditablePageTitle } from "@/components/site/editable";
 import type { PageTemplateProps, ThemeModule } from "@/components/site/theme";
+import { blockViews } from "./blocks/views";
 import { Breadcrumbs } from "./breadcrumbs";
-import { PROSE, WIDGETS } from "./rich-text";
 import { SectionMenu } from "./section-menu";
 
 function PageBody({ page, crumbs, context }: PageTemplateProps) {
@@ -14,9 +14,9 @@ function PageBody({ page, crumbs, context }: PageTemplateProps) {
           {page.title}
         </h1>
       </EditablePageTitle>
-      <EditablePageContent pageId={page.id} value={page.content}>
-        <RichText doc={page.content} context={context} widgets={WIDGETS} className={PROSE} />
-      </EditablePageContent>
+      <div className="space-y-12">
+        <Blocks blocks={page.blocks} pageId={page.id} context={context} views={blockViews} />
+      </div>
     </article>
   );
 }

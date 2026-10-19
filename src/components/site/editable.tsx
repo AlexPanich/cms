@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { db } from "@/db";
-import type { RichTextDoc } from "@/lib/rich-text";
+import type { Block } from "@/lib/blocks/registry";
 import { SITE_TEXTS, type SiteTextKey } from "@/lib/site";
 import { listGalleryOptions } from "@/server/galleries/service";
 import { getFrontEditor } from "@/server/site/front-editor";
-import { PageContentEditor, PageTitleEditor, TextEditor } from "./front-edit-lazy";
+import { PageTitleEditor, TextBlockEditor, TextEditor } from "./front-edit-lazy";
 
 // Обёртки для правки на сайте: пользователю с правом edit_from_front выводят клиентский
 // редактор, всем остальным — только содержимое. Править можно лишь поля из белого списка
@@ -27,22 +27,22 @@ export async function EditablePageTitle({
   );
 }
 
-export async function EditablePageContent({
+export async function EditableTextBlock({
   pageId,
-  value,
+  block,
   children,
 }: {
   pageId: number;
-  value: RichTextDoc | null;
+  block: Block<"text">;
   children: ReactNode;
 }) {
   if (!(await getFrontEditor())) return children;
   // Список галерей для вставки в текст — только редактору и без кеша.
   const galleries = await listGalleryOptions(db());
   return (
-    <PageContentEditor pageId={pageId} value={value} galleries={galleries}>
+    <TextBlockEditor pageId={pageId} blockId={block.id} value={block.data} galleries={galleries}>
       {children}
-    </PageContentEditor>
+    </TextBlockEditor>
   );
 }
 

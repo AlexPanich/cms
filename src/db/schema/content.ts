@@ -10,7 +10,7 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 import type { RichTextDoc } from "../../lib/rich-text";
-import { id, searchVectorSql, timestamps, tsvector } from "./columns";
+import { id, richTextSearchSql, searchVectorSql, timestamps, tsvector } from "./columns";
 import { media } from "./media";
 
 // Именованные текстовые блоки, которые шаблоны вставляют по ключу.
@@ -40,7 +40,7 @@ export const articles = pgTable(
     published: boolean().notNull().default(false),
     publishedAt: timestamp({ withTimezone: true }),
     searchVector: tsvector().generatedAlwaysAs((): SQL =>
-      searchVectorSql(articles.title, articles.excerpt, articles.content),
+      searchVectorSql(articles.title, articles.excerpt, richTextSearchSql(articles.content)),
     ),
     ...timestamps,
   },

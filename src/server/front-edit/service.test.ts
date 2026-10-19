@@ -4,7 +4,7 @@ import { pages, texts } from "@/db/schema";
 import type { Tx } from "@/db";
 import { z } from "@/lib/zod";
 import { withRollback } from "@/test/db";
-import { createPage, getPage } from "@/server/pages/service";
+import { createPage, getPage, PageError } from "@/server/pages/service";
 import { createText } from "@/server/texts/service";
 import { FrontEditError, type FrontEditErrorCode, saveFrontEdit } from "./service";
 import type { FrontEditInput } from "./schema";
@@ -20,12 +20,19 @@ async function expectFrontEditError(promise: Promise<unknown>, code: FrontEditEr
   );
 }
 
+const textBlock = (id: string, text: string) => ({
+  id,
+  type: "text",
+  variant: null,
+  data: { content: doc(text) },
+});
+
 const publishedPage = (tx: Tx, slug: string, published = true) =>
   createPage(tx, {
     parentId: null,
     slug,
     title: "Старый заголовок",
-    content: doc("Старый текст"),
+    blocks: [textBlock("b1", "Старый текст"), textBlock("b2", "Второй блок")],
     published,
   });
 
@@ -38,18 +45,44 @@ describe("front-edit service", () => {
         title: "Новый",
         slug: page.slug,
         path: page.path,
-        content: doc("Старый текст"),
+        blocks: page.blocks,
         published: true,
       });
     }));
 
-  it("меняет текст страницы и может его очистить", () =>
+  it("меняет один блок страницы и пересчитывает текст для поиска", () =>
     withRollback(async (tx) => {
-      const page = await publishedPage(tx, "front-edit-content");
-      await saveFrontEdit(tx, { field: "page.content", pageId: page.id, value: doc("Новый") });
-      expect((await getPage(tx, page.id))?.content).toEqual(doc("Новый"));
-      await saveFrontEdit(tx, { field: "page.content", pageId: page.id, value: null });
-      expect(await getPage(tx, page.id)).toMatchObject({ content: null, title: page.title });
+      const page = await publishedPage(tx, "front-edit-block");
+      await saveFrontEdit(tx, {
+        field: "page.block",
+        pageId: page.id,
+        blockId: "b2",
+        data: { content: doc(" Новый "), extra: "мусор" },
+      });
+      expect(await getPage(tx, page.id)).toMatchObject({
+        blocks: [textBlock("b1", "Старый текст"), textBlock("b2", " Новый ")],
+        searchText: "Старый текст\nНовый",
+        title: page.title,
+      });
+    }));
+
+  it("проверяет данные блока схемой его типа", () =>
+    withRollback(async (tx) => {
+      const page = await publishedPage(tx, "front-edit-block-invalid");
+      await expect(
+        saveFrontEdit(tx, { field: "page.block", pageId: page.id, blockId: "b1", data: {} }),
+      ).rejects.toBeInstanceOf(z.ZodError);
+      await expect(
+        saveFrontEdit(tx, {
+          field: "page.block",
+          pageId: page.id,
+          blockId: "missing",
+          data: { content: doc("x") },
+        }),
+      ).rejects.toSatisfy(
+        (error) => error instanceof PageError && error.code === "block_not_found",
+      );
+      expect((await getPage(tx, page.id))?.blocks).toEqual(page.blocks);
     }));
 
   it("не правит черновики и несуществующие страницы", () =>
@@ -60,7 +93,16 @@ describe("front-edit service", () => {
         "page_not_found",
       );
       await expectFrontEditError(
-        saveFrontEdit(tx, { field: "page.content", pageId: 2_000_000_000, value: null }),
+        saveFrontEdit(tx, {
+          field: "page.block",
+          pageId: draft.id,
+          blockId: "b1",
+          data: { content: doc("x") },
+        }),
+        "page_not_found",
+      );
+      await expectFrontEditError(
+        saveFrontEdit(tx, { field: "page.title", pageId: 2_000_000_000, value: "Новый" }),
         "page_not_found",
       );
     }));
@@ -96,7 +138,8 @@ describe("front-edit service", () => {
         { field: "page.slug", pageId: page.id, value: "other" },
         { field: "page.published", pageId: page.id, value: false },
         { field: "page.title", pageId: page.id, value: "   " },
-        { field: "page.content", pageId: page.id, value: "<script>" },
+        { field: "page.content", pageId: page.id, value: null },
+        { field: "page.block", pageId: page.id, blockId: "", data: {} },
         { field: "text.body", key: "../etc", value: "x" },
       ] as unknown as FrontEditInput[];
       for (const input of invalid) {

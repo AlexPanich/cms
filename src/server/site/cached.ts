@@ -7,6 +7,7 @@ import {
   getAncestors,
   getGalleriesByKeys,
   getHomePage,
+  getPageLinks,
   getPublishedArticle,
   getPublishedPage,
   getSectionMenu,
@@ -14,6 +15,7 @@ import {
   getSitemapEntries,
   getSiteTexts,
   listPublishedArticles,
+  type PageLink,
   type PublicGallery,
   getRouteIndex,
 } from "./service";
@@ -65,6 +67,14 @@ export async function cachedGalleries(keys: string[]): Promise<[string, PublicGa
   cacheLife("hours");
   cacheTag(TAGS.galleries);
   return [...(await getGalleriesByKeys(db(), keys))];
+}
+
+// id по порядку — ключ кеша; пары [id, ссылка], как у галерей.
+export async function cachedPageLinks(ids: number[]): Promise<[number, PageLink][]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(TAGS.pages);
+  return [...(await getPageLinks(db(), ids))];
 }
 
 export async function cachedArticles(page: number) {

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
-import type { z } from "@/lib/zod";
+import { z } from "@/lib/zod";
 import {
   FormCheckbox,
   FormInput,
@@ -30,12 +30,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ActionResult } from "@/lib/action-result";
+import { type RichTextDoc, richTextDocSchema } from "@/lib/rich-text";
 import { slugify } from "@/lib/slug";
 import { DEFAULT_PAGE_TEMPLATE, PAGE_TEMPLATES } from "@/lib/templates";
 import { pageInputSchema } from "@/server/pages/schema";
 import { createPage, updatePage } from "../actions";
 
-type FormValues = z.input<typeof pageInputSchema>;
+// До редактора блоков (этап 8, шаг 6) форма правит только первый блок «Текст» — поле
+// «Содержимое». При отправке оно собирается обратно в блоки, остальные блоки не меняются.
+const pageFormSchema = z
+  .object({ content: richTextDocSchema.nullable().default(null) })
+  .and(pageInputSchema);
+
+type FormValues = z.input<typeof pageFormSchema>;
+
+type FormBlock = NonNullable<FormValues["blocks"]>[number];
+
+function withTextContent(blocks: readonly FormBlock[], content: RichTextDoc | null): FormBlock[] {
+  const index = blocks.findIndex((block) => block.type === "text");
+  if (content === null) return blocks.filter((_, i) => i !== index);
+  if (index === -1) {
+    return [{ id: crypto.randomUUID(), type: "text", variant: null, data: { content } }, ...blocks];
+  }
+  return blocks.with(index, { ...blocks[index], data: { content } });
+}
 
 export type ParentOption = { id: number; title: string; depth: number };
 
@@ -58,8 +76,8 @@ export function PageForm({
   defaultParentId?: number | null;
 }) {
   const router = useRouter();
-  const form = useForm<FormValues, unknown, z.output<typeof pageInputSchema>>({
-    resolver: zodResolver(pageInputSchema),
+  const form = useForm<FormValues, unknown, z.output<typeof pageFormSchema>>({
+    resolver: zodResolver(pageFormSchema),
     defaultValues: page ?? {
       parentId: defaultParentId,
       slug: "",
@@ -67,6 +85,7 @@ export function PageForm({
       menuTitle: "",
       metaDescription: "",
       content: null,
+      blocks: [],
       template: DEFAULT_PAGE_TEMPLATE,
       published: false,
       isHome: false,
@@ -75,8 +94,10 @@ export function PageForm({
 
   const { onSubmit, pending } = useActionSubmit(
     form,
-    (values): Promise<ActionResult<unknown>> =>
-      page ? updatePage(page.id, values) : createPage(values),
+    ({ content, ...values }): Promise<ActionResult<unknown>> => {
+      const input = { ...values, blocks: withTextContent(values.blocks, content) };
+      return page ? updatePage(page.id, input) : createPage(input);
+    },
     {
       successMessage: page ? "Страница сохранена" : "Страница создана",
       onSuccess: () => {

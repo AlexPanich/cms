@@ -16,6 +16,7 @@ import {
   getAncestors,
   getGalleriesByKeys,
   getHomePage,
+  getPageLinks,
   getPublishedArticle,
   getPublishedPage,
   getRouteIndex,
@@ -61,6 +62,33 @@ describe("публичный сайт", () => {
       expect((await getHomePage(tx))?.path).toBe("home");
       expect(await getPublishedPage(tx, "draft")).toBeNull();
       expect((await getPublishedPage(tx, "home"))?.isHome).toBe(true);
+    }));
+
+  it("отдаёт только блоки, которые можно вывести", () =>
+    withRollback(async (tx) => {
+      const text = { id: "t1", type: "text", variant: "missing", data: { content: doc("Привет") } };
+      await insertPage(tx, {
+        path: "blocks",
+        blocks: [
+          text,
+          { id: "t2", type: "slider", data: {} },
+          { id: "t3", type: "text", data: {} },
+        ],
+      });
+      expect((await getPublishedPage(tx, "blocks"))?.blocks).toEqual([{ ...text, variant: null }]);
+    }));
+
+  it("находит адреса опубликованных страниц для ссылок из блоков", () =>
+    withRollback(async (tx) => {
+      const home = await insertPage(tx, { path: "home", title: "Главная", isHome: true });
+      const about = await insertPage(tx, { path: "about", title: "О нас", menuTitle: "Компания" });
+      const draft = await insertPage(tx, { path: "draft", published: false });
+      const links = await getPageLinks(tx, [home.id, about.id, draft.id, 2_000_000_000]);
+      expect([...links]).toEqual([
+        [home.id, { href: "/", title: "Главная" }],
+        [about.id, { href: "/about", title: "Компания" }],
+      ]);
+      expect(await getPageLinks(tx, [])).toEqual(new Map());
     }));
 
   it("строит хлебные крошки и меню раздела, пропуская неопубликованное", () =>
@@ -177,9 +205,9 @@ describe("публичный сайт", () => {
       await insertPage(tx, {
         path: "offices",
         title: "Наши офисы",
-        content: doc("Мы работаем в Москве и Казани."),
+        searchText: "Мы работаем в Москве и Казани.",
       });
-      await insertPage(tx, { path: "contacts", title: "Контакты", content: doc("Офис в Москве") });
+      await insertPage(tx, { path: "contacts", title: "Контакты", searchText: "Офис в Москве" });
       await insertPage(tx, { path: "draft", title: "Офис-черновик", published: false });
       await tx.insert(articles).values({
         slug: "opening",

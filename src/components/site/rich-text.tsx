@@ -1,10 +1,13 @@
 import { type ComponentType, Fragment, type ReactNode } from "react";
 import { galleryKeyOf, type RichTextDoc, type RichTextNode } from "@/lib/rich-text";
 import { isSafeLinkUrl } from "@/lib/url";
-import type { PublicGallery } from "@/server/site/service";
+import type { PageLink, PublicGallery } from "@/server/site/service";
 
-// Данные виджетов, загруженные заранее (src/server/site/content.ts).
-export type ContentContext = { galleries: ReadonlyMap<string, PublicGallery> };
+// Данные виджетов и ссылок на страницы, загруженные заранее (src/server/site/content.ts).
+export type ContentContext = {
+  galleries: ReadonlyMap<string, PublicGallery>;
+  links: ReadonlyMap<number, PageLink>;
+};
 
 // Как выглядят виджеты, решает тема.
 export type RichTextWidgets = { gallery: ComponentType<{ gallery: PublicGallery }> };

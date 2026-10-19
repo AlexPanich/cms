@@ -43,6 +43,34 @@
       "when": 1792410762247,
       "tag": "0005_search",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792444012759,
+      "tag": "0006_page_blocks",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792444028502,
+      "tag": "0007_page_blocks_data",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792444044365,
+      "tag": "0008_page_blocks_search",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792444048807,
+      "tag": "0009_page_search_index",
+      "breakpoints": true
     }
   ]
 }
