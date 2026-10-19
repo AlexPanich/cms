@@ -97,6 +97,10 @@ DATABASE_URL='<External Database URL>?sslmode=require' pnpm user:create-admin --
 
 `.mcp.json` подключает к Claude Code MCP-сервер Render (деплои, логи, метрики, сервисы). Ключ — в переменной окружения `RENDER_API_KEY` (Render → Account Settings → API Keys), в репозиторий он не попадает. Без переменной Claude Code покажет ошибку подключения этого сервера.
 
+## Сайт для клиента
+
+Каждый клиент — отдельный репозиторий из этого: дизайн в `src/theme/`, ядро приходит слиянием тегов. Как создать репозиторий, натянуть макет, обновить ядро и выкатить — [docs/CLIENT.md](docs/CLIENT.md). Каталог блоков для дизайнера — [docs/BLOCKS.md](docs/BLOCKS.md), правила — [docs/DESIGN-GUIDE.md](docs/DESIGN-GUIDE.md).
+
 ## Релизы
 
 Версии ведёт [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release-please.yml`) по коммитам в формате Conventional Commits:

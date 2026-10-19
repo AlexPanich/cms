@@ -3,6 +3,9 @@
 CMS на Next.js 16 + TypeScript + PostgreSQL. Переписываем со старой версии на Laravel 5.2 (лежит в `legacy/`).
 Данные и URL из старой версии **не переносятся**: база новая, страницы и дизайн тоже новые.
 
+Тема (дизайн сайта) и, в репозитории клиента, правила клиента: @src/theme/CLAUDE.md
+Репозиторий клиента создаётся из этого и получает ядро слиянием тегов — `docs/CLIENT.md`.
+
 ## Команды
 
 ```bash
@@ -15,6 +18,7 @@ pnpm user:create-admin --email admin@example.com   # первый админис
 pnpm blocks:catalog        # docs/BLOCKS.md из описаний блоков (CI проверяет через --check)
 pnpm lint && pnpm typecheck && pnpm test && pnpm format:check   # быстрые проверки CI
 pnpm build && pnpm test:e2e   # E2E на Playwright (поднимает pnpm start сам)
+pnpm theme:screenshots     # после pnpm build: скриншоты блоков /_blocks и страниц в test-results/screenshots
 pnpm build
 docker compose up --build # полный стек: db → migrate → app
 docker compose -f docker-compose.prod.yml up -d --build   # продакшен: + Caddy (HTTPS) и резервные копии
@@ -132,7 +136,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 5. ✅ Публичный сайт: `app/[[...slug]]`, шаблоны как React-лейауты, поиск через Postgres FTS, `sitemap.xml`.
 6. ✅ Редактирование на сайте: клиентский компонент для пользователей с правом `edit_from_front`, поля только из белого списка.
 7. ✅ E2E-тесты (Playwright) и деплой в Docker.
-8. Темы и блоки: дизайн клиента в `src/theme/`, страница из блоков каталога, каталог для дизайнера, отдельный репозиторий на клиента.
+8. Темы и блоки: дизайн клиента в `src/theme/`, страница из блоков каталога, каталог для дизайнера, отдельный репозиторий на клиента (`docs/CLIENT.md`, skill `apply-design`).
 
 ## Особенности окружения
 

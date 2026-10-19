@@ -12,6 +12,9 @@ permissions:
 
 jobs:
   release-please:
+    # Только в репозитории ядра. Репозиторий клиента получает версии ядра слиянием тегов
+    # (docs/CLIENT.md): своих релизов у него нет, version в package.json — версия ядра.
+    if: github.repository == 'AlexPanich/cms'
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
