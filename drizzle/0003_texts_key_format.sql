@@ -1,0 +1,1 @@
+ALTER TABLE "texts" ADD CONSTRAINT "texts_key_format" CHECK ("texts"."key" ~ '^[a-z0-9]+(-[a-z0-9]+)*$');

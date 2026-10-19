@@ -1,0 +1,117 @@
+# Продакшен на одном сервере: Caddy (HTTPS) → app → db, плюс резервные копии.
+# Переменные — в .env рядом с этим файлом (образец: .env.production.example).
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Подробно — в README, раздел «Продакшен».
+name: cms-prod
+
+# Без ограничения логи контейнеров растут, пока не займут весь диск.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-db-env: &db-env
+  POSTGRES_USER: ${POSTGRES_USER:-cms}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в .env (openssl rand -hex 24)}
+  POSTGRES_DB: ${POSTGRES_DB:-cms}
+
+x-app-env: &app-env
+  DATABASE_URL: postgres://${POSTGRES_USER:-cms}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-cms}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Задайте BETTER_AUTH_SECRET в .env (openssl rand -base64 32)}
+  BETTER_AUTH_URL: https://${SITE_DOMAIN:?Задайте SITE_DOMAIN в .env}
+
+services:
+  # Порт базы наружу не публикуется: к ней ходят только app, migrate и backup.
+  db:
+    image: postgres:17-alpine
+    environment: *db-env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging
+
+  # Миграции и сид при каждом запуске стека, затем завершается.
+  migrate:
+    build:
+      context: .
+      target: migrator
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+    logging: *logging
+
+  # Приложение доступно только через Caddy: прямой доступ позволил бы подделать
+  # X-Forwarded-For, по которому Better Auth считает попытки входа.
+  app:
+    build:
+      context: .
+      target: runner
+    environment: *app-env
+    volumes:
+      - storage:/app/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    logging: *logging
+
+  # HTTPS с сертификатом Let's Encrypt для SITE_DOMAIN (порты 80 и 443 должны быть открыты).
+  caddy:
+    image: caddy:2.10-alpine
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+
+  # Дамп БД и архив загруженных файлов по расписанию (docker/backup.sh).
+  # Копировать резервные копии с сервера наружу — отдельно (rsync, снапшоты хостинга).
+  backup:
+    image: postgres:17-alpine
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-cms}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-cms}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    entrypoint: ["sh", "/usr/local/bin/backup.sh"]
+    command: ["schedule"]
+    volumes:
+      - ./docker/backup.sh:/usr/local/bin/backup.sh:ro
+      - ${BACKUP_DIR:-./backups}:/backups
+      # Запись нужна только для восстановления (backup.sh restore).
+      - storage:/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  db-data:
+  storage:
+  caddy-data:
+  caddy-config:

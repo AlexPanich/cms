@@ -1,0 +1,15 @@
+# Обратный прокси перед приложением: HTTPS, сжатие, лимит тела запроса.
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# Документ до 20 МБ плюс заголовки multipart — как serverActions.bodySizeLimit в next.config.ts.
+	request_body {
+		max_size 21MB
+	}
+
+	header Strict-Transport-Security "max-age=31536000"
+
+	# Caddy сам ставит X-Forwarded-For с IP клиента, а присланный клиентом заголовок
+	# отбрасывает (trusted_proxies не заданы). Better Auth берёт IP для rate limit отсюда.
+	reverse_proxy app:3000
+}

@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: cms
+          POSTGRES_PASSWORD: cms
+          POSTGRES_DB: cms
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U cms" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgres://cms:cms@localhost:5432/cms
+      BETTER_AUTH_SECRET: ci-secret-not-used-in-production-0123456789
+      BETTER_AUTH_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm db:migrate
+      - run: pnpm db:seed
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+
+  # Продакшен-стек целиком: образы, миграции, Caddy с HTTPS и резервная копия.
+  # Caddy для localhost выпускает сертификат своим локальным центром, поэтому curl -k.
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      SITE_DOMAIN: localhost
+      POSTGRES_PASSWORD: ci-password
+      BETTER_AUTH_SECRET: ci-secret-not-used-in-production-0123456789
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck docker/backup.sh
+      - run: docker compose -f docker-compose.prod.yml up -d --build
+      - name: Сайт отвечает через Caddy
+        run: |
+          for i in $(seq 1 60); do
+            curl -fsSk https://localhost/api/health && exit 0
+            sleep 2
+          done
+          exit 1
+      - name: Первая резервная копия создана при запуске
+        run: ls backups/db-*.dump backups/storage-*.tar.gz
+      - if: failure()
+        run: docker compose -f docker-compose.prod.yml logs
