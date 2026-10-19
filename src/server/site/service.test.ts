@@ -14,8 +14,10 @@ import type { RichTextDoc } from "@/lib/rich-text";
 import { withRollback as withRollbackBase } from "@/test/db";
 import {
   getAncestors,
+  getDocumentsByIds,
   getGalleriesByKeys,
   getHomePage,
+  getImagesByIds,
   getPageLinks,
   getPublishedArticle,
   getPublishedPage,
@@ -26,6 +28,7 @@ import {
   getSiteTexts,
   HIGHLIGHT_END,
   HIGHLIGHT_START,
+  listLatestArticles,
   listPublishedArticles,
   resolveSiteRoute,
   searchSite,
@@ -183,6 +186,55 @@ describe("публичный сайт", () => {
       expect(result.has("missing")).toBe(false);
     }));
 
+  it("загружает картинки и документы из блоков по id", () =>
+    withRollback(async (tx) => {
+      const [image, document, unnamed] = await tx
+        .insert(media)
+        .values([
+          {
+            kind: "image" as const,
+            storageKey: "images/2026/01/a.webp",
+            originalName: "a.png",
+            mimeType: "image/webp",
+            size: 1,
+            width: 10,
+            height: 5,
+            alt: "Кот",
+          },
+          {
+            kind: "document" as const,
+            storageKey: "documents/2026/01/b.pdf",
+            originalName: "price.pdf",
+            mimeType: "application/pdf",
+            size: 2048,
+            title: "Прайс",
+          },
+          {
+            kind: "document" as const,
+            storageKey: "documents/2026/01/c.docx",
+            originalName: "Договор.docx",
+            mimeType: "application/msword",
+            size: 10,
+          },
+        ])
+        .returning();
+
+      const images = await getImagesByIds(tx, [image.id, document.id]);
+      expect([...images]).toEqual([
+        [image.id, { url: "/media/images/2026/01/a.webp", alt: "Кот", width: 10, height: 5 }],
+      ]);
+      const documents = await getDocumentsByIds(tx, [image.id, document.id, unnamed.id]);
+      expect(documents.has(image.id)).toBe(false);
+      expect(documents.get(document.id)).toEqual({
+        url: "/media/documents/2026/01/b.pdf",
+        title: "Прайс",
+        size: 2048,
+        extension: "pdf",
+      });
+      expect(documents.get(unnamed.id)).toMatchObject({ title: "Договор.docx", extension: "docx" });
+      expect((await getImagesByIds(tx, [])).size).toBe(0);
+    }));
+
   it("показывает только опубликованные статьи, новые сверху", () =>
     withRollback(async (tx) => {
       await tx.insert(articles).values([
@@ -193,6 +245,7 @@ describe("публичный сайт", () => {
       const { items, total } = await listPublishedArticles(tx, { page: 1 });
       expect(total).toBe(2);
       expect(items.map((item) => item.slug)).toEqual(["new", "old"]);
+      expect((await listLatestArticles(tx, 1)).map((item) => item.slug)).toEqual(["new"]);
       expect(await getPublishedArticle(tx, "draft")).toBeNull();
       expect(await getPublishedArticle(tx, "new")).toMatchObject({
         title: "Новая",

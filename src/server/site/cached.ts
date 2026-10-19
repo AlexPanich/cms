@@ -5,7 +5,9 @@ import { SITE_CACHE_TAGS as TAGS } from "@/lib/site-cache";
 import { SITE_TEXT_KEYS } from "@/lib/site";
 import {
   getAncestors,
+  getDocumentsByIds,
   getGalleriesByKeys,
+  getImagesByIds,
   getHomePage,
   getPageLinks,
   getPublishedArticle,
@@ -14,9 +16,12 @@ import {
   getSiteMenu,
   getSitemapEntries,
   getSiteTexts,
+  listLatestArticles,
   listPublishedArticles,
   type PageLink,
+  type PublicDocument,
   type PublicGallery,
+  type PublicImage,
   getRouteIndex,
 } from "./service";
 
@@ -75,6 +80,29 @@ export async function cachedPageLinks(ids: number[]): Promise<[number, PageLink]
   cacheLife("hours");
   cacheTag(TAGS.pages);
   return [...(await getPageLinks(db(), ids))];
+}
+
+// Картинки и документы из блоков: id по порядку — ключ кеша, пары [id, данные].
+export async function cachedImages(ids: number[]): Promise<[number, PublicImage][]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(TAGS.media);
+  return [...(await getImagesByIds(db(), ids))];
+}
+
+export async function cachedDocuments(ids: number[]): Promise<[number, PublicDocument][]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(TAGS.media);
+  return [...(await getDocumentsByIds(db(), ids))];
+}
+
+// Превью статей — картинки, но их меняет edit_media, а он сбрасывает и тег статей.
+export async function cachedLatestArticles(limit: number) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(TAGS.articles);
+  return listLatestArticles(db(), limit);
 }
 
 export async function cachedArticles(page: number) {

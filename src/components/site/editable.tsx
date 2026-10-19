@@ -1,8 +1,10 @@
 import { cache, type ReactNode } from "react";
 import { db } from "@/db";
+import type { Field } from "@/lib/blocks/define";
 import { hasFieldKind } from "@/lib/blocks/form";
 import { type Block, collectBlockMediaIds, getBlockDefinition } from "@/lib/blocks/registry";
 import { SITE_TEXTS, type SiteTextKey } from "@/lib/site";
+import { listDocumentOptions } from "@/server/documents/service";
 import { listGalleryOptions } from "@/server/galleries/service";
 import { listImageUrls } from "@/server/media/service";
 import { getPageTree } from "@/server/pages/service";
@@ -34,6 +36,7 @@ export async function EditablePageTitle({
 // Данные для формы блока — только редактору и без кеша сайта; на странице много блоков,
 // поэтому списки загружаются один раз за запрос.
 const galleryOptions = cache(() => listGalleryOptions(db()));
+const documentOptions = cache(() => listDocumentOptions(db()));
 // Ссылаться из блока на сайте можно только на опубликованные страницы.
 const linkPageOptions = cache(async () =>
   flattenTree(await getPageTree(db(), { publishedOnly: true })).map(({ id, title, depth }) => ({
@@ -56,13 +59,22 @@ export async function EditableBlock({
 }) {
   const definition = getBlockDefinition(block.type);
   if (!definition || !(await getFrontEditor())) return children;
-  const [galleries, pages, images] = await Promise.all([
-    hasFieldKind(definition.fields, "richText") ? galleryOptions() : [],
-    hasFieldKind(definition.fields, "link") ? linkPageOptions() : [],
+  const needs = (kind: Field["kind"]) => hasFieldKind(definition.fields, kind);
+  const [galleries, pages, documents, images] = await Promise.all([
+    needs("richText") || needs("gallery") ? galleryOptions() : [],
+    needs("link") ? linkPageOptions() : [],
+    needs("document") ? documentOptions() : [],
     listImageUrls(db(), collectBlockMediaIds([block])),
   ]);
   return (
-    <BlockEditor pageId={pageId} block={block} galleries={galleries} pages={pages} images={images}>
+    <BlockEditor
+      pageId={pageId}
+      block={block}
+      galleries={galleries}
+      pages={pages}
+      documents={documents}
+      images={images}
+    >
       {children}
     </BlockEditor>
   );

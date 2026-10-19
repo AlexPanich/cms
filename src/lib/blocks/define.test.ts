@@ -58,6 +58,19 @@ describe("необязательные поля", () => {
   });
 });
 
+describe("field.gallery и field.document", () => {
+  it("галерея — ключ, документ — id", () => {
+    const gallery = field.gallery({ label: "Галерея", required: true });
+    expect(gallery.schema.parse("office-2026")).toBe("office-2026");
+    expect(gallery.schema.safeParse("Офис").success).toBe(false);
+    expect(messages(gallery.schema.safeParse(undefined))).toEqual(["Обязательное поле"]);
+    const document = field.document({ label: "Документ" });
+    expect(document.schema.parse(undefined)).toBeNull();
+    expect(document.schema.parse(5)).toBe(5);
+    expect(document.schema.safeParse(0).success).toBe(false);
+  });
+});
+
 describe("field.list", () => {
   const cards = field.list(
     { title: field.text({ label: "Заголовок", required: true }) },

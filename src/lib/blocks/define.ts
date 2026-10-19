@@ -1,4 +1,5 @@
 import { type RichTextDoc, richTextDocSchema } from "@/lib/rich-text";
+import { SLUG_PATTERN } from "@/lib/slug";
 import { isSafeLinkUrl } from "@/lib/url";
 import { z } from "@/lib/zod";
 
@@ -60,6 +61,21 @@ export type LinkField<R extends boolean = boolean> = Common & {
   schema: FieldSchema<Opt<R, LinkValue>>;
 };
 
+// Галерея из раздела «Галереи» по ключу. Удалённая галерея на сайте не выводится.
+export type GalleryField<R extends boolean = boolean> = Common & {
+  kind: "gallery";
+  required: R;
+  schema: FieldSchema<Opt<R, string>>;
+};
+
+// Документ из раздела «Документы» (media с kind = document) по id. Удалённый документ
+// на сайте не выводится.
+export type DocumentField<R extends boolean = boolean> = Common & {
+  kind: "document";
+  required: R;
+  schema: FieldSchema<Opt<R, number>>;
+};
+
 export type ListField<F extends Fields = Fields> = Common & {
   kind: "list";
   of: F;
@@ -86,7 +102,15 @@ export type BooleanField = Common & {
 };
 
 export type Field =
-  TextField | RichTextField | ImageField | LinkField | ListField | SelectField | BooleanField;
+  | TextField
+  | RichTextField
+  | ImageField
+  | LinkField
+  | GalleryField
+  | DocumentField
+  | ListField
+  | SelectField
+  | BooleanField;
 
 // Интерфейс, а не Record: список содержит поля, и псевдоним типа замкнулся бы сам на себя.
 export interface Fields {
@@ -183,6 +207,26 @@ export const field = {
       kind: "link",
       required,
       schema: optional(linkValueSchema, required) as FieldSchema<Opt<R, LinkValue>>,
+    };
+  },
+
+  gallery<const R extends boolean = false>(options: Common & { required?: R }): GalleryField<R> {
+    const { required = false as R, ...common } = options;
+    return {
+      ...common,
+      kind: "gallery",
+      required,
+      schema: optional(z.string().regex(SLUG_PATTERN), required) as FieldSchema<Opt<R, string>>,
+    };
+  },
+
+  document<const R extends boolean = false>(options: Common & { required?: R }): DocumentField<R> {
+    const { required = false as R, ...common } = options;
+    return {
+      ...common,
+      kind: "document",
+      required,
+      schema: optional(z.number().int().positive(), required) as FieldSchema<Opt<R, number>>,
     };
   },
 

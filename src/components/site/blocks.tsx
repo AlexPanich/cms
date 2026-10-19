@@ -1,7 +1,8 @@
 import type { ComponentType } from "react";
-import type { LinkValue } from "@/lib/blocks/define";
+import type { ImageValue, LinkValue } from "@/lib/blocks/define";
 import type { Block, BlockType } from "@/lib/blocks/registry";
 import { isSafeLinkUrl } from "@/lib/url";
+import type { PublicDocument, PublicImage } from "@/server/site/service";
 import type { ContentContext } from "./rich-text";
 
 // Вывод блоков страницы. Как выглядит каждый блок, решает тема (BlockViews), а порядок,
@@ -45,4 +46,25 @@ export function resolveLink(
   }
   const page = context.links.get(link.pageId);
   return page ? { href: page.href, label: link.label || page.title } : null;
+}
+
+// Картинка из поля блока. Удалённая из медиатеки не выводится (null). Пустой alt —
+// описание из медиатеки.
+export function resolveImage(
+  image: ImageValue | null,
+  context: ContentContext,
+): PublicImage | null {
+  if (!image) return null;
+  const stored = context.images.get(image.mediaId);
+  return stored ? { ...stored, alt: image.alt || stored.alt } : null;
+}
+
+// Документ из поля блока. Удалённый не выводится (null). Пустое название — из раздела «Документы».
+export function resolveDocument(
+  id: number | null,
+  title: string,
+  context: ContentContext,
+): PublicDocument | null {
+  const stored = id === null ? undefined : context.documents.get(id);
+  return stored ? { ...stored, title: title || stored.title } : null;
 }

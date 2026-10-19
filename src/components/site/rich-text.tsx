@@ -1,12 +1,23 @@
 import { type ComponentType, Fragment, type ReactNode } from "react";
 import { galleryKeyOf, type RichTextDoc, type RichTextNode } from "@/lib/rich-text";
 import { isSafeLinkUrl } from "@/lib/url";
-import type { PageLink, PublicGallery } from "@/server/site/service";
+import type {
+  PageLink,
+  PublicDocument,
+  PublicGallery,
+  PublicImage,
+  PublishedArticleCard,
+} from "@/server/site/service";
 
-// Данные виджетов и ссылок на страницы, загруженные заранее (src/server/site/content.ts).
+// Данные виджетов, ссылок на страницы и полей блоков, загруженные заранее
+// (src/server/site/content.ts).
 export type ContentContext = {
   galleries: ReadonlyMap<string, PublicGallery>;
   links: ReadonlyMap<number, PageLink>;
+  images: ReadonlyMap<number, PublicImage>;
+  documents: ReadonlyMap<number, PublicDocument>;
+  // Свежие статьи для блока «Последние статьи», сколько попросил самый длинный такой блок.
+  articles: readonly PublishedArticleCard[];
 };
 
 // Как выглядят виджеты, решает тема.

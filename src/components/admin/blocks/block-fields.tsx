@@ -100,9 +100,97 @@ function BlockFieldInput({ control, field: item, name }: FieldProps) {
       return <ImageInput control={control} field={item} name={name} />;
     case "link":
       return <LinkInput control={control} field={item} name={name} />;
+    case "gallery":
+      return (
+        <OptionSelect
+          {...common}
+          required={item.required}
+          placeholder="Выберите галерею"
+          options={galleries.map((gallery) => ({ value: gallery.key, label: gallery.title }))}
+        />
+      );
+    case "document":
+      return <DocumentSelect {...common} required={item.required} />;
     case "list":
       return <ListInput control={control} field={item} name={name} />;
   }
+}
+
+function DocumentSelect(props: Omit<OptionSelectProps<number>, "options" | "placeholder">) {
+  const { documents } = useBlockEditor();
+  return (
+    <OptionSelect
+      {...props}
+      placeholder="Выберите документ"
+      options={documents.map((document) => ({ value: document.id, label: document.title }))}
+    />
+  );
+}
+
+type OptionSelectProps<V extends string | number> = {
+  control: Control<FieldValues>;
+  name: string;
+  label: string;
+  description?: string;
+  required: boolean;
+  placeholder: string;
+  options: { value: V; label: string }[];
+};
+
+const NONE = "none";
+
+// Выбор галереи или документа: значение — ключ или id, у необязательного поля есть «Не выбрано».
+// Удалённая запись остаётся значением, пока её не заменят, — форма это показывает.
+function OptionSelect<V extends string | number>({
+  control,
+  name,
+  label,
+  description,
+  required,
+  placeholder,
+  options,
+}: OptionSelectProps<V>) {
+  const items = [
+    ...(required ? [] : [{ value: NONE, label: "Не выбрано" }]),
+    ...options.map((option) => ({ value: String(option.value), label: option.label })),
+  ];
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => {
+        const value = field.value as V | null;
+        const missing = value !== null && !options.some((option) => option.value === value);
+        return (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={name}>{label}</FieldLabel>
+            <Select
+              items={items}
+              value={value === null ? (required ? null : NONE) : missing ? null : String(value)}
+              onValueChange={(next) => {
+                if (next === null || next === NONE) return field.onChange(null);
+                const option = options.find((item) => String(item.value) === next);
+                if (option) field.onChange(option.value);
+              }}
+            >
+              <SelectTrigger id={name} className="w-full" aria-invalid={fieldState.invalid}>
+                <SelectValue placeholder={missing ? "Удалено — выберите другое" : placeholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {items.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {description && <FieldDescription>{description}</FieldDescription>}
+            <FieldError errors={[fieldState.error]} />
+          </Field>
+        );
+      }}
+    />
+  );
 }
 
 // 1.777… → «16:9». Пропорции из описания поля подсказывают, какую картинку загружать.

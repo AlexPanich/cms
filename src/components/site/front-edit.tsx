@@ -5,7 +5,11 @@ import { PencilIcon } from "lucide-react";
 import { createContext, type ReactNode, use, useState } from "react";
 import { type Control, type FieldValues, useForm } from "react-hook-form";
 import { BlockFields } from "@/components/admin/blocks/block-fields";
-import { BlockEditorProvider, type PageOption } from "@/components/admin/blocks/editor-context";
+import {
+  BlockEditorProvider,
+  type DocumentOption,
+  type PageOption,
+} from "@/components/admin/blocks/editor-context";
 import { ButtonLink } from "@/components/admin/button-link";
 import { FormInput, FormTextarea } from "@/components/admin/form-fields";
 import type { GalleryOption } from "@/components/admin/gallery-node";
@@ -217,6 +221,7 @@ export function BlockEditor({
   block,
   galleries,
   pages,
+  documents,
   images,
   children,
 }: {
@@ -224,6 +229,7 @@ export function BlockEditor({
   block: Block;
   galleries: GalleryOption[];
   pages: PageOption[];
+  documents: DocumentOption[];
   images: Record<number, string>;
   children: ReactNode;
 }) {
@@ -238,6 +244,7 @@ export function BlockEditor({
           <BlockEditorProvider
             galleries={galleries}
             pages={pages}
+            documents={documents}
             images={images}
             upload={uploadFrontEditImage}
           >

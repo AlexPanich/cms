@@ -8,6 +8,7 @@ import { blocksFormValue } from "@/lib/blocks/form";
 import { type Block, collectBlockMediaIds } from "@/lib/blocks/registry";
 import { resolvePageTemplate } from "@/lib/templates";
 import { requirePagePermission } from "@/server/auth/session";
+import { listDocumentOptions } from "@/server/documents/service";
 import { listGalleryOptions } from "@/server/galleries/service";
 import { listImageUrls } from "@/server/media/service";
 import { getPage, getPageTree } from "@/server/pages/service";
@@ -28,9 +29,10 @@ export default async function EditPagePage({ params }: PageProps<"/admin/pages/[
   // В родители нельзя выбрать саму страницу и её потомков — сервер тоже это проверяет.
   // Блоки, которые не проходят схему, попадают в форму с тем, что удалось прочитать.
   const blocks = blocksFormValue(page.blocks);
-  const [tree, galleries, images] = await Promise.all([
+  const [tree, galleries, documents, images] = await Promise.all([
     getPageTree(db()),
     listGalleryOptions(db()),
+    listDocumentOptions(db()),
     listImageUrls(db(), collectBlockMediaIds(blocks as Block[])),
   ]);
   const flat = flattenTree(tree);
@@ -66,6 +68,7 @@ export default async function EditPagePage({ params }: PageProps<"/admin/pages/[
         parents={parents}
         galleries={galleries}
         linkPages={linkPages}
+        documents={documents}
         images={images}
         page={{
           id: page.id,

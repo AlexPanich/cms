@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 import { collectGalleryKeys, type RichTextDoc, type RichTextNode } from "@/lib/rich-text";
 import { type ContentContext, RichText, type RichTextWidgets } from "./rich-text";
 
-const empty: ContentContext = { galleries: new Map(), links: new Map() };
+const empty: ContentContext = {
+  galleries: new Map(),
+  links: new Map(),
+  images: new Map(),
+  documents: new Map(),
+  articles: [],
+};
 
 const widgets: RichTextWidgets = {
   gallery: ({ gallery }) => (
