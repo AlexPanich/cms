@@ -34,6 +34,7 @@ docker compose up --build # полный стек: db → migrate → app
 - `src/scripts/`: CLI-скрипты, запускаются через `tsx --conditions=react-server` (иначе падает импорт `server-only`).
 - `src/db/migrate.ts`: программный мигратор. В Docker его запускает отдельный сервис `migrate` (стадия `migrator` в Dockerfile).
 - Route handlers и страницы, которые ходят в БД, должны вызывать `await connection()` из `next/server`. Иначе при `cacheComponents` Next попытается пререндерить их на сборке.
+- В запросе к одной таблице Drizzle пишет колонки без имени таблицы, поэтому в коррелированном подзапросе через `sql\`\`` внешнюю колонку нужно писать явно (`media.id`), иначе она свяжется с таблицей подзапроса.
 - Тесты лежат рядом с кодом: `src/**/*.test.ts` (Vitest). Алиас `@/*` указывает на `src/*`.
 - Интеграционные тесты ходят в настоящий Postgres из `.env`, поэтому перед `pnpm test` база должна быть поднята и смигрирована. Каждый тест оборачивается в `withRollback` из `src/test/db.ts` и ничего не оставляет в БД.
 
@@ -50,6 +51,7 @@ docker compose up --build # полный стек: db → migrate → app
 - Порядок перетаскиванием — dnd-kit по образцу `pages/_components/page-tree.tsx` (оптимистичное обновление, откат при ошибке, объявления на русском); сервис принимает полный список id в новом порядке и проверяет, что это перестановка.
 - Rich text — `FormRichText` (TipTap, `src/components/admin/rich-text-editor.tsx`). Документ хранится как JSON и проверяется `richTextDocSchema` (`src/lib/rich-text.ts`).
 - Загрузка картинки — поле `FormImageUpload` (`src/components/admin/image-upload.tsx`) и server action, который вызывает `saveUploadedImage` (`src/server/media/service.ts`). Файл не доверяем ни по имени, ни по MIME: формат определяет sharp, сохраняется перекодированный WebP. Адрес файла — `mediaUrl(storageKey)`, в разметке — `next/image`.
+- Картинка используется, если на неё ссылается галерея или превью статьи — подсчёт `galleryUses`/`articleUses` в `src/server/media/service.ts`. Новую ссылку на `media` добавляй туда же, иначе картинку сочтут неиспользуемой и удалят вместе с галереей. Записи `media` удаляются в транзакции, а файлы — после неё (`deleteStoredFiles`).
 - Шаблоны страниц — реестр `PAGE_TEMPLATES` в `src/lib/templates.ts`.
 - Новый раздел добавляется в `ADMIN_NAV` (`src/app/admin/_components/nav.ts`) с его правом.
 - В E2E искать элементы через `getByRole` (скрытые копии из `<Activity>` он пропускает, `getByLabel` — нет), а после `goto`/`reload` дожидаться содержимого: админка сначала отдаёт «Загрузка…» из `<Suspense>`.

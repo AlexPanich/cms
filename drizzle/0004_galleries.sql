@@ -1,0 +1,2 @@
+CREATE INDEX "gallery_items_media_idx" ON "gallery_items" USING btree ("media_id");--> statement-breakpoint
+ALTER TABLE "galleries" ADD CONSTRAINT "galleries_key_format" CHECK ("galleries"."key" ~ '^[a-z0-9]+(-[a-z0-9]+)*$');

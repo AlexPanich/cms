@@ -48,6 +48,7 @@ export async function cleanupE2EData() {
     await sql`delete from menus where key like ${`${E2E_PREFIX}%`}`;
     await sql`delete from texts where key like ${`${E2E_PREFIX}%`}`;
     await sql`delete from articles where slug like ${`${E2E_PREFIX}%`}`;
+    await sql`delete from galleries where key like ${`${E2E_PREFIX}%`}`;
     // Файлы, загруженные пользователями E2E, — до удаления самих пользователей.
     const files = await sql<{ storage_key: string }[]>`
       delete from media

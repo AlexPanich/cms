@@ -7,16 +7,19 @@ export function Pagination({
   pageCount,
   basePath,
   search,
+  params: extraParams,
 }: {
   page: number;
   pageCount: number;
   basePath: string;
   search?: string;
+  // Другие параметры списка (фильтры), которые нужно сохранить при переходе.
+  params?: Record<string, string>;
 }) {
   if (pageCount <= 1) return null;
 
   const href = (target: number) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(extraParams);
     if (search) params.set("q", search);
     if (target > 1) params.set("page", String(target));
     const query = params.toString();

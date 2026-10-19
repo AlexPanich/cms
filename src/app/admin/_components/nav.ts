@@ -1,5 +1,7 @@
 import {
   FileTextIcon,
+  ImageIcon,
+  ImagesIcon,
   LayoutDashboardIcon,
   type LucideIcon,
   MenuIcon,
@@ -55,6 +57,20 @@ export const ADMIN_NAV: AdminNavItem[] = [
     description: "Новости и публикации с превью",
     icon: NewspaperIcon,
     permission: "edit_articles",
+  },
+  {
+    href: "/admin/galleries",
+    label: "Галереи",
+    description: "Наборы изображений для вставки в текст страниц",
+    icon: ImagesIcon,
+    permission: "edit_media",
+  },
+  {
+    href: "/admin/media",
+    label: "Изображения",
+    description: "Все загруженные картинки, удаление неиспользуемых",
+    icon: ImageIcon,
+    permission: "edit_media",
   },
   {
     href: "/admin/users",
