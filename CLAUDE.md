@@ -34,6 +34,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 - `src/server/auth/`: Better Auth (`auth.ts`, `getAuth()`), права пользователя из БД, `getCurrentUser`/`requirePermission`/`requirePagePermission`. Обработчик — `src/app/api/auth/[...all]/route.ts`.
 - `src/scripts/`: CLI-скрипты, запускаются через `tsx --conditions=react-server` (иначе падает импорт `server-only`).
 - Продакшен — `docker-compose.prod.yml` (проект `cms-prod`): Caddy (`docker/Caddyfile`) — единственный вход снаружи, он же ставит `X-Forwarded-For`, по которому Better Auth считает попытки входа. Порт `app` наружу не открывать. Резервные копии — `docker/backup.sh` в сервисе `backup`. Экземпляр приложения один: кеш и rate limit в памяти.
+- Демо на Render (бесплатный план) — `render.yaml` и `docker/render.Dockerfile`: миграции и сид при старте контейнера, файлы эфемерные, база живёт 30 дней. Не продакшен. MCP Render для Claude Code — `.mcp.json`, ключ в `RENDER_API_KEY`.
 - `src/db/migrate.ts`: программный мигратор. В Docker его запускает отдельный сервис `migrate` (стадия `migrator` в Dockerfile).
 - Route handlers и страницы, которые ходят в БД, должны вызывать `await connection()` из `next/server`. Иначе при `cacheComponents` Next попытается пререндерить их на сборке.
 - В запросе к одной таблице Drizzle пишет колонки без имени таблицы, поэтому в коррелированном подзапросе через `sql\`\`` внешнюю колонку нужно писать явно (`media.id`), иначе она свяжется с таблицей подзапроса.
