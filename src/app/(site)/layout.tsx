@@ -26,10 +26,15 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
     cachedSiteMenu("main"),
     cachedSiteMenu("footer"),
   ]);
+  // data-site — граница стилей темы (src/theme/theme.css). Обёртка не создаёт блока
+  // (display: contents), поэтому вёрстку оболочки целиком задаёт тема. Окна и уведомления
+  // правки на сайте выводятся в портал вне неё и выглядят как админка.
   const site = (
-    <theme.SiteLayout site={info} mainMenu={mainMenu} footerMenu={footerMenu}>
-      {children}
-    </theme.SiteLayout>
+    <div data-site className="contents">
+      <theme.SiteLayout site={info} mainMenu={mainMenu} footerMenu={footerMenu}>
+        {children}
+      </theme.SiteLayout>
+    </div>
   );
   return editor ? (
     <FrontEditProvider canOpenAdmin={editor.canOpenAdmin}>{site}</FrontEditProvider>
