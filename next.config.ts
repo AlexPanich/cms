@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
+  // Не создавать AGENTS.md в корне при запуске: инструкции для Claude — в CLAUDE.md.
+  agentRules: false,
   experimental: {
     // forbidden() и forbidden.tsx для ответа 403.
     authInterrupts: true,

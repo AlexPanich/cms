@@ -23,7 +23,7 @@
 # Ядро — remote upstream, клиент — origin. Начинаем с последней версии ядра.
 git clone --origin upstream git@github.com:AlexPanich/cms.git client-site
 cd client-site
-git switch -C master v0.3.0            # нужный тег ядра: git tag --sort=-v:refname | head
+git switch -C master v1.0.0            # нужный тег ядра: git tag --sort=-v:refname | head
 git remote add origin git@github.com:<организация>/<клиент>-site.git
 git remote set-url --push upstream DISABLED   # чтобы случайно не отправить коммиты клиента в ядро
 git push -u origin master
@@ -84,9 +84,9 @@ pnpm theme:screenshots                     # test-results/screenshots: блок�
 
 ```bash
 git fetch upstream --tags
-git switch -c core/v0.4.0
-git log --oneline v0.3.0..v0.4.0           # что приходит; CHANGELOG.md — то же человеческим языком
-git merge v0.4.0
+git switch -c core/v1.1.0
+git log --oneline v1.0.0..v1.1.0           # что приходит; CHANGELOG.md — то же человеческим языком
+git merge v1.1.0
 ```
 
 Конфликты:
@@ -95,7 +95,7 @@ git merge v0.4.0
   `git checkout --theirs -- <путь>`. Исключение — `docs/BLOCKS.md`: перегенерировать
   (`pnpm blocks:catalog`), в нём есть и блоки темы.
 - **В `src/theme/`** — ядро поменяло тему по умолчанию. Оставьте версию клиента
-  (`git checkout --ours -- <путь>`) и посмотрите изменение ядра (`git show v0.4.0 -- <путь>`):
+  (`git checkout --ours -- <путь>`) и посмотрите изменение ядра (`git show v1.1.0 -- <путь>`):
   если это новое требование контракта (новый блок, новое поле в пропсах), его нужно повторить
   в теме клиента.
 
@@ -110,7 +110,7 @@ pnpm build && pnpm test:e2e
 
 Новый блок ядра теме нужно нарисовать (без вида не соберётся), а дизайнеру — показать
 обновлённый `/_blocks`. Миграции БД приходят вместе с ядром и применяются при деплое сами.
-Затем PR `chore: обновить ядро до v0.4.0` в репозиторий клиента и деплой.
+Затем PR `chore: обновить ядро до v1.1.0` в репозиторий клиента и деплой.
 
 ## Деплой
 

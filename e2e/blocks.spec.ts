@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import sharp from "sharp";
+import { blockVariants } from "../src/lib/blocks/registry";
 import {
   expectToast,
   insertArticle,
@@ -75,10 +76,12 @@ test("блоки каталога: картинка, ссылки, список 
   await features.getByRole("textbox", { name: "Текст", exact: true }).fill("За неделю");
   await choose(page, features, "Иконка", "Молния");
 
-  // Призыв к действию: кнопка на страницу сайта и светлое оформление.
+  // Призыв к действию: кнопка на страницу сайта и вариант оформления, если тема его объявила
+  // (варианты — у каждой темы свои, поэтому берём из реестра).
   await addBlock(page, "Призыв к действию");
   const cta = page.getByRole("listitem", { name: "Блок «Призыв к действию» (3)" });
-  await choose(page, cta, "Оформление", "На светлом фоне");
+  const [ctaVariant] = blockVariants("cta");
+  if (ctaVariant) await choose(page, cta, "Оформление", ctaVariant.label);
   await cta.getByRole("textbox", { name: "Заголовок", exact: true }).fill("Остались вопросы?");
   await choose(page, cta, "Кнопка: куда ведёт", "Страница сайта");
   await choose(page, cta, "Кнопка: страница", target);
@@ -89,12 +92,11 @@ test("блоки каталога: картинка, ссылки, список 
   await page.goto(`/${slug}`);
   const main = page.getByRole("main");
   await expect(main.getByRole("heading", { name: `Добро пожаловать ${stamp}` })).toBeVisible();
-  // Страница начинается с «Первого экрана»: h1 есть, но не виден.
+  // h1 есть всегда, даже если страница начинается с «Первого экрана» (показывать ли его, решает тема).
   await expect(main.getByRole("heading", { level: 1 })).toHaveText(title);
-  await expect(main.getByRole("heading", { level: 1 })).toHaveClass(/sr-only/);
   await expect(main.getByRole("link", { name: "К статьям" })).toHaveAttribute("href", "/articles");
   await expect(main.getByRole("img", { name: "Синий фон" })).toBeVisible();
-  await expect(main.getByRole("heading", { name: "Быстро", level: 3 })).toBeVisible();
+  await expect(main.getByRole("heading", { name: "Быстро" })).toBeVisible();
   await expect(main.getByRole("link", { name: target })).toHaveAttribute(
     "href",
     `/e2e-cel-${stamp}`,
@@ -147,10 +149,12 @@ test("блоки с данными из разделов: галерея, док
   await expect(main.getByText(`E2E Галерея ${stamp}`)).toBeVisible();
 
   const file = main.getByRole("link", { name: new RegExp(`E2E Прайс ${stamp}`) });
-  await expect(file).toContainText("PDF, 2 КБ");
-  await expect(
-    main.getByRole("heading", { name: "Файлы" }).locator("..").getByRole("link"),
-  ).toHaveCount(1);
+  // Тип и размер файла — без привязки к тому, как тема их разделяет.
+  await expect(file).toContainText("PDF");
+  await expect(file).toContainText("2 КБ");
+  // Удалённый документ не выводится: на странице одна ссылка на файл (адрес задаёт ядро, не тема).
+  await expect(main.getByRole("heading", { name: "Файлы" })).toBeVisible();
+  await expect(main.locator('a[href^="/media/documents/"]')).toHaveCount(1);
 
   await expect(main.getByRole("heading", { name: "Новости" })).toBeVisible();
   await expect(main.getByRole("link", { name: `E2E Статья ${stamp}` })).toBeVisible();
