@@ -20,7 +20,9 @@ CMD ["sh", "-c", "pnpm exec tsx src/db/migrate.ts && pnpm exec tsx src/db/seed.t
 FROM deps AS builder
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm build
+# Своих файлов в public пока нет (иконка — в src/app), а git пустой каталог не хранит:
+# создаём его, чтобы COPY в runner не падал.
+RUN mkdir -p public && pnpm build
 
 FROM node:24-alpine AS runner
 WORKDIR /app
