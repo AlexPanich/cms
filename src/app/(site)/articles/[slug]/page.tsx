@@ -1,48 +1,65 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense } from "react";
+import { JsonLd } from "@/components/site/json-ld";
 import { RichText } from "@/components/site/rich-text";
 import { db } from "@/db";
+import { richTextExcerpt } from "@/lib/rich-text";
 import { loadContentContext } from "@/server/site/content";
+import { absoluteUrl } from "@/server/site/url";
 import { articleDate } from "../../_components/article-card";
-import { Breadcrumbs } from "../../_components/breadcrumbs";
+import { Breadcrumbs, BreadcrumbsJsonLd } from "../../_components/breadcrumbs";
+import { NotFoundView } from "../../_components/not-found-view";
 import { getArticleForSlug, getSiteInfo } from "../../_lib/data";
+import { siteMetadata } from "../../_lib/metadata";
 
 type Props = PageProps<"/articles/[slug]">;
 
+export const instant = false;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   await connection();
-  const [site, article] = await Promise.all([
-    getSiteInfo(),
-    getArticleForSlug((await params).slug),
-  ]);
-  if (!article) return { title: site.name };
-  return {
-    title: `${article.title} — ${site.name}`,
-    description: article.excerpt ?? undefined,
-    openGraph: article.previewUrl ? { images: [article.previewUrl] } : undefined,
-  };
+  const article = await getArticleForSlug((await params).slug);
+  if (!article) return siteMetadata({ title: "Статья не найдена", noindex: true });
+  return siteMetadata({
+    title: article.title,
+    description: article.excerpt ?? richTextExcerpt(article.content),
+    path: `/articles/${article.slug}`,
+    image: article.previewUrl,
+    article: { publishedTime: article.publishedAt, modifiedTime: article.updatedAt },
+  });
 }
 
-export default function ArticlePage({ params }: Props) {
-  return (
-    <Suspense>
-      <ArticleView params={params} />
-    </Suspense>
-  );
-}
-
-async function ArticleView({ params }: Pick<Props, "params">) {
+// Несуществующую статью отсекает proxy (404); здесь — для навигации на клиенте.
+export default async function ArticlePage({ params }: Props) {
   await connection();
   const article = await getArticleForSlug((await params).slug);
-  if (!article) notFound();
-  const context = await loadContentContext(db(), article.content);
+  if (!article) return <NotFoundView />;
+  const [context, site] = await Promise.all([
+    loadContentContext(db(), article.content),
+    getSiteInfo(),
+  ]);
+  const crumbs = [{ href: "/articles", title: "Статьи" }];
 
   return (
     <article className="mx-auto max-w-3xl">
-      <Breadcrumbs items={[{ href: "/articles", title: "Статьи" }]} current={article.title} />
+      <JsonLd
+        data={{
+          "@type": "Article",
+          headline: article.title,
+          description: article.excerpt ?? undefined,
+          image: article.previewUrl ? [absoluteUrl(article.previewUrl)] : undefined,
+          datePublished: article.publishedAt?.toISOString(),
+          dateModified: article.updatedAt.toISOString(),
+          mainEntityOfPage: absoluteUrl(`/articles/${article.slug}`),
+          publisher: { "@type": "Organization", name: site.name, url: absoluteUrl("/") },
+        }}
+      />
+      <BreadcrumbsJsonLd
+        items={crumbs}
+        current={{ href: `/articles/${article.slug}`, title: article.title }}
+      />
+      <Breadcrumbs items={crumbs} current={article.title} />
       <h1 className="mb-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
         {article.title}
       </h1>

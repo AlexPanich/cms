@@ -25,6 +25,7 @@ import {
   HIGHLIGHT_END,
   HIGHLIGHT_START,
   listPublishedArticles,
+  resolveSiteRoute,
   searchSite,
 } from "./service";
 
@@ -224,5 +225,33 @@ describe("публичный сайт", () => {
         "/",
         "/articles/news",
       ]);
+    }));
+
+  it("решает для proxy, отдать страницу, 404 или перенаправить", () =>
+    withRollback(async (tx) => {
+      await insertPage(tx, { path: "home", isHome: true });
+      const about = await insertPage(tx, { path: "about" });
+      await insertPage(tx, { path: "about/team", parentId: about.id });
+      await insertPage(tx, { path: "draft", published: false });
+      await tx.insert(articles).values([
+        { slug: "news", title: "Новость", published: true, publishedAt: new Date() },
+        { slug: "draft", title: "Черновик" },
+      ]);
+
+      const resolve = (pathname: string) => resolveSiteRoute(tx, pathname);
+      for (const pathname of [
+        "/",
+        "/about",
+        "/about/team",
+        "/articles",
+        "/articles/news",
+        "/search",
+      ]) {
+        expect(await resolve(pathname), pathname).toEqual({ status: "ok" });
+      }
+      for (const pathname of ["/draft", "/missing", "/about/missing", "/articles/draft", "/Bad"]) {
+        expect(await resolve(pathname), pathname).toEqual({ status: "not_found" });
+      }
+      expect(await resolve("/home")).toEqual({ status: "redirect", location: "/" });
     }));
 });

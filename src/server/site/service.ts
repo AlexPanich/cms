@@ -4,6 +4,7 @@ import type { Executor } from "@/db";
 import { articles, galleries, galleryItems, media, menus, pages, texts } from "@/db/schema";
 import { mediaUrl } from "@/lib/media";
 import { PAGE_SIZE } from "@/lib/pagination";
+import { classifySitePath } from "@/lib/site-routes";
 import { getMenuItems } from "@/server/menus/service";
 
 // Всё, что читает публичный сайт: только опубликованное.
@@ -268,4 +269,36 @@ export async function getSitemapEntries(executor: Executor) {
     ...pageRows.map((row) => ({ path: pageHref(row), updatedAt: row.updatedAt })),
     ...articleRows.map((row) => ({ path: `/articles/${row.slug}`, updatedAt: row.updatedAt })),
   ];
+}
+
+export type RouteResolution =
+  { status: "ok" } | { status: "not_found" } | { status: "redirect"; location: string };
+
+// Для proxy: есть ли по адресу опубликованная страница или статья. У главной один адрес — «/».
+export async function resolveSiteRoute(
+  executor: Executor,
+  pathname: string,
+): Promise<RouteResolution> {
+  const route = classifySitePath(pathname);
+  switch (route.kind) {
+    case "other":
+      return { status: "ok" };
+    case "invalid":
+      return { status: "not_found" };
+    case "article": {
+      const [row] = await executor
+        .select({ id: articles.id })
+        .from(articles)
+        .where(and(eq(articles.slug, route.slug), eq(articles.published, true)));
+      return row ? { status: "ok" } : { status: "not_found" };
+    }
+    case "page": {
+      const [row] = await executor
+        .select({ isHome: pages.isHome })
+        .from(pages)
+        .where(and(eq(pages.path, route.path), eq(pages.published, true)));
+      if (!row) return { status: "not_found" };
+      return row.isHome ? { status: "redirect", location: "/" } : { status: "ok" };
+    }
+  }
 }

@@ -56,3 +56,23 @@ export function collectGalleryKeys(doc: RichTextDoc | null): string[] {
   visit(doc?.content);
   return [...keys];
 }
+
+// Начало текста документа для meta description, если описание не задано: блоки через
+// пробел, обрезка по границе слова. Поисковики показывают около 160 символов.
+export function richTextExcerpt(doc: RichTextDoc | null, maxLength = 160): string | null {
+  const parts: string[] = [];
+  const visit = (nodes: RichTextNode[] | undefined) => {
+    for (const node of nodes ?? []) {
+      if (node.text) parts.push(node.text);
+      visit(node.content);
+      if (node.type !== "text") parts.push(" ");
+    }
+  };
+  visit(doc?.content);
+  const text = parts.join("").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  if (text.length <= maxLength) return text;
+  const cut = text.slice(0, maxLength - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > maxLength / 2 ? cut.slice(0, lastSpace) : cut).replace(/[\s,.;:—-]+$/, "")}…`;
+}

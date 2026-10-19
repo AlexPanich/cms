@@ -46,7 +46,3 @@ function SearchBox() {
     </form>
   );
 }
-
-export function SiteHeaderFallback() {
-  return <div className="mx-auto h-16 w-full max-w-5xl px-4" />;
-}

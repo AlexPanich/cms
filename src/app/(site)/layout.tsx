@@ -1,6 +1,19 @@
-import { Suspense } from "react";
+import type { Viewport } from "next";
+import { connection } from "next/server";
 import { SiteFooter } from "./_components/site-footer";
-import { SiteHeader, SiteHeaderFallback } from "./_components/site-header";
+import { SiteHeader } from "./_components/site-header";
+
+// Публичный сайт рендерится целиком до отправки ответа, без стриминга и без <Suspense>
+// (подробно — в CLAUDE.md): метаданные попадают в <head>, а текст — сразу в HTML, а не
+// в скрытый блок, который потом вставляет скрипт. Статусы 404 и 308 отдаёт proxy.
+export const instant = false;
+
+// Viewport нельзя стримить: если он зависит от запроса, Next не отдаёт заранее собранную
+// оболочку и ждёт рендера всей страницы. Это и включает блокирующий рендер публичной части.
+export async function generateViewport(): Promise<Viewport> {
+  await connection();
+  return {};
+}
 
 export default function SiteLayout({ children }: LayoutProps<"/">) {
   return (
@@ -12,17 +25,13 @@ export default function SiteLayout({ children }: LayoutProps<"/">) {
         К содержимому
       </a>
       <header className="border-b">
-        <Suspense fallback={<SiteHeaderFallback />}>
-          <SiteHeader />
-        </Suspense>
+        <SiteHeader />
       </header>
       <main id="content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
         {children}
       </main>
       <footer className="border-t">
-        <Suspense>
-          <SiteFooter />
-        </Suspense>
+        <SiteFooter />
       </footer>
     </div>
   );

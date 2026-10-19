@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, permanentRedirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense } from "react";
-import { getPageForPath, getSiteInfo, pathFromSegments } from "../_lib/data";
+import { richTextExcerpt } from "@/lib/rich-text";
+import { pageHref } from "@/server/site/service";
+import { NotFoundView } from "../_components/not-found-view";
+import { getPageForPath, pathFromSegments } from "../_lib/data";
+import { siteMetadata } from "../_lib/metadata";
 import { PageTemplateView } from "../_templates/templates";
 
 type Props = PageProps<"/[[...slug]]">;
@@ -11,45 +14,31 @@ type Props = PageProps<"/[[...slug]]">;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   await connection();
   const path = pathFromSegments((await params).slug);
-  const [site, page] = await Promise.all([
-    getSiteInfo(),
-    path === null ? null : getPageForPath(path),
-  ]);
-  if (!page) return { title: site.name };
-  return {
-    title: page.isHome ? site.name : `${page.title} — ${site.name}`,
-    description: page.metaDescription ?? (site.description || undefined),
-  };
+  const page = path === null ? null : await getPageForPath(path);
+  if (path === "" && !page) return siteMetadata({ path: "/" });
+  if (!page) return siteMetadata({ title: "Страница не найдена", noindex: true });
+  return siteMetadata({
+    title: page.isHome ? undefined : page.title,
+    description: page.metaDescription ?? richTextExcerpt(page.content),
+    path: pageHref(page),
+  });
 }
 
-// Страница отрисовывается в потоке, поэтому для отсутствующей страницы статус ответа — 200,
-// но Next добавляет в разметку <meta name="robots" content="noindex">.
-export default function SitePage({ params }: Props) {
-  return (
-    <Suspense fallback={<PageFallback />}>
-      <PageView params={params} />
-    </Suspense>
-  );
-}
+export const instant = false;
 
-async function PageView({ params }: Pick<Props, "params">) {
+// Статус ответа ставит proxy (404 или 308) до рендера. Страница «не найдена» рисуется здесь же,
+// а не через notFound(): так остаются её метаданные (заголовок и noindex). Сюда же попадает
+// навигация на клиенте, которую proxy не проверяет.
+export default async function SitePage({ params }: Props) {
   await connection();
   const path = pathFromSegments((await params).slug);
-  if (path === null) notFound();
-  const page = await getPageForPath(path);
+  const page = path === null ? null : await getPageForPath(path);
 
-  if (!page) {
-    if (path === "") return <EmptySite />;
-    notFound();
-  }
+  if (!page) return path === "" ? <EmptySite /> : <NotFoundView />;
   // У главной один адрес — «/».
   if (page.isHome && path !== "") permanentRedirect("/");
 
   return <PageTemplateView page={page} />;
-}
-
-function PageFallback() {
-  return <div className="bg-muted h-10 w-2/3 animate-pulse rounded-md" />;
 }
 
 // Свежая установка: главная страница ещё не назначена.

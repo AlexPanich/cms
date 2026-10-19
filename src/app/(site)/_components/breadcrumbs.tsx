@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { JsonLd } from "@/components/site/json-ld";
+import { absoluteUrl } from "@/server/site/url";
 
 export type Crumb = { href: string; title: string };
 
@@ -19,5 +21,23 @@ export function Breadcrumbs({ items, current }: { items: Crumb[]; current: strin
         </li>
       </ol>
     </nav>
+  );
+}
+
+// Те же крошки для поисковиков (BreadcrumbList): в выдаче вместо адреса показывается путь.
+export function BreadcrumbsJsonLd({ items, current }: { items: Crumb[]; current: Crumb }) {
+  const all = [{ href: "/", title: "Главная" }, ...items, current];
+  return (
+    <JsonLd
+      data={{
+        "@type": "BreadcrumbList",
+        itemListElement: all.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.title,
+          item: absoluteUrl(item.href),
+        })),
+      }}
+    />
   );
 }

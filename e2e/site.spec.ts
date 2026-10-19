@@ -37,11 +37,28 @@ test("публичная страница: меню, раздел, крошки,
       .getByRole("link", { name: `E2E Раздел ${stamp}` }),
   ).toHaveAttribute("aria-current", "page");
 
-  // Черновик и неверный адрес — «не найдена» с noindex.
-  for (const path of [`/e2e-draft-${stamp}`, `/${root}/missing`, "/Bad_Path"]) {
-    await page.goto(path);
-    await expect(page.getByRole("heading", { name: "Страница не найдена" })).toBeVisible();
+  // Метаданные для поисковиков — в <head> исходного HTML, без стриминга.
+  const html = await (await request.get(`/${root}/child`)).text();
+  const head = html.slice(0, html.indexOf("</head>"));
+  expect(head).toContain(`<link rel="canonical" href="${new URL(`/${root}/child`, page.url())}"/>`);
+  expect(head).toMatch(new RegExp(`<meta name="description" content="Здесь живёт ${word}`));
+  expect(head).toContain('<meta property="og:type" content="website"/>');
+  expect(html).toContain('"@type":"BreadcrumbList"');
+  // Текст — сразу в разметке, а не в скрытом блоке, который потом вставляет скрипт.
+  expect(html).toMatch(new RegExp(`<p>Здесь живёт ${word}`));
+
+  // Черновик и неверный адрес — настоящий 404 со страницей сайта и noindex.
+  for (const path of [
+    `/e2e-draft-${stamp}`,
+    `/${root}/missing`,
+    "/Bad_Path",
+    "/articles/e2e-nope",
+  ]) {
+    const response = await page.goto(path);
+    expect(response?.status(), path).toBe(404);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/не найдена$/);
     await expect(page.locator('head meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+    await expect(page.getByRole("navigation", { name: "Главное меню" })).toBeVisible();
   }
 
   // Поиск из шапки.

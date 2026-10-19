@@ -1,27 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { Fragment, Suspense } from "react";
+import { Fragment } from "react";
 import { db } from "@/db";
 import { pageCount, parsePage, parseSearch } from "@/lib/pagination";
 import { HIGHLIGHT_END, HIGHLIGHT_START, searchSite } from "@/server/site/service";
 import { SitePagination } from "../_components/site-pagination";
-import { getSiteInfo } from "../_lib/data";
+import { siteMetadata } from "../_lib/metadata";
+
+export const instant = false;
 
 export async function generateMetadata(): Promise<Metadata> {
   await connection();
-  const site = await getSiteInfo();
-  // Результаты поиска поисковикам индексировать незачем.
-  return { title: `Поиск — ${site.name}`, robots: { index: false } };
+  // Результаты поиска поисковикам индексировать незачем, а ссылки с них — можно.
+  return siteMetadata({ title: "Поиск", noindex: true });
 }
 
 export default function SearchPage({ searchParams }: PageProps<"/search">) {
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-6 text-3xl font-semibold tracking-tight sm:text-4xl">Поиск</h1>
-      <Suspense>
-        <SearchResults searchParams={searchParams} />
-      </Suspense>
+      <SearchResults searchParams={searchParams} />
     </div>
   );
 }

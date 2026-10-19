@@ -5,19 +5,45 @@ import type { PageTemplate } from "@/lib/templates";
 import { isPageTemplate } from "@/lib/templates";
 import { loadContentContext } from "@/server/site/content";
 import { getAncestors, getSectionMenu, pageHref, type PublishedPage } from "@/server/site/service";
-import { Breadcrumbs } from "../_components/breadcrumbs";
+import { JsonLd } from "@/components/site/json-ld";
+import { absoluteUrl } from "@/server/site/url";
+import { Breadcrumbs, BreadcrumbsJsonLd } from "../_components/breadcrumbs";
+import { getSiteInfo } from "../_lib/data";
 import { SectionMenu } from "../_components/section-menu";
 
 type TemplateProps = { page: PublishedPage };
 
 async function PageBody({ page }: TemplateProps) {
-  const [ancestors, context] = await Promise.all([
+  const [ancestors, context, site] = await Promise.all([
     page.isHome ? [] : getAncestors(db(), page.path),
     loadContentContext(db(), page.content),
+    getSiteInfo(),
   ]);
   return (
     <article className="min-w-0">
-      {!page.isHome && <Breadcrumbs items={ancestors} current={page.title} />}
+      {page.isHome ? (
+        // Сайт целиком: название и поиск по сайту прямо из выдачи.
+        <JsonLd
+          data={{
+            "@type": "WebSite",
+            name: site.name,
+            url: absoluteUrl("/"),
+            potentialAction: {
+              "@type": "SearchAction",
+              target: `${absoluteUrl("/search")}?q={search_term_string}`,
+              "query-input": "required name=search_term_string",
+            },
+          }}
+        />
+      ) : (
+        <>
+          <BreadcrumbsJsonLd
+            items={ancestors}
+            current={{ href: pageHref(page), title: page.title }}
+          />
+          <Breadcrumbs items={ancestors} current={page.title} />
+        </>
+      )}
       <h1 className="mb-6 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
         {page.title}
       </h1>

@@ -61,6 +61,9 @@ docker compose up --build # полный стек: db → migrate → app
 ## Публичный сайт
 
 - Маршруты — в `src/app/(site)/`, данные — `src/server/site/service.ts` (только опубликованное).
+- Публичные страницы рендерятся без стриминга ради SEO: в `(site)` не используй `<Suspense>` и `loading.tsx`, у новых страниц — `export const instant = false`. Иначе текст уйдёт в скрытый блок, а метаданные — из `<head>`.
+- Статус 404/308 рендер с Cache Components поставить не может (всегда 200) — его ставит `src/proxy.ts` через `resolveSiteRoute` до рендера. Новый тип публичного адреса добавляй в `classifySitePath` (`src/lib/site-routes.ts`) и `resolveSiteRoute`. «Не найдена» страница рисует сама (`NotFoundView`), а не через `notFound()` — так сохраняются её метаданные.
+- Метаданные публичных страниц — только через `siteMetadata` (`(site)/_lib/metadata.ts`): canonical, Open Graph, noindex. Структурированные данные — `JsonLd` (`src/components/site/json-ld.tsx`). Обёртки с `cache` из React для повторных запросов в одном рендере — `(site)/_lib/data.ts`.
 - Новый раздел первого уровня (как `/articles`) добавляй и в `RESERVED_ROOT_SLUGS` (`src/lib/slug.ts`), иначе страница с таким slug станет недоступной.
 - Новый шаблон: ключ в `PAGE_TEMPLATES` (`src/lib/templates.ts`) и лейаут в `(site)/_templates/templates.tsx`.
 - Новый виджет в контенте: узел TipTap в редакторе (по образцу `src/components/admin/gallery-node.tsx`), вывод в реестре `NODES` (`src/components/site/rich-text.tsx`), загрузка данных в `loadContentContext` (`src/server/site/content.ts`). Документ — это данные: узлы не из реестра не выводятся.

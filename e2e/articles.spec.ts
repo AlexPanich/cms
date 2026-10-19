@@ -62,16 +62,15 @@ test("статья с превью: загрузка, замена, публик
   expect(response.headers()["content-type"]).toBe("image/webp");
   expect(response.headers()["x-content-type-options"]).toBe("nosniff");
   for (const path of [
+    // «%2e%2e» нормализуется до маршрутизации в /package.json — на него отвечает proxy сайта.
+    "/media/images/%2e%2e/%2e%2e/package.json",
     "/media/images/2026/01/..%2f..%2f..%2fpackage.json",
     mediaPath?.replace(".webp", ".php"),
   ]) {
-    expect((await request.get(path ?? "")).status(), path).toBe(404);
+    const response = await request.get(path ?? "");
+    expect(response.status(), path).toBe(404);
+    expect(await response.text()).not.toContain('"name": "cms"');
   }
-  // «%2e%2e» нормализуется ещё до маршрутизации: запрос уходит в /package.json, то есть
-  // в маршрут страниц сайта, и тот отвечает «не найдена». Главное — файл не отдаётся.
-  const traversal = await request.get("/media/images/%2e%2e/%2e%2e/package.json");
-  expect(traversal.headers()["content-type"]).toMatch(/^text\/html/);
-  expect(await traversal.text()).not.toContain('"name": "cms"');
 
   // Замена превью и затем удаление превью.
   await page.getByLabel("Превью").setInputFiles({
