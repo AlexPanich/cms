@@ -1,6 +1,6 @@
 import { asc } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { ZodError } from "zod";
+import { z } from "@/lib/zod";
 import type { Tx } from "@/db";
 import { pages } from "@/db/schema";
 import { withRollback as withRollbackBase } from "@/test/db";
@@ -38,9 +38,9 @@ async function paths(tx: Tx) {
 describe("pages service", () => {
   it("не даёт занять корневой адрес раздела сайта, но разрешает его на вложенном уровне", () =>
     withRollback(async (tx) => {
-      await expect(createPage(tx, input("admin"))).rejects.toBeInstanceOf(ZodError);
+      await expect(createPage(tx, input("admin"))).rejects.toBeInstanceOf(z.ZodError);
       const about = await createPage(tx, input("about"));
-      await expect(updatePage(tx, about.id, input("search"))).rejects.toBeInstanceOf(ZodError);
+      await expect(updatePage(tx, about.id, input("search"))).rejects.toBeInstanceOf(z.ZodError);
       expect((await createPage(tx, input("articles", about.id))).path).toBe("about/articles");
     }));
 

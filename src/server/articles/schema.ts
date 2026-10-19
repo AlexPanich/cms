@@ -1,7 +1,6 @@
-import { z } from "zod";
 import { richTextDocSchema } from "@/lib/rich-text";
 import { SLUG_PATTERN } from "@/lib/slug";
-import { optionalText } from "@/lib/zod";
+import { optionalText, z } from "@/lib/zod";
 
 export const articleInputSchema = z.object({
   slug: z.string().regex(SLUG_PATTERN, "Только латиница в нижнем регистре, цифры и дефисы"),

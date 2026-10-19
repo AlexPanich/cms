@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { PERMISSIONS } from "@/lib/permissions";
 import { SLUG_PATTERN } from "@/lib/slug";
 

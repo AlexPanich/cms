@@ -71,7 +71,7 @@ docker compose up --build # полный стек: db → migrate → app
 
 ## Правила
 
-- Любой ввод (формы, server actions, query-параметры) валидируется zod-схемой.
+- Любой ввод (формы, server actions, query-параметры) валидируется zod-схемой. zod импортируется только из `@/lib/zod` (правило ESLint): там русские сообщения об ошибках для сервера и форм.
 - Изменение данных только через server actions или POST. GET-запросы ничего не меняют.
 - Каждое действие в админке проверяет конкретное право (`edit_pages` и т. п.), а не только факт входа:
   страница — `await requirePagePermission("edit_pages", "/admin/pages")`, server action и route handler — `await requirePermission(...)` первой строкой.

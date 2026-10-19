@@ -1,6 +1,6 @@
 "use server";
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { db } from "@/db";
 import { mediaUrl } from "@/lib/media";
 import { runAction } from "@/server/action";

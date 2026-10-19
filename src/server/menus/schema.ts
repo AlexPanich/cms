@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { isSafeLinkUrl } from "@/lib/url";
 
 const MENU_ITEM_KINDS = ["page", "url"] as const;

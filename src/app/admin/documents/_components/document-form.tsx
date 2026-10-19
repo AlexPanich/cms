@@ -5,7 +5,7 @@ import { FileIcon, UploadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { FormInput } from "@/components/admin/form-fields";
 import { useActionSubmit } from "@/components/admin/use-action-submit";
 import { Button } from "@/components/ui/button";

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
-import type { z } from "zod";
+import type { z } from "@/lib/zod";
 import {
   FormCheckbox,
   FormInput,

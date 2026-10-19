@@ -4,7 +4,7 @@
 import "dotenv/config";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { closeDb, db } from "@/db";
 import { createUserWithPassword, UserError } from "@/server/users/service";
 

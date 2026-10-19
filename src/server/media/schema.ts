@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { optionalText } from "@/lib/zod";
+import { optionalText, z } from "@/lib/zod";
 
 export const imageInfoSchema = z.object({
   alt: optionalText(300),

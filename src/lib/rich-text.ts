@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./zod";
 import { SLUG_PATTERN } from "./slug";
 
 // Ограничение на размер документа TipTap в JSON — защита от случайно вставленных мегабайтов.

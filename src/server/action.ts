@@ -1,5 +1,5 @@
 import "server-only";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import type { ActionResult } from "@/lib/action-result";
 import type { Permission } from "@/lib/permissions";
 import { AuthError, type CurrentUser, requirePermission } from "./auth/session";

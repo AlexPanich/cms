@@ -5,7 +5,7 @@ import { PencilIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { z } from "zod";
+import type { z } from "@/lib/zod";
 import { FormInput } from "@/components/admin/form-fields";
 import { useActionSubmit } from "@/components/admin/use-action-submit";
 import { Button } from "@/components/ui/button";

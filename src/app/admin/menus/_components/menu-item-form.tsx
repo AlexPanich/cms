@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import type { z } from "zod";
+import type { z } from "@/lib/zod";
 import { ButtonLink } from "@/components/admin/button-link";
 import { FormInput, FormSelect } from "@/components/admin/form-fields";
 import { useActionSubmit } from "@/components/admin/use-action-submit";

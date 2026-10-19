@@ -1,6 +1,6 @@
 "use server";
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { db } from "@/db";
 import { runAction } from "@/server/action";
 import type { NewUserInput, PasswordInput, UserInput } from "@/server/users/schema";

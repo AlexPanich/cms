@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { SLUG_PATTERN } from "@/lib/slug";
 
 export const galleryInputSchema = z.object({

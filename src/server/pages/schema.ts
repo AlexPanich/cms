@@ -1,8 +1,7 @@
-import { z } from "zod";
 import { richTextDocSchema } from "@/lib/rich-text";
 import { RESERVED_ROOT_SLUGS, SLUG_PATTERN } from "@/lib/slug";
 import { PAGE_TEMPLATE_KEYS } from "@/lib/templates";
-import { optionalText } from "@/lib/zod";
+import { optionalText, z } from "@/lib/zod";
 
 export const pageInputSchema = z
   .object({
