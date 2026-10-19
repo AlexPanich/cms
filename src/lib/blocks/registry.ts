@@ -137,13 +137,24 @@ export function blocksExcerpt(blocks: readonly Block[], maxLength = 160): string
   return null;
 }
 
-// Ключи галерей из rich text всех блоков — чтобы загрузить их одним запросом до вывода.
+// Ключи галерей из полей-галерей и rich text всех блоков — чтобы загрузить их одним
+// запросом до вывода.
 export function collectBlockGalleryKeys(blocks: readonly Block[]): string[] {
   const keys = new Set<string>();
   for (const entry of blockValues(blocks)) {
+    if (entry.kind === "gallery" && entry.value) keys.add(entry.value);
     if (entry.kind === "richText") for (const key of collectGalleryKeys(entry.value)) keys.add(key);
   }
   return [...keys];
+}
+
+// id документов из блоков — чтобы загрузить их одним запросом до вывода.
+export function collectBlockDocumentIds(blocks: readonly Block[]): number[] {
+  const ids = new Set<number>();
+  for (const entry of blockValues(blocks)) {
+    if (entry.kind === "document" && entry.value) ids.add(entry.value);
+  }
+  return [...ids];
 }
 
 // id картинок из блоков — для подсчёта использования media.

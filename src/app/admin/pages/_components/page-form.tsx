@@ -6,7 +6,11 @@ import { useEffect } from "react";
 import { type Control, Controller, type FieldValues, useForm } from "react-hook-form";
 import type { z } from "@/lib/zod";
 import { BlocksEditor } from "@/components/admin/blocks/blocks-editor";
-import { BlockEditorProvider, type PageOption } from "@/components/admin/blocks/editor-context";
+import {
+  BlockEditorProvider,
+  type DocumentOption,
+  type PageOption,
+} from "@/components/admin/blocks/editor-context";
 import { FormCheckbox, FormInput, FormSelect, FormTextarea } from "@/components/admin/form-fields";
 import type { GalleryOption } from "@/components/admin/gallery-node";
 import { useActionSubmit } from "@/components/admin/use-action-submit";
@@ -49,6 +53,7 @@ export function PageForm({
   parents,
   galleries,
   linkPages,
+  documents,
   images = {},
   defaultParentId = null,
 }: {
@@ -57,6 +62,8 @@ export function PageForm({
   galleries: GalleryOption[];
   // Страницы, на которые могут ссылаться блоки.
   linkPages: PageOption[];
+  // Документы для блоков с документами.
+  documents: DocumentOption[];
   // Адреса картинок из блоков: mediaId → url.
   images?: Record<number, string>;
   defaultParentId?: number | null;
@@ -160,6 +167,7 @@ export function PageForm({
         <BlockEditorProvider
           galleries={galleries}
           pages={linkPages}
+          documents={documents}
           images={images}
           upload={uploadPageImage}
         >

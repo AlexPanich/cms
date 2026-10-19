@@ -28,38 +28,43 @@ export async function insertRootPages(slugs: string[]) {
   }
 }
 
-// Опубликованная страница с текстом из абзацев. parentPath — путь родителя, если страница вложенная.
+// Опубликованная страница с текстом из абзацев или своими блоками. parentPath — путь
+// родителя, если страница вложенная.
 export async function insertPublishedPage({
   slug,
   title,
   paragraphs = [],
+  blocks: ownBlocks,
   parentPath,
 }: {
   slug: string;
   title: string;
   paragraphs?: string[];
+  blocks?: { type: string; variant?: string; data: unknown }[];
   parentPath?: string;
 }) {
   // Текст — один блок «Текст», как у страницы, созданной в админке. Поисковый текст
   // пишет сервис страниц, поэтому здесь его тоже нужно задать.
-  const blocks = paragraphs.length
-    ? [
-        {
-          id: crypto.randomUUID(),
-          type: "text",
-          variant: null,
-          data: {
-            content: {
-              type: "doc",
-              content: paragraphs.map((text) => ({
-                type: "paragraph",
-                content: [{ type: "text", text }],
-              })),
+  const blocks = ownBlocks
+    ? ownBlocks.map((block) => ({ id: crypto.randomUUID(), variant: null, ...block }))
+    : paragraphs.length
+      ? [
+          {
+            id: crypto.randomUUID(),
+            type: "text",
+            variant: null,
+            data: {
+              content: {
+                type: "doc",
+                content: paragraphs.map((text) => ({
+                  type: "paragraph",
+                  content: [{ type: "text", text }],
+                })),
+              },
             },
           },
-        },
-      ]
-    : [];
+        ]
+      : [];
   const sql = connect();
   try {
     const [parent] = parentPath
@@ -68,8 +73,57 @@ export async function insertPublishedPage({
     const path = parentPath ? `${parentPath}/${slug}` : slug;
     await sql`
       insert into pages (parent_id, slug, path, title, blocks, search_text, published)
-      values (${parent.id}, ${slug}, ${path}, ${title}, ${sql.json(blocks)},
+      values (${parent.id}, ${slug}, ${path}, ${title}, ${sql.json(blocks as postgres.JSONValue)},
         ${paragraphs.join("\n")}, true)`;
+  } finally {
+    await sql.end();
+  }
+}
+
+// Запись media от имени администратора E2E: удаляется в teardown вместе с его файлами
+// (самих файлов на диске нет — для вывода на сайте они не нужны).
+export async function insertMedia(values: {
+  kind: "image" | "document";
+  name: string;
+  title?: string;
+}): Promise<number> {
+  const sql = connect();
+  try {
+    const extension = values.kind === "image" ? "webp" : "pdf";
+    const [{ id }] = await sql`
+      insert into media (kind, storage_key, original_name, mime_type, size, width, height, title, uploaded_by)
+      values (${values.kind}, ${`${values.kind}s/2026/01/${crypto.randomUUID()}.${extension}`},
+        ${`${values.name}.${values.kind === "image" ? "png" : "pdf"}`},
+        ${values.kind === "image" ? "image/webp" : "application/pdf"}, 2048,
+        ${values.kind === "image" ? 64 : null}, ${values.kind === "image" ? 48 : null},
+        ${values.title ?? null},
+        (select id from users where email = ${ADMIN.email}))
+      returning id`;
+    return id;
+  } finally {
+    await sql.end();
+  }
+}
+
+// Галерея с картинками по id. Ключ должен начинаться с префикса E2E.
+export async function insertGallery(key: string, title: string, mediaIds: number[]) {
+  const sql = connect();
+  try {
+    const [{ id }] =
+      await sql`insert into galleries (key, title) values (${key}, ${title}) returning id`;
+    for (const [sort, mediaId] of mediaIds.entries()) {
+      await sql`insert into gallery_items (gallery_id, media_id, sort) values (${id}, ${mediaId}, ${sort})`;
+    }
+  } finally {
+    await sql.end();
+  }
+}
+
+// Опубликованная статья. slug должен начинаться с префикса E2E.
+export async function insertArticle(slug: string, title: string) {
+  const sql = connect();
+  try {
+    await sql`insert into articles (slug, title, published, published_at) values (${slug}, ${title}, true, now())`;
   } finally {
     await sql.end();
   }

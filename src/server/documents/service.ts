@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, ilike, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { media } from "@/db/schema";
 import { documentExtension, MAX_DOCUMENT_BYTES, mediaUrl } from "@/lib/media";
@@ -132,4 +132,14 @@ export async function listDocuments(
     items: rows.map(({ storageKey, ...row }) => ({ ...row, url: mediaUrl(storageKey) })),
     total,
   };
+}
+
+// Документы для выбора в блоке «Документы»: название или имя файла.
+export async function listDocumentOptions(executor: Executor) {
+  const title = sql<string>`coalesce(nullif(${media.title}, ''), ${media.originalName})`;
+  return executor
+    .select({ id: media.id, title })
+    .from(media)
+    .where(eq(media.kind, "document"))
+    .orderBy(asc(title), asc(media.id));
 }

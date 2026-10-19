@@ -8,18 +8,21 @@ export const SITE_CACHE_TAGS = {
   texts: "site:texts",
   articles: "site:articles",
   galleries: "site:galleries",
+  // Картинки и документы из блоков страниц.
+  media: "site:media",
 } as const;
 
 export type SiteCacheTag = (typeof SITE_CACHE_TAGS)[keyof typeof SITE_CACHE_TAGS];
 
 // Какие данные сайта может изменить действие с этим правом. runAction сбрасывает эти теги
 // после каждого успешного действия — новый server action не нужно помнить об этом отдельно.
-// Медиа: картинку могли удалить или поменять ей описание — она есть в галереях и превью статей.
+// Медиа: картинку или документ могли удалить или поменять им описание — они есть в галереях,
+// превью статей и блоках страниц.
 export const SITE_CACHE_TAGS_BY_PERMISSION: Partial<Record<Permission, readonly SiteCacheTag[]>> = {
   edit_pages: [SITE_CACHE_TAGS.pages],
   edit_menus: [SITE_CACHE_TAGS.menus],
   edit_texts: [SITE_CACHE_TAGS.texts],
   edit_articles: [SITE_CACHE_TAGS.articles],
-  edit_media: [SITE_CACHE_TAGS.galleries, SITE_CACHE_TAGS.articles],
+  edit_media: [SITE_CACHE_TAGS.galleries, SITE_CACHE_TAGS.articles, SITE_CACHE_TAGS.media],
   edit_from_front: [SITE_CACHE_TAGS.pages, SITE_CACHE_TAGS.texts],
 };

@@ -259,6 +259,7 @@ function BlockCard({
   return (
     <li
       ref={setNodeRef}
+      aria-label={`Блок «${label}» (${index + 1})`}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={isDragging ? "relative z-10 opacity-80" : undefined}
     >

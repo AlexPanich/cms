@@ -4,6 +4,7 @@ import {
   blocksExcerpt,
   blocksSchema,
   blocksSearchText,
+  collectBlockDocumentIds,
   collectBlockGalleryKeys,
   collectBlockMediaIds,
   collectBlockPageIds,
@@ -24,6 +25,11 @@ vi.mock("@/theme/blocks", async () => {
         fields: {
           title: field.text({ label: "Заголовок", required: true }),
           about: field.richText({ label: "О команде" }),
+          photos: field.gallery({ label: "Фотографии" }),
+          files: field.list(
+            { file: field.document({ label: "Файл", required: true }) },
+            { label: "Файлы", itemLabel: "Файл", max: 5 },
+          ),
           more: field.link({ label: "Ссылка" }),
           people: field.list(
             {
@@ -170,9 +176,19 @@ describe("данные из полей блоков", () => {
         data: {
           ...team.data,
           about: { type: "doc", content: [{ type: "gallery", attrs: { key: "team" } }] },
+          photos: "office",
         },
       },
+      { ...team, id: "b3", data: { ...team.data, photos: "party" } },
     ]);
-    expect(collectBlockGalleryKeys(withGalleries)).toEqual(["office", "team"]);
+    expect(collectBlockGalleryKeys(withGalleries)).toEqual(["office", "team", "party"]);
+  });
+
+  it("id документов из списков без повторов", () => {
+    const withFiles = blocksSchema.parse([
+      { ...team, data: { ...team.data, files: [{ file: 5 }, { file: 6 }, { file: 5 }] } },
+    ]);
+    expect(collectBlockDocumentIds(withFiles)).toEqual([5, 6]);
+    expect(collectBlockDocumentIds(blocks)).toEqual([]);
   });
 });

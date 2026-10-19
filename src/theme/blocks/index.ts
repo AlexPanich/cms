@@ -8,4 +8,7 @@ import type { BlockDefinition, BlockVariants } from "@/lib/blocks/define";
 export const THEME_BLOCKS = [] as const satisfies readonly BlockDefinition[];
 
 // Варианты оформления по типу блока: { "media-text": [{ key: "image-right", label: … }] }.
-export const BLOCK_VARIANTS: BlockVariants = {};
+export const BLOCK_VARIANTS: BlockVariants = {
+  "media-text": [{ key: "image-right", label: "Картинка справа" }],
+  cta: [{ key: "light", label: "На светлом фоне" }],
+};

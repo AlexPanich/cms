@@ -3,7 +3,7 @@ import { type SQL, and, asc, count, desc, eq, inArray, isNull, sql } from "drizz
 import type { Executor } from "@/db";
 import { articles, galleries, galleryItems, media, menus, pages, texts } from "@/db/schema";
 import { validStoredBlocks } from "@/lib/blocks/registry";
-import { mediaUrl } from "@/lib/media";
+import { documentExtension, mediaUrl } from "@/lib/media";
 import { PAGE_SIZE, pageCount, parsePage } from "@/lib/pagination";
 import { classifySitePath } from "@/lib/site-routes";
 import { getMenuItems } from "@/server/menus/service";
@@ -191,6 +191,65 @@ export type PublicGallery = {
   images: { url: string; alt: string; width: number; height: number }[];
 };
 
+// Картинки из блоков по id. Удалённой картинки в ответе нет — блок выводится без неё.
+export async function getImagesByIds(executor: Executor, ids: readonly number[]) {
+  const result = new Map<number, PublicImage>();
+  if (ids.length === 0) return result;
+  const rows = await executor
+    .select({
+      id: media.id,
+      storageKey: media.storageKey,
+      alt: media.alt,
+      width: media.width,
+      height: media.height,
+    })
+    .from(media)
+    .where(and(inArray(media.id, [...ids]), eq(media.kind, "image")));
+  for (const row of rows) {
+    result.set(row.id, {
+      url: mediaUrl(row.storageKey),
+      alt: row.alt ?? "",
+      width: row.width ?? 0,
+      height: row.height ?? 0,
+    });
+  }
+  return result;
+}
+
+export type PublicImage = { url: string; alt: string; width: number; height: number };
+
+// Документы из блоков по id. Удалённого документа в ответе нет — он не выводится.
+export async function getDocumentsByIds(executor: Executor, ids: readonly number[]) {
+  const result = new Map<number, PublicDocument>();
+  if (ids.length === 0) return result;
+  const rows = await executor
+    .select({
+      id: media.id,
+      storageKey: media.storageKey,
+      title: media.title,
+      originalName: media.originalName,
+      size: media.size,
+    })
+    .from(media)
+    .where(and(inArray(media.id, [...ids]), eq(media.kind, "document")));
+  for (const row of rows) {
+    result.set(row.id, {
+      url: mediaUrl(row.storageKey),
+      title: row.title || row.originalName,
+      size: row.size,
+      extension: documentExtension(row.originalName),
+    });
+  }
+  return result;
+}
+
+export type PublicDocument = {
+  url: string;
+  title: string;
+  size: number;
+  extension: string | null;
+};
+
 const articleCardFields = {
   slug: articles.slug,
   title: articles.title,
@@ -219,6 +278,18 @@ export async function listPublishedArticles(executor: Executor, { page }: { page
     executor.select({ total: count() }).from(articles).where(where),
   ]);
   return { items: rows.map(withPreview), total };
+}
+
+// Свежие статьи для блока «Последние статьи».
+export async function listLatestArticles(executor: Executor, limit: number) {
+  const rows = await executor
+    .select(articleCardFields)
+    .from(articles)
+    .leftJoin(media, eq(media.id, articles.previewId))
+    .where(eq(articles.published, true))
+    .orderBy(desc(articles.publishedAt), desc(articles.id))
+    .limit(limit);
+  return rows.map(withPreview);
 }
 
 export type PublishedArticleCard = Awaited<
