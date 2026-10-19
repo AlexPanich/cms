@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { connection } from "next/server";
-import { Fragment } from "react";
 import { db } from "@/db";
+import type { HighlightPart } from "@/components/site/theme";
 import { pageCount, parsePage, parseSearch } from "@/lib/pagination";
 import { HIGHLIGHT_END, HIGHLIGHT_START, searchSite } from "@/server/site/service";
-import { SitePagination } from "../_components/site-pagination";
+import { theme } from "@/theme";
 import { siteMetadata } from "../_lib/metadata";
 
 export const instant = false;
@@ -16,16 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return siteMetadata({ title: "Поиск", noindex: true });
 }
 
-export default function SearchPage({ searchParams }: PageProps<"/search">) {
-  return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-6 text-3xl font-semibold tracking-tight sm:text-4xl">Поиск</h1>
-      <SearchResults searchParams={searchParams} />
-    </div>
-  );
-}
-
-async function SearchResults({ searchParams }: Pick<PageProps<"/search">, "searchParams">) {
+export default async function SearchPage({ searchParams }: PageProps<"/search">) {
   await connection();
   const params = await searchParams;
   const query = parseSearch(params.q);
@@ -35,69 +25,28 @@ async function SearchResults({ searchParams }: Pick<PageProps<"/search">, "searc
     : { items: [], total: 0 };
 
   return (
-    <>
-      {/* key: поле обновляется при переходе между запросами без перезагрузки. */}
-      <form role="search" className="mb-8 flex gap-2" key={query}>
-        <input
-          type="search"
-          name="q"
-          defaultValue={query}
-          aria-label="Что искать"
-          placeholder="Например: контакты"
-          className="border-input focus-visible:border-ring focus-visible:ring-ring/50 h-10 flex-1 rounded-md border bg-transparent px-3 outline-none focus-visible:ring-3"
-        />
-        <button
-          type="submit"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 rounded-md px-4 text-sm font-medium"
-        >
-          Найти
-        </button>
-      </form>
-
-      {query && (
-        <p className="text-muted-foreground mb-6 text-sm" role="status">
-          {total > 0 ? `Найдено: ${total}` : `По запросу «${query}» ничего не нашлось`}
-        </p>
-      )}
-
-      <ol className="flex flex-col gap-6">
-        {items.map((item) => (
-          <li key={item.href}>
-            <Link
-              href={item.href}
-              className="text-lg font-medium underline-offset-4 hover:underline"
-            >
-              {item.title}
-            </Link>
-            <div className="text-muted-foreground text-xs">
-              {item.kind === "article" ? "Статья" : "Страница"} · {item.href}
-            </div>
-            {item.snippet && <p className="mt-1">{highlight(item.snippet)}</p>}
-          </li>
-        ))}
-      </ol>
-
-      <SitePagination
-        page={page}
-        pageCount={pageCount(total)}
-        basePath="/search"
-        params={{ q: query }}
-      />
-    </>
+    <theme.Search
+      query={query}
+      results={items.map((item) => ({
+        ...item,
+        snippet: item.snippet ? highlight(item.snippet) : null,
+      }))}
+      total={total}
+      page={page}
+      pageCount={pageCount(total)}
+    />
   );
 }
 
-// Фрагмент от ts_headline с маркерами вокруг совпадений → текст с <mark>. Сам фрагмент
-// выводится как текст, поэтому HTML со страницы не исполнится.
-function highlight(snippet: string) {
-  return snippet.split(HIGHLIGHT_START).map((part, index) => {
-    if (index === 0) return <Fragment key={index}>{part}</Fragment>;
+// Фрагмент от ts_headline с маркерами вокруг совпадений → части с пометкой совпадения.
+// Тема выводит их как текст, поэтому HTML со страницы не исполнится.
+function highlight(snippet: string): HighlightPart[] {
+  return snippet.split(HIGHLIGHT_START).flatMap((part, index) => {
+    if (index === 0) return [{ text: part, match: false }];
     const [match, rest = ""] = part.split(HIGHLIGHT_END);
-    return (
-      <Fragment key={index}>
-        <mark className="bg-yellow-200/70 dark:bg-yellow-500/30">{match}</mark>
-        {rest}
-      </Fragment>
-    );
+    return [
+      { text: match, match: true },
+      { text: rest, match: false },
+    ];
   });
 }

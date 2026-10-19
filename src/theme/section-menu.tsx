@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { isActiveHref } from "@/lib/site";
 import { cn } from "@/lib/utils";
-import type { Crumb } from "./breadcrumbs";
+import type { Crumb } from "@/components/site/theme";
 
 // Меню раздела: корневая страница ветки и её подстраницы.
 export function SectionMenu({

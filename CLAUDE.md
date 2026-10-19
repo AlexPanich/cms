@@ -65,15 +65,16 @@ docker compose -f docker-compose.prod.yml up -d --build   # продакшен: 
 ## Публичный сайт
 
 - Маршруты — в `src/app/(site)/`, данные — `src/server/site/service.ts` (только опубликованное).
+- Разметка и оформление — тема в `src/theme/` (импорт `@/theme`), контракт `ThemeModule` — `src/components/site/theme.ts`. Маршрут загружает данные, ставит метаданные и JSON-LD и передаёт данные пропсами в компонент темы; тема в БД не ходит. Общие компоненты для тем — `src/components/site/` (`Editable…`, `RichText`). Новый вид страницы — новое поле в `ThemeModule`.
 - Публичные страницы рендерятся без стриминга ради SEO: в `(site)` не используй `<Suspense>` и `loading.tsx`, у новых страниц — `export const instant = false`. Иначе текст уйдёт в скрытый блок, а метаданные — из `<head>`.
-- Статус 404/308 рендер с Cache Components поставить не может (всегда 200) — его ставит `src/proxy.ts` через `resolveSiteRoute` до рендера. Новый тип публичного адреса добавляй в `classifySitePath` (`src/lib/site-routes.ts`) и `resolveSiteRoute`. «Не найдена» страница рисует сама (`NotFoundView`), а не через `notFound()` — так сохраняются её метаданные.
+- Статус 404/308 рендер с Cache Components поставить не может (всегда 200) — его ставит `src/proxy.ts` через `resolveSiteRoute` до рендера. Новый тип публичного адреса добавляй в `classifySitePath` (`src/lib/site-routes.ts`) и `resolveSiteRoute`. «Не найдена» страница рисует сама (`theme.NotFound`), а не через `notFound()` — так сохраняются её метаданные.
 - Метаданные публичных страниц — только через `siteMetadata` (`(site)/_lib/metadata.ts`): canonical, Open Graph, noindex. Структурированные данные — `JsonLd` (`src/components/site/json-ld.tsx`). Обёртки с `cache` из React для повторных запросов в одном рендере — `(site)/_lib/data.ts`.
 - Новый раздел первого уровня (как `/articles`) добавляй и в `RESERVED_ROOT_SLUGS` (`src/lib/slug.ts`), иначе страница с таким slug станет недоступной.
-- Новый шаблон: ключ в `PAGE_TEMPLATES` (`src/lib/templates.ts`) и лейаут в `(site)/_templates/templates.tsx`.
+- Новый шаблон: ключ в `PAGE_TEMPLATES` (`src/lib/templates.ts`) и лейаут в `templates` темы (`src/theme/templates.tsx`).
 - Новый виджет в контенте: узел TipTap в редакторе (по образцу `src/components/admin/gallery-node.tsx`), вывод в реестре `NODES` (`src/components/site/rich-text.tsx`), загрузка данных в `loadContentContext` (`src/server/site/content.ts`). Документ — это данные: узлы не из реестра не выводятся.
 - Тексты лейаута — `SITE_TEXTS` (`src/lib/site.ts`), их создаёт сид.
 - Данные для публичных страниц читаются только через `src/server/site/cached.ts` (`"use cache"` + `cacheTag` по типу данных). Кеш сбрасывает `runAction` по `SITE_CACHE_TAGS_BY_PERMISSION` (`src/lib/site-cache.ts`): новый тип данных — новый тег и строка в этой карте. Чтение по пути или slug — только для адресов из `cachedRouteIndex`, иначе любой запрос на несуществующий адрес станет записью в кеше.
-- Правка на сайте: белый список полей — `frontEditInputSchema` (`src/server/front-edit/schema.ts`), новое поле добавляется туда и в сервис. На странице — серверные обёртки из `(site)/_components/editable.tsx`: редактор выводится только пользователю с `edit_from_front`.
+- Правка на сайте: белый список полей — `frontEditInputSchema` (`src/server/front-edit/schema.ts`), новое поле добавляется туда и в сервис. На странице — серверные обёртки из `src/components/site/editable.tsx`, тема оборачивает ими поля в разметке: редактор выводится только пользователю с `edit_from_front`.
 - Тяжёлый клиентский код, нужный не всем посетителям, подключай через `next/dynamic` (как `front-edit-lazy.tsx`): Next грузит на каждую страницу все клиентские модули, импортированные в сегменте, даже если они не отрендерены.
 - Правки в БД в обход админки (SQL, E2E-фикстуры) сайт не увидит до сброса кеша: `POST /api/site-cache`, в E2E — `resetSiteCache(page)`.
 

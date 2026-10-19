@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { parsePage } from "@/lib/pagination";
-import { ArticleCard } from "../_components/article-card";
-import { NotFoundView } from "../_components/not-found-view";
-import { SitePagination } from "../_components/site-pagination";
+import { theme } from "@/theme";
 import { getArticlesPage } from "../_lib/data";
 import { siteMetadata } from "../_lib/metadata";
 
@@ -30,25 +28,7 @@ export default async function ArticlesPage({ searchParams }: Props) {
   await connection();
   const page = parsePage((await searchParams).page);
   const list = await getArticlesPage(page);
-  if (!list) return <NotFoundView />;
+  if (!list) return <theme.NotFound />;
 
-  return (
-    <>
-      <h1 className="mb-8 text-3xl font-semibold tracking-tight sm:text-4xl">Статьи</h1>
-      {list.items.length === 0 ? (
-        <p className="text-muted-foreground">Статей пока нет</p>
-      ) : (
-        <>
-          <ul className="flex flex-col gap-10">
-            {list.items.map((article) => (
-              <li key={article.slug}>
-                <ArticleCard article={article} />
-              </li>
-            ))}
-          </ul>
-          <SitePagination page={page} pageCount={list.pageCount} basePath="/articles" />
-        </>
-      )}
-    </>
-  );
+  return <theme.ArticleList articles={list.items} page={page} pageCount={list.pageCount} />;
 }

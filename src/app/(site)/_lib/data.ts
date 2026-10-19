@@ -1,12 +1,8 @@
 import "server-only";
-import { getSessionCookie } from "better-auth/cookies";
-import { headers } from "next/headers";
-import { cache } from "react";
-import { can } from "@/lib/permissions";
+import type { SiteInfo } from "@/components/site/theme";
 import { FALLBACK_SITE_NAME } from "@/lib/site";
 import { pageCount } from "@/lib/pagination";
 import { SLUG_PATTERN } from "@/lib/slug";
-import { getCurrentUser } from "@/server/auth/session";
 import {
   cachedArticle,
   cachedArticles,
@@ -19,7 +15,7 @@ import {
 // идёт только для адресов из индекса опубликованного, иначе любой запрос на несуществующий
 // адрес создавал бы новую запись в кеше.
 
-export async function getSiteInfo() {
+export async function getSiteInfo(): Promise<SiteInfo> {
   const texts = await cachedSiteTexts();
   return {
     name: texts["site-name"] || FALLBACK_SITE_NAME,
@@ -55,13 +51,3 @@ export async function getArticlesPage(page: number) {
   const pages = pageCount(index.articleSlugs.length);
   return page > pages ? null : { ...(await cachedArticles(page)), pageCount: pages };
 }
-
-// Пользователь с правом правки на сайте или null. Только для него рендерятся клиентские
-// компоненты правки — остальным посетителям их код не отправляется. Гость без cookie
-// сессии — без запроса в БД.
-export const getFrontEditor = cache(async () => {
-  if (!getSessionCookie(await headers())) return null;
-  const user = await getCurrentUser();
-  if (!can(user, "edit_from_front")) return null;
-  return { canOpenAdmin: can(user, "view_admin") };
-});

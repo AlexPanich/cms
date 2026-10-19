@@ -3,12 +3,12 @@ import { db } from "@/db";
 import type { RichTextDoc } from "@/lib/rich-text";
 import { SITE_TEXTS, type SiteTextKey } from "@/lib/site";
 import { listGalleryOptions } from "@/server/galleries/service";
-import { getFrontEditor } from "../_lib/data";
+import { getFrontEditor } from "@/server/site/front-editor";
 import { PageContentEditor, PageTitleEditor, TextEditor } from "./front-edit-lazy";
 
 // Обёртки для правки на сайте: пользователю с правом edit_from_front выводят клиентский
 // редактор, всем остальным — только содержимое. Править можно лишь поля из белого списка
-// (src/server/front-edit/schema.ts).
+// (src/server/front-edit/schema.ts). Тема оборачивает ими соответствующие места разметки.
 
 export async function EditablePageTitle({
   pageId,

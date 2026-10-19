@@ -1,20 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { PublishedArticleCard } from "@/server/site/service";
 
 export const articleDate = new Intl.DateTimeFormat("ru-RU", { dateStyle: "long" });
 
-export function ArticleCard({
-  article,
-}: {
-  article: {
-    slug: string;
-    title: string;
-    excerpt: string | null;
-    publishedAt: Date | null;
-    previewUrl: string | null;
-    previewAlt: string | null;
-  };
-}) {
+export function ArticleCard({ article }: { article: PublishedArticleCard }) {
   return (
     <article className="group relative flex flex-col gap-4 sm:flex-row">
       {article.previewUrl && (
