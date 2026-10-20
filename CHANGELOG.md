@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.0.0](https://github.com/AlexPanich/cms/compare/v0.2.0...v1.0.0) (2026-10-19)
+
+
+### Features
+
+* **auth:** создание первого администратора на /setup ([6369f95](https://github.com/AlexPanich/cms/commit/6369f950e37b3181b7b2fa1694686405be9cefd1))
+* **auth:** создание первого администратора на /setup ([ec0a0eb](https://github.com/AlexPanich/cms/commit/ec0a0eb3d8f76f50103d7781155fb5a1f5a55870))
+* **blocks:** добавить DSL полей и реестр блоков ([bfac806](https://github.com/AlexPanich/cms/commit/bfac8063667c80a30b83c8a44f0e0bc0acd5a872))
+* **blocks:** добавить DSL полей и реестр блоков ([9e5486e](https://github.com/AlexPanich/cms/commit/9e5486e5b58e33af7aff7c784b9e4decdad7cf10))
+* **blocks:** добавить базовый каталог блоков ([414219c](https://github.com/AlexPanich/cms/commit/414219cd35492e063aa60d808cbf0fcde2317788))
+* **blocks:** добавить базовый каталог блоков ([b605596](https://github.com/AlexPanich/cms/commit/b6055969dbfb05f18e3129bbc9f5fea9d0775522))
+* **blocks:** добавить каталог блоков для дизайнера ([89c5a09](https://github.com/AlexPanich/cms/commit/89c5a09628a95ba6ee6dd6eb808e8fc3ffcc766e))
+* **blocks:** добавить каталог блоков для дизайнера ([b2ac995](https://github.com/AlexPanich/cms/commit/b2ac9952d95cbb6bcdb802f59ed24d96086d0e15))
+* **pages:** добавить редактор блоков страницы ([66d8261](https://github.com/AlexPanich/cms/commit/66d8261bc3d6a1bbb26454b5b7c4a6350758fa5e))
+* **pages:** добавить редактор блоков страницы ([c42371b](https://github.com/AlexPanich/cms/commit/c42371be341e0785b01e212002bf13d8a26af179))
+* **pages:** собирать страницы из блоков ([049959e](https://github.com/AlexPanich/cms/commit/049959e010c534d3872c69684bc086de480ae33c))
+* **pages:** собирать страницы из блоков ([bf0206c](https://github.com/AlexPanich/cms/commit/bf0206c2f1991edfd3068f4ab6a9da9cf42beb9e))
+* **settings:** добавить настройки сайта и блок «Контакты» ([8bd95b7](https://github.com/AlexPanich/cms/commit/8bd95b7ce30ca5a3bc6f2c205406c06ad026df66))
+* **settings:** добавить настройки сайта и блок «Контакты» ([332574e](https://github.com/AlexPanich/cms/commit/332574e92cc8e7c2324076b571c05ae60a9c052f))
+
+
+### Bug Fixes
+
+* **theme:** скрывать заголовок страницы над первым экраном ([b2c1fe4](https://github.com/AlexPanich/cms/commit/b2c1fe46f18a8168d9ff673f16c2a5b973a4c278))
+
+
+### Miscellaneous Chores
+
+* не создавать AGENTS.md при запуске Next ([6a46220](https://github.com/AlexPanich/cms/commit/6a46220966fd8667321e4b82008a10ea659be057))
+
 ## [0.2.0](https://github.com/AlexPanich/cms/compare/v0.1.0...v0.2.0) (2026-10-19)
 
 
